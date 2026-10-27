@@ -548,6 +548,21 @@ export default function App() {
     );
   }
 
+  // Authenticated but household still loading from Firestore:
+  // block UI to avoid writes that skip Firestore (race condition on first login).
+  if (currentUser && !currentHousehold && !isGuestMode) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0c] flex flex-col items-center justify-center gap-4 text-zinc-400">
+        <div className="w-12 h-12 rounded-2xl bg-orange-500 flex items-center justify-center text-zinc-950 font-black shadow-xl shadow-orange-500/25 animate-pulse">
+          <WalletCards className="w-7 h-7 stroke-[2.5]" />
+        </div>
+        <div className="text-sm font-semibold tracking-wide text-zinc-400 flex items-center gap-2">
+          <span>Conectando sua conta na nuvem...</span>
+        </div>
+      </div>
+    );
+  }
+
   // If user is not authenticated and hasn't explicitly chosen guest mode, show the Google Auth Gate screen
   if (!currentUser && !isGuestMode) {
     return (
