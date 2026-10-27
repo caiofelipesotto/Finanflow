@@ -64,6 +64,7 @@ export default function App() {
   const [isShareHouseholdOpen, setIsShareHouseholdOpen] = useState(false);
   const [isConfirmClearModalOpen, setIsConfirmClearModalOpen] = useState(false);
   const [clearLoading, setClearLoading] = useState(false);
+  const [cloudSaveStatus, setCloudSaveStatus] = useState<'ok' | 'error' | null>(null);
 
   // Persistence with localStorage as offline fallback / initial state
   const [transactions, setTransactions] = useState<Transaction[]>(() => {
@@ -266,9 +267,12 @@ export default function App() {
 
       if (user && household) {
         newItems.forEach((item) => {
-          saveTransactionToCloud(item, household, user).catch((err) =>
-            console.error('Erro ao sincronizar transação na nuvem:', err)
-          );
+          saveTransactionToCloud(item, household, user)
+            .then(() => notifyCloudSave(true))
+            .catch((err) => {
+              console.error('Erro ao sincronizar transação na nuvem:', err);
+              notifyCloudSave(false);
+            });
         });
       }
     } else if (existingId) {
@@ -278,9 +282,12 @@ export default function App() {
       );
 
       if (user && household) {
-        saveTransactionToCloud(updatedTx, household, user).catch((err) =>
-          console.error('Erro ao atualizar transação na nuvem:', err)
-        );
+        saveTransactionToCloud(updatedTx, household, user)
+          .then(() => notifyCloudSave(true))
+          .catch((err) => {
+            console.error('Erro ao atualizar transação na nuvem:', err);
+            notifyCloudSave(false);
+          });
       }
     } else {
       const newTx: Transaction = {
@@ -290,12 +297,20 @@ export default function App() {
       setTransactions((prev) => [newTx, ...prev]);
 
       if (user && household) {
-        saveTransactionToCloud(newTx, household, user).catch((err) =>
-          console.error('Erro ao salvar transação na nuvem:', err)
-        );
+        saveTransactionToCloud(newTx, household, user)
+          .then(() => notifyCloudSave(true))
+          .catch((err) => {
+            console.error('Erro ao salvar transação na nuvem:', err);
+            notifyCloudSave(false);
+          });
       }
     }
     setEditingTx(null);
+  };
+
+  const notifyCloudSave = (ok: boolean) => {
+    setCloudSaveStatus(ok ? 'ok' : 'error');
+    setTimeout(() => setCloudSaveStatus(null), 4000);
   };
 
   const handleEditTransaction = (tx: Transaction) => {
@@ -524,16 +539,26 @@ export default function App() {
     } catch (e) {
       console.error('Erro na sincronização de dados locais para a nuvem:', e);
     }
-  };
-
-  const handleLogout = async () => {
+  };    const handleLogout = async () => {
     if (confirm('Deseja realmente sair da sua conta Google?')) {
       await signOut(auth);
+      // Limpa o cache local para não deixar dados órfãos entre sessões
+      localStorage.removeItem('finanflow_transactions');
+      localStorage.removeItem('finanflow_goals');
+      localStorage.removeItem('finanflow_categories');
+      localStorage.removeItem('finanflow_accounts');
+      localStorage.removeItem('finanflow_caio_transactions');
+      localStorage.removeItem('finanflow_caio_goals');
+      localStorage.removeItem('finanflow_caio_categories');
+      localStorage.removeItem('finanflow_caio_accounts');
+      localStorage.removeItem('finanflow_v2_blank_state');
       setCurrentUser(null);
       setCurrentHousehold(null);
+      setCloudSaveStatus(null);
       setIsGuestMode(false);
     }
   };
+
 
   if (authChecking) {
     return (
@@ -765,6 +790,13 @@ export default function App() {
             {currentUser && (
               <>
                 <span aria-hidden="true" className="text-zinc-700">·</span>
+                {cloudSaveStatus === 'error' && (
+                  <span className="text-xs text-rose-400 font-medium">Erro na nuvem</span>
+                )}
+                {cloudSaveStatus === 'ok' && (
+                  <span className="text-xs text-orange-400 font-medium">Salvo na nuvem</span>
+                )}
+                {cloudSaveStatus && <span aria-hidden="true" className="text-zinc-700">·</span>}
                 <button
                   onClick={handleLogout}
                   className="text-zinc-500 hover:text-zinc-400 transition-colors cursor-pointer"
