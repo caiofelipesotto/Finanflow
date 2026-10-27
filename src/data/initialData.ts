@@ -1,0 +1,178 @@
+import { Category, Account, Goal, Transaction } from '../types/finance';
+
+export const SPREADSHEET_TITLE = 'FinanFlow · Gestão Financeira Inteligente';
+
+export const DEFAULT_CATEGORIES: Category[] = [
+  // Receitas
+  {
+    id: 'cat_salario',
+    name: 'Salário & Proventos',
+    icon: 'Briefcase',
+    color: '#f97316',
+    type: 'income',
+  },
+  {
+    id: 'cat_renda_extra',
+    name: 'Renda Extra & Bônus',
+    icon: 'Sparkles',
+    color: '#fb923c',
+    type: 'income',
+  },
+  {
+    id: 'cat_rendimentos',
+    name: 'Rendimentos & Investimentos',
+    icon: 'TrendingUp',
+    color: '#fbbf24',
+    type: 'income',
+  },
+
+  // Despesas Fixas & Moradia
+  {
+    id: 'cat_moradia',
+    name: 'Moradia (Aluguel, Condomínio, Luz)',
+    icon: 'Home',
+    color: '#f97316',
+    type: 'expense',
+    budget: 0,
+  },
+  {
+    id: 'cat_veiculo',
+    name: 'Veículo (Financiamento, Seguro, IPVA)',
+    icon: 'Car',
+    color: '#f59e0b',
+    type: 'expense',
+    budget: 0,
+  },
+  {
+    id: 'cat_educacao',
+    name: 'Educação & Escola',
+    icon: 'GraduationCap',
+    color: '#a1a1aa',
+    type: 'expense',
+    budget: 0,
+  },
+  {
+    id: 'cat_assinaturas',
+    name: 'Assinaturas & Telecom (Internet, Streaming)',
+    icon: 'Tv',
+    color: '#f43f5e',
+    type: 'expense',
+    budget: 0,
+  },
+
+  // Despesas Variáveis
+  {
+    id: 'cat_alimentacao',
+    name: 'Supermercado & Alimentação',
+    icon: 'Coffee',
+    color: '#ec4899',
+    type: 'expense',
+    budget: 0,
+  },
+  {
+    id: 'cat_combustivel',
+    name: 'Transporte & Combustível',
+    icon: 'Zap',
+    color: '#f97316',
+    type: 'expense',
+    budget: 0,
+  },
+  {
+    id: 'cat_compras_cartao',
+    name: 'Compras & Vestuário',
+    icon: 'ShoppingBag',
+    color: '#eab308',
+    type: 'expense',
+    budget: 0,
+  },
+  {
+    id: 'cat_saude',
+    name: 'Saúde & Farmácia',
+    icon: 'ShieldCheck',
+    color: '#f59e0b',
+    type: 'expense',
+    budget: 0,
+  },
+  {
+    id: 'cat_lazer',
+    name: 'Lazer & Restaurantes',
+    icon: 'Utensils',
+    color: '#f43f5e',
+    type: 'expense',
+    budget: 0,
+  },
+  {
+    id: 'cat_investimentos_saida',
+    name: 'Aportes & Poupança',
+    icon: 'PiggyBank',
+    color: '#f97316',
+    type: 'expense',
+    budget: 0,
+  },
+  {
+    id: 'cat_outros',
+    name: 'Outras Despesas',
+    icon: 'MoreHorizontal',
+    color: '#64748b',
+    type: 'expense',
+    budget: 0,
+  },
+];
+
+export const DEFAULT_ACCOUNTS: Account[] = [
+  {
+    id: 'acc_corrente',
+    name: 'Conta Corrente Principal',
+    type: 'checking',
+    initialBalance: 0,
+    color: '#f97316',
+  },
+  {
+    id: 'acc_picpay',
+    name: 'Cartão PicPay',
+    type: 'credit',
+    initialBalance: 0,
+    color: '#78716c',
+    cardLimit: 5000,
+    cardDueDay: 10,
+  },
+  {
+    id: 'acc_santander',
+    name: 'Cartão Santander',
+    type: 'credit',
+    initialBalance: 0,
+    color: '#ef4444',
+    cardLimit: 6000,
+    cardDueDay: 15,
+  },
+  {
+    id: 'acc_riachuelo',
+    name: 'Cartão Riachuelo',
+    type: 'credit',
+    initialBalance: 0,
+    color: '#ec4899',
+    cardLimit: 3000,
+    cardDueDay: 20,
+  },
+  {
+    id: 'acc_cdb',
+    name: 'Investimento / Reserva CDB',
+    type: 'investment',
+    initialBalance: 0,
+    color: '#f97316',
+  },
+  {
+    id: 'acc_carteira',
+    name: 'Carteira / Dinheiro Físico',
+    type: 'cash',
+    initialBalance: 0,
+    color: '#64748b',
+  },
+];
+
+export const DEFAULT_GOALS: Goal[] = [];
+
+// Clean blank slate: no pre-populated values as requested by user
+export const getSampleTransactions = (): Transaction[] => {
+  return [];
+};

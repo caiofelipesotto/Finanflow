@@ -1,0 +1,325 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile with display name and associated household",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Firebase Auth UID"
+        },
+        "email": {
+          "type": "string",
+          "description": "User email address"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "User display name"
+        },
+        "photoURL": {
+          "type": "string",
+          "description": "User profile photo URL"
+        },
+        "householdId": {
+          "type": "string",
+          "description": "Current active household ID"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp ISO string or server timestamp"
+        }
+      },
+      "required": ["id", "email", "householdId"]
+    },
+    "Household": {
+      "title": "Household",
+      "description": "Shared household finance workspace (e.g. Caio & Lubia)",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Household ID"
+        },
+        "name": {
+          "type": "string",
+          "description": "Household name"
+        },
+        "ownerId": {
+          "type": "string",
+          "description": "UID of owner/creator"
+        },
+        "memberUids": {
+          "type": "array",
+          "description": "List of authorized member UIDs (max 10)"
+        },
+        "inviteCode": {
+          "type": "string",
+          "description": "Household invite code"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp ISO string or server timestamp"
+        }
+      },
+      "required": ["id", "name", "ownerId", "memberUids", "inviteCode"]
+    },
+    "Transaction": {
+      "title": "Transaction",
+      "description": "Financial income or expense transaction",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique transaction ID"
+        },
+        "householdId": {
+          "type": "string",
+          "description": "Associated household ID"
+        },
+        "memberUids": {
+          "type": "array",
+          "description": "Member UIDs with access"
+        },
+        "creatorUid": {
+          "type": "string",
+          "description": "UID of creator"
+        },
+        "creatorName": {
+          "type": "string",
+          "description": "Name or email of creator"
+        },
+        "description": {
+          "type": "string",
+          "description": "Transaction title or description"
+        },
+        "amount": {
+          "type": "number",
+          "description": "Amount in BRL"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["income", "expense"],
+          "description": "Income or expense"
+        },
+        "category": {
+          "type": "string",
+          "description": "Category ID"
+        },
+        "date": {
+          "type": "string",
+          "description": "Date in YYYY-MM-DD"
+        },
+        "account": {
+          "type": "string",
+          "description": "Account ID"
+        },
+        "paymentMethod": {
+          "type": "string",
+          "description": "Payment method"
+        },
+        "isPaid": {
+          "type": "boolean",
+          "description": "Payment status"
+        },
+        "notes": {
+          "type": "string",
+          "description": "Optional notes"
+        },
+        "recurrence": {
+          "type": "string",
+          "description": "Recurrence type"
+        },
+        "installmentGroupId": {
+          "type": "string",
+          "description": "Installment group ID"
+        },
+        "recurrenceGroupId": {
+          "type": "string",
+          "description": "Recurrence group ID"
+        },
+        "installment": {
+          "type": "object",
+          "description": "Installment details"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Creation timestamp"
+        }
+      },
+      "required": ["id", "householdId", "memberUids", "creatorUid", "description", "amount", "type", "category", "date", "account", "paymentMethod", "isPaid"]
+    },
+    "Category": {
+      "title": "Category",
+      "description": "Budget and transaction category",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Category ID"
+        },
+        "householdId": {
+          "type": "string",
+          "description": "Household ID"
+        },
+        "memberUids": {
+          "type": "array",
+          "description": "Member UIDs with access"
+        },
+        "creatorUid": {
+          "type": "string",
+          "description": "UID of creator"
+        },
+        "name": {
+          "type": "string",
+          "description": "Category name"
+        },
+        "icon": {
+          "type": "string",
+          "description": "Lucide icon name"
+        },
+        "color": {
+          "type": "string",
+          "description": "Hex or tailwind color"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["expense", "income", "both"],
+          "description": "Category applicable type"
+        },
+        "budget": {
+          "type": "number",
+          "description": "Monthly budget limit"
+        }
+      },
+      "required": ["id", "householdId", "memberUids", "creatorUid", "name", "icon", "color", "type"]
+    },
+    "Account": {
+      "title": "Account",
+      "description": "Bank account, wallet or credit card",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Account ID"
+        },
+        "householdId": {
+          "type": "string",
+          "description": "Household ID"
+        },
+        "memberUids": {
+          "type": "array",
+          "description": "Member UIDs with access"
+        },
+        "creatorUid": {
+          "type": "string",
+          "description": "UID of creator"
+        },
+        "name": {
+          "type": "string",
+          "description": "Account name"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["checking", "credit", "cash", "investment"],
+          "description": "Account type"
+        },
+        "initialBalance": {
+          "type": "number",
+          "description": "Initial balance"
+        },
+        "color": {
+          "type": "string",
+          "description": "Display color"
+        },
+        "cardLimit": {
+          "type": "number",
+          "description": "Credit limit"
+        },
+        "cardDueDay": {
+          "type": "number",
+          "description": "Card statement due day"
+        }
+      },
+      "required": ["id", "householdId", "memberUids", "creatorUid", "name", "type", "initialBalance", "color"]
+    },
+    "Goal": {
+      "title": "Goal",
+      "description": "Financial savings goal or investment reserve",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Goal ID"
+        },
+        "householdId": {
+          "type": "string",
+          "description": "Household ID"
+        },
+        "memberUids": {
+          "type": "array",
+          "description": "Member UIDs with access"
+        },
+        "creatorUid": {
+          "type": "string",
+          "description": "UID of creator"
+        },
+        "title": {
+          "type": "string",
+          "description": "Goal title"
+        },
+        "targetAmount": {
+          "type": "number",
+          "description": "Target amount"
+        },
+        "currentAmount": {
+          "type": "number",
+          "description": "Current saved amount"
+        },
+        "deadline": {
+          "type": "string",
+          "description": "Target date YYYY-MM-DD"
+        },
+        "color": {
+          "type": "string",
+          "description": "Display color"
+        },
+        "icon": {
+          "type": "string",
+          "description": "Icon name"
+        },
+        "notes": {
+          "type": "string",
+          "description": "Optional notes"
+        }
+      },
+      "required": ["id", "householdId", "memberUids", "creatorUid", "title", "targetAmount", "currentAmount", "deadline", "color", "icon"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "Individual user profiles"
+    },
+    "/households/{householdId}": {
+      "schema": "Household",
+      "description": "Household shared spaces"
+    },
+    "/transactions/{transactionId}": {
+      "schema": "Transaction",
+      "description": "Financial transactions shared by household members"
+    },
+    "/categories/{categoryId}": {
+      "schema": "Category",
+      "description": "Categories shared by household members"
+    },
+    "/accounts/{accountId}": {
+      "schema": "Account",
+      "description": "Accounts shared by household members"
+    },
+    "/goals/{goalId}": {
+      "schema": "Goal",
+      "description": "Goals shared by household members"
+    }
+  }
+}

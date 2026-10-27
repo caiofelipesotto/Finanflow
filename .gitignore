@@ -1,0 +1,14 @@
+node_modules/
+build/
+dist/
+coverage/
+.DS_Store
+*.log
+.env*
+!.env.example
+
+# scratch local (testes OCR, screenshots, ferramentas)
+.tmp/
+.tools/
+artifacts/
+*.traineddata

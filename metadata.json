@@ -1,0 +1,6 @@
+{
+  "name": "FinanFlow · Finanças Pessoais",
+  "description": "Aplicativo simples, intuitivo e completo para organizar suas finanças pessoais, controlar receitas, despesas, orçamentos e metas financeiras.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

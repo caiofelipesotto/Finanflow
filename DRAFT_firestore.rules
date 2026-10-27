@@ -1,0 +1,223 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net - Default Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Hardened Global Primitives
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && (request.auth.token.email_verified == true || request.auth.token.firebase.sign_in_provider == 'google.com');
+    }
+
+    // Pillar 2: Validation Blueprints
+    function isValidUser(data) {
+      return data.keys().hasAll(['id', 'email', 'householdId']) &&
+             data.keys().hasOnly(['id', 'email', 'displayName', 'photoURL', 'householdId', 'createdAt', 'updatedAt']) &&
+             data.id is string && data.id == request.auth.uid &&
+             data.email is string && data.email.size() <= 254 &&
+             data.householdId is string && data.householdId.size() <= 128 &&
+             (!('displayName' in data) || (data.displayName is string && data.displayName.size() <= 120)) &&
+             (!('photoURL' in data) || (data.photoURL is string && data.photoURL.size() <= 1000));
+    }
+
+    function isValidHousehold(data) {
+      return data.keys().hasAll(['id', 'name', 'ownerId', 'memberUids', 'inviteCode']) &&
+             data.keys().hasOnly(['id', 'name', 'ownerId', 'memberUids', 'inviteCode', 'createdAt', 'updatedAt']) &&
+             data.id is string && data.id.size() <= 128 &&
+             data.name is string && data.name.size() > 0 && data.name.size() <= 120 &&
+             data.ownerId is string && data.ownerId.size() <= 128 &&
+             data.memberUids is list && data.memberUids.size() > 0 && data.memberUids.size() <= 10 &&
+             data.memberUids[0] is string &&
+             data.inviteCode is string && data.inviteCode.size() <= 64;
+    }
+
+    function isValidTransaction(data) {
+      return data.keys().hasAll(['id', 'householdId', 'memberUids', 'creatorUid', 'description', 'amount', 'type', 'category', 'date', 'account', 'paymentMethod', 'isPaid']) &&
+             data.keys().hasOnly(['id', 'householdId', 'memberUids', 'creatorUid', 'creatorName', 'description', 'amount', 'type', 'category', 'date', 'account', 'paymentMethod', 'isPaid', 'notes', 'recurrence', 'installment', 'installmentGroupId', 'recurrenceGroupId', 'createdAt', 'updatedAt']) &&
+             data.id is string && data.id.size() <= 128 &&
+             data.householdId is string && data.householdId.size() <= 128 &&
+             data.memberUids is list && data.memberUids.size() > 0 && data.memberUids.size() <= 10 &&
+             data.memberUids[0] is string &&
+             data.creatorUid is string && data.creatorUid.size() <= 128 &&
+             data.description is string && data.description.size() > 0 && data.description.size() <= 300 &&
+             data.amount is number && data.amount >= 0 &&
+             (data.type == 'income' || data.type == 'expense') &&
+             data.category is string && data.category.size() <= 128 &&
+             data.date is string && data.date.size() <= 30 &&
+             data.account is string && data.account.size() <= 128 &&
+             data.paymentMethod is string && data.paymentMethod.size() <= 64 &&
+             data.isPaid is bool &&
+             (!('notes' in data) || (data.notes is string && data.notes.size() <= 2000)) &&
+             (!('recurrence' in data) || (data.recurrence is string && data.recurrence.size() <= 64)) &&
+             (!('creatorName' in data) || (data.creatorName is string && data.creatorName.size() <= 120));
+    }
+
+    function isValidCategory(data) {
+      return data.keys().hasAll(['id', 'householdId', 'memberUids', 'creatorUid', 'name', 'icon', 'color', 'type']) &&
+             data.keys().hasOnly(['id', 'householdId', 'memberUids', 'creatorUid', 'name', 'icon', 'color', 'type', 'budget', 'createdAt', 'updatedAt']) &&
+             data.id is string && data.id.size() <= 128 &&
+             data.householdId is string && data.householdId.size() <= 128 &&
+             data.memberUids is list && data.memberUids.size() > 0 && data.memberUids.size() <= 10 &&
+             data.creatorUid is string &&
+             data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
+             data.icon is string && data.icon.size() <= 64 &&
+             data.color is string && data.color.size() <= 64 &&
+             (data.type == 'expense' || data.type == 'income' || data.type == 'both') &&
+             (!('budget' in data) || (data.budget is number && data.budget >= 0));
+    }
+
+    function isValidAccount(data) {
+      return data.keys().hasAll(['id', 'householdId', 'memberUids', 'creatorUid', 'name', 'type', 'initialBalance', 'color']) &&
+             data.keys().hasOnly(['id', 'householdId', 'memberUids', 'creatorUid', 'name', 'type', 'initialBalance', 'color', 'cardLimit', 'cardDueDay', 'createdAt', 'updatedAt']) &&
+             data.id is string && data.id.size() <= 128 &&
+             data.householdId is string && data.householdId.size() <= 128 &&
+             data.memberUids is list && data.memberUids.size() > 0 && data.memberUids.size() <= 10 &&
+             data.creatorUid is string &&
+             data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
+             (data.type == 'checking' || data.type == 'credit' || data.type == 'cash' || data.type == 'investment') &&
+             data.initialBalance is number &&
+             data.color is string && data.color.size() <= 64 &&
+             (!('cardLimit' in data) || (data.cardLimit is number && data.cardLimit >= 0)) &&
+             (!('cardDueDay' in data) || (data.cardDueDay is number && data.cardDueDay >= 1 && data.cardDueDay <= 31));
+    }
+
+    function isValidGoal(data) {
+      return data.keys().hasAll(['id', 'householdId', 'memberUids', 'creatorUid', 'title', 'targetAmount', 'currentAmount', 'deadline', 'color', 'icon']) &&
+             data.keys().hasOnly(['id', 'householdId', 'memberUids', 'creatorUid', 'title', 'targetAmount', 'currentAmount', 'deadline', 'color', 'icon', 'notes', 'createdAt', 'updatedAt']) &&
+             data.id is string && data.id.size() <= 128 &&
+             data.householdId is string && data.householdId.size() <= 128 &&
+             data.memberUids is list && data.memberUids.size() > 0 && data.memberUids.size() <= 10 &&
+             data.creatorUid is string &&
+             data.title is string && data.title.size() > 0 && data.title.size() <= 120 &&
+             data.targetAmount is number && data.targetAmount >= 0 &&
+             data.currentAmount is number && data.currentAmount >= 0 &&
+             data.deadline is string && data.deadline.size() <= 30 &&
+             data.color is string && data.color.size() <= 64 &&
+             data.icon is string && data.icon.size() <= 64 &&
+             (!('notes' in data) || (data.notes is string && data.notes.size() <= 1000));
+    }
+
+    // Match Rules for User Profile
+    match /users/{userId} {
+      allow get: if isVerifiedUser() && userId == request.auth.uid;
+      allow list: if false; // PII Protection: users cannot be listed
+      allow create: if isVerifiedUser() && isValidId(userId) && userId == request.auth.uid && isValidUser(incoming());
+      allow update: if isVerifiedUser() && isValidId(userId) && userId == request.auth.uid &&
+                       isValidUser(incoming()) && incoming().id == existing().id &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'photoURL', 'householdId', 'updatedAt']);
+      allow delete: if false;
+    }
+
+    // Match Rules for Households
+    match /households/{householdId} {
+      allow get: if isVerifiedUser() && isValidId(householdId) && (request.auth.uid in resource.data.memberUids);
+      allow list: if isVerifiedUser() && (request.auth.uid in resource.data.memberUids);
+      allow create: if isVerifiedUser() && isValidId(householdId) &&
+                       isValidHousehold(incoming()) &&
+                       incoming().ownerId == request.auth.uid &&
+                       request.auth.uid in incoming().memberUids;
+      allow update: if isVerifiedUser() && isValidId(householdId) &&
+                       isValidHousehold(incoming()) &&
+                       (request.auth.uid in existing().memberUids) &&
+                       incoming().id == existing().id &&
+                       incoming().ownerId == existing().ownerId &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['name', 'memberUids', 'inviteCode', 'updatedAt']);
+      allow delete: if isVerifiedUser() && isValidId(householdId) && existing().ownerId == request.auth.uid;
+    }
+
+    // Match Rules for Transactions
+    match /transactions/{transactionId} {
+      allow get: if isVerifiedUser() && isValidId(transactionId) && (request.auth.uid in resource.data.memberUids);
+      allow list: if isVerifiedUser() && (request.auth.uid in resource.data.memberUids);
+      allow create: if isVerifiedUser() && isValidId(transactionId) &&
+                       isValidTransaction(incoming()) &&
+                       incoming().creatorUid == request.auth.uid &&
+                       request.auth.uid in incoming().memberUids;
+      allow update: if isVerifiedUser() && isValidId(transactionId) &&
+                       isValidTransaction(incoming()) &&
+                       (request.auth.uid in existing().memberUids) &&
+                       incoming().id == existing().id &&
+                       incoming().creatorUid == existing().creatorUid &&
+                       incoming().householdId == existing().householdId &&
+                       incoming().diff(existing()).affectedKeys().hasOnly([
+                         'memberUids', 'description', 'amount', 'type', 'category', 'date',
+                         'account', 'paymentMethod', 'isPaid', 'notes', 'recurrence',
+                         'installment', 'installmentGroupId', 'recurrenceGroupId', 'updatedAt'
+                       ]);
+      allow delete: if isVerifiedUser() && isValidId(transactionId) && (request.auth.uid in existing().memberUids);
+    }
+
+    // Match Rules for Categories
+    match /categories/{categoryId} {
+      allow get: if isVerifiedUser() && isValidId(categoryId) && (request.auth.uid in resource.data.memberUids);
+      allow list: if isVerifiedUser() && (request.auth.uid in resource.data.memberUids);
+      allow create: if isVerifiedUser() && isValidId(categoryId) &&
+                       isValidCategory(incoming()) &&
+                       incoming().creatorUid == request.auth.uid &&
+                       request.auth.uid in incoming().memberUids;
+      allow update: if isVerifiedUser() && isValidId(categoryId) &&
+                       isValidCategory(incoming()) &&
+                       (request.auth.uid in existing().memberUids) &&
+                       incoming().id == existing().id &&
+                       incoming().creatorUid == existing().creatorUid &&
+                       incoming().householdId == existing().householdId &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['name', 'icon', 'color', 'type', 'budget', 'memberUids', 'updatedAt']);
+      allow delete: if isVerifiedUser() && isValidId(categoryId) && (request.auth.uid in existing().memberUids);
+    }
+
+    // Match Rules for Accounts
+    match /accounts/{accountId} {
+      allow get: if isVerifiedUser() && isValidId(accountId) && (request.auth.uid in resource.data.memberUids);
+      allow list: if isVerifiedUser() && (request.auth.uid in resource.data.memberUids);
+      allow create: if isVerifiedUser() && isValidId(accountId) &&
+                       isValidAccount(incoming()) &&
+                       incoming().creatorUid == request.auth.uid &&
+                       request.auth.uid in incoming().memberUids;
+      allow update: if isVerifiedUser() && isValidId(accountId) &&
+                       isValidAccount(incoming()) &&
+                       (request.auth.uid in existing().memberUids) &&
+                       incoming().id == existing().id &&
+                       incoming().creatorUid == existing().creatorUid &&
+                       incoming().householdId == existing().householdId &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['name', 'type', 'initialBalance', 'color', 'cardLimit', 'cardDueDay', 'memberUids', 'updatedAt']);
+      allow delete: if isVerifiedUser() && isValidId(accountId) && (request.auth.uid in existing().memberUids);
+    }
+
+    // Match Rules for Goals
+    match /goals/{goalId} {
+      allow get: if isVerifiedUser() && isValidId(goalId) && (request.auth.uid in resource.data.memberUids);
+      allow list: if isVerifiedUser() && (request.auth.uid in resource.data.memberUids);
+      allow create: if isVerifiedUser() && isValidId(goalId) &&
+                       isValidGoal(incoming()) &&
+                       incoming().creatorUid == request.auth.uid &&
+                       request.auth.uid in incoming().memberUids;
+      allow update: if isVerifiedUser() && isValidId(goalId) &&
+                       isValidGoal(incoming()) &&
+                       (request.auth.uid in existing().memberUids) &&
+                       incoming().id == existing().id &&
+                       incoming().creatorUid == existing().creatorUid &&
+                       incoming().householdId == existing().householdId &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['title', 'targetAmount', 'currentAmount', 'deadline', 'color', 'icon', 'notes', 'memberUids', 'updatedAt']);
+      allow delete: if isVerifiedUser() && isValidId(goalId) && (request.auth.uid in existing().memberUids);
+    }
+  }
+}
