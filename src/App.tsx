@@ -65,6 +65,7 @@ export default function App() {
   const [isConfirmClearModalOpen, setIsConfirmClearModalOpen] = useState(false);
   const [clearLoading, setClearLoading] = useState(false);
   const [cloudSaveStatus, setCloudSaveStatus] = useState<'ok' | 'error' | null>(null);
+  const [cloudTimeout, setCloudTimeout] = useState(false);
 
   // Persistence with localStorage as offline fallback / initial state
   const [transactions, setTransactions] = useState<Transaction[]>(() => {
@@ -575,6 +576,13 @@ export default function App() {
 
   // Authenticated but household still loading from Firestore:
   // block UI to avoid writes that skip Firestore (race condition on first login).
+  // Timeout: if cloud doesn't respond within 10s, let user proceed offline.
+  useEffect(() => {
+    if (!currentUser || currentHousehold || isGuestMode || cloudTimeout) return;
+    const t = setTimeout(() => setCloudTimeout(true), 10000);
+    return () => clearTimeout(t);
+  }, [currentUser, currentHousehold, isGuestMode, cloudTimeout]);
+
   if (currentUser && !currentHousehold && !isGuestMode) {
     return (
       <div className="min-h-screen bg-[#0a0a0c] flex flex-col items-center justify-center gap-4 text-zinc-400">
@@ -582,7 +590,19 @@ export default function App() {
           <WalletCards className="w-7 h-7 stroke-[2.5]" />
         </div>
         <div className="text-sm font-semibold tracking-wide text-zinc-400 flex items-center gap-2">
-          <span>Conectando sua conta na nuvem...</span>
+          {cloudTimeout ? (
+            <>
+              <span>Nuvem indisponível — modo offline</span>
+              <button
+                onClick={() => setIsGuestMode(true)}
+                className="mt-2 text-xs text-orange-400 underline hover:text-orange-300 cursor-pointer"
+              >
+                Continuar assim mesmo
+              </button>
+            </>
+          ) : (
+            <span>Conectando sua conta na nuvem...</span>
+          )}
         </div>
       </div>
     );
