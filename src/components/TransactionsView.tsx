@@ -136,8 +136,8 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
       {/* Header and Quick Stats */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold text-white tracking-tight">Transações</h1>
-          <p className="text-xs text-zinc-400 mt-0.5">
+          <h1 className="ui-h1">Transações</h1>
+          <p className="ui-sub">
             Histórico completo e controle de todas as suas entradas e saídas
           </p>
         </div>
@@ -146,7 +146,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
           {onOpenScanInvoice && (
             <button
               onClick={onOpenScanInvoice}
-              className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-zinc-300 bg-zinc-950/70 hover:bg-zinc-900/80 border border-zinc-700/60 rounded-xl transition-all shadow-xs whitespace-nowrap"
+              className="ui-btn ui-btn-secondary"
             >
               <Camera className="w-3.5 h-3.5 text-zinc-400" />
               <span>Escanear Print / Fatura</span>
@@ -155,7 +155,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
 
           <button
             onClick={onOpenImportSpreadsheet}
-            className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-zinc-300 bg-zinc-950/80 hover:bg-zinc-900 border border-zinc-800/80 rounded-xl transition-colors shadow-2xs whitespace-nowrap"
+            className="ui-btn ui-btn-secondary"
           >
             <FileSpreadsheet className="w-3.5 h-3.5" />
             <span>Importar Planilha</span>
@@ -163,7 +163,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
 
           <button
             onClick={() => exportTransactionsToCsv(filteredTransactions, categoriesMap, accountsMap)}
-            className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-zinc-300 bg-[#1d1d20] hover:bg-[#1d1d20] border border-zinc-800 rounded-xl transition-colors shadow-2xs whitespace-nowrap"
+            className="ui-btn ui-btn-secondary"
           >
             <Download className="w-3.5 h-3.5" />
             <span>Exportar CSV</span>
@@ -171,7 +171,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
 
           <button
             onClick={onOpenNewTransaction}
-            className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-black bg-orange-400 hover:bg-orange-300 rounded-xl transition-all shadow-md shadow-orange-500/10 whitespace-nowrap"
+            className="ui-btn ui-btn-primary"
           >
             <Plus className="w-3.5 h-3.5 stroke-[3]" />
             <span>Nova Transação</span>
@@ -236,7 +236,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="min-w-0 max-w-full px-2.5 py-1 text-xs border border-neutral-700 rounded-lg bg-[#1d1d20] text-white outline-hidden focus:border-orange-500"
+              className="min-w-0 max-w-full ui-input py-1"
             >
               <option value="all">Todas as categorias</option>
               {categories.map((c) => (
@@ -252,7 +252,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
             <select
               value={selectedAccount}
               onChange={(e) => setSelectedAccount(e.target.value)}
-              className="min-w-0 max-w-full px-2.5 py-1 text-xs border border-neutral-700 rounded-lg bg-[#1d1d20] text-white outline-hidden focus:border-orange-500"
+              className="min-w-0 max-w-full ui-input py-1"
             >
               <option value="all">Todas as contas</option>
               {accounts.map((a) => (
@@ -268,7 +268,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
             <select
               value={selectedStatus}
               onChange={(e) => setSelectedStatus(e.target.value as 'all' | 'paid' | 'pending')}
-              className="px-2.5 py-1 text-xs border border-neutral-700 rounded-lg bg-[#1d1d20] text-white outline-hidden focus:border-orange-500"
+              className="ui-input py-1"
             >
               <option value="all">Todos os status</option>
               <option value="paid">Pago / Concluído</option>

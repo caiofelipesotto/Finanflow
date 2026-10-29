@@ -24,7 +24,7 @@ export const DonutCategoryChart: React.FC<DonutCategoryChartProps> = ({
 
   if (items.length === 0 || totalExpense === 0) {
     return (
-      <div className="bg-[#141416] border border-zinc-800 rounded-2xl p-5 shadow-xl">
+      <div className="ui-card p-5">
         <h3 className="text-sm font-bold text-white mb-1">Distribuição de Despesas</h3>
         <p className="text-xs text-zinc-400 mb-6">{monthLabel}</p>
         <div className="py-12 text-center text-xs text-zinc-500">
@@ -44,7 +44,7 @@ export const DonutCategoryChart: React.FC<DonutCategoryChartProps> = ({
   const displayItem = hoveredItem || items[0];
 
   return (
-    <div className="bg-[#141416] border border-zinc-800 rounded-2xl p-5 shadow-xl flex flex-col justify-between">
+    <div className="ui-card p-5 flex flex-col justify-between">
       <div>
         <div className="flex items-center justify-between mb-4">
           <div>

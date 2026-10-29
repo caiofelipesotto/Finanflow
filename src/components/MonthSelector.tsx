@@ -41,7 +41,7 @@ export const MonthSelector: React.FC<MonthSelectorProps> = ({
 
   return (
     <div className="flex items-center gap-2">
-      <div className="flex items-center bg-surface border border-neutral-200 rounded-lg p-0.5 shadow-2xs">
+      <div className="ui-panel flex items-center p-0.5">
         <button
           onClick={handlePrev}
           title="Mês Anterior"

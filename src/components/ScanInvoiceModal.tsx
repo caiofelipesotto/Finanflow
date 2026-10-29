@@ -424,13 +424,13 @@ export function ScanInvoiceModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md overflow-y-auto animate-in fade-in duration-200">
+    <div className="ui-modal-overlay overflow-y-auto">
       {/* my-auto em vez de my-8: com conteúdo mais alto que a tela, margens
           automáticas alinham ao topo (cima acessível ao rolar); quando cabe,
           centraliza igual antes. items-center puro cortava o topo no celular. */}
-      <div className="bg-[#17171a] border border-zinc-700/80 rounded-2xl w-full max-w-3xl shadow-2xl overflow-hidden flex flex-col my-auto">
+      <div className="ui-modal max-w-3xl my-auto">
         {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-neutral-800 bg-[#101012]">
+        <div className="ui-modal-header justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-lg shadow-orange-500/20 text-white">
               <Camera className="w-5 h-5" />
@@ -446,9 +446,8 @@ export function ScanInvoiceModal({
                 </span>
               </div>
               <p className="text-xs text-zinc-400 mt-0.5">
-                Envie foto ou print de apps (Riachuelo, PicPay, Santander, Nubank) e calcule
-                parcelas automaticamente. A leitura acontece no seu aparelho — a imagem não sai
-                do celular.
+                Envie uma foto ou print de fatura, cupom ou comprovante e as compras entram
+                já calculadas. A leitura acontece no seu aparelho — a imagem não sai do celular.
               </p>
             </div>
           </div>
@@ -486,7 +485,7 @@ export function ScanInvoiceModal({
                   Clique para tirar foto ou selecionar imagem do print
                 </h3>
                 <p className="text-xs text-zinc-400 max-w-md">
-                  Suporta screenshots do app da Riachuelo, PicPay, Santander, faturas de cartão ou comprovantes de compras.
+                  Funciona com prints de app do banco, fatura do cartão, cupom fiscal ou comprovante de compra.
                 </p>
 
                 <div className="mt-4 flex items-center gap-2 text-[11px] text-zinc-500 bg-zinc-800/50 px-3 py-1.5 rounded-full border border-zinc-700/50">
@@ -869,13 +868,13 @@ export function ScanInvoiceModal({
         </div>
 
         {/* Footer actions */}
-        <div className="p-4 border-t border-neutral-800 bg-[#101012] flex items-center justify-between">
+        <div className="ui-modal-footer justify-between">
           {scanStep === 'upload' ? (
             <>
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 text-xs font-medium text-zinc-400 hover:text-white rounded-lg hover:bg-zinc-800 transition-colors"
+                className="ui-btn ui-btn-ghost"
               >
                 Cancelar
               </button>
@@ -889,7 +888,7 @@ export function ScanInvoiceModal({
               <button
                 type="button"
                 onClick={() => setScanStep('upload')}
-                className="px-4 py-2 text-xs font-medium text-zinc-400 hover:text-white rounded-lg hover:bg-zinc-800 transition-colors flex items-center gap-1.5"
+                className="ui-btn ui-btn-ghost flex items-center gap-1.5"
               >
                 <RefreshCw className="w-3.5 h-3.5" />
                 Escanear Outro
@@ -899,7 +898,7 @@ export function ScanInvoiceModal({
                 <button
                   type="button"
                   onClick={onClose}
-                  className="px-4 py-2 text-xs font-medium text-zinc-400 hover:text-white rounded-lg hover:bg-zinc-800 transition-colors"
+                  className="ui-btn ui-btn-ghost"
                 >
                   Cancelar
                 </button>
@@ -907,7 +906,7 @@ export function ScanInvoiceModal({
                   type="button"
                   onClick={handleConfirmAndSave}
                   disabled={items.length === 0}
-                  className="px-5 py-2.5 text-xs font-bold text-white bg-gradient-to-r from-orange-600 to-orange-600 hover:from-orange-500 hover:to-orange-500 rounded-xl shadow-lg shadow-orange-900/30 flex items-center gap-2 transition-all disabled:opacity-50"
+                  className="ui-btn ui-btn-primary"
                 >
                   <CheckCircle2 className="w-4 h-4" />
                   Confirmar e Criar {items.reduce((acc, it) => acc + it.installmentsCount, 0)} Lançamentos

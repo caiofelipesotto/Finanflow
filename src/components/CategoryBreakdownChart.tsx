@@ -55,7 +55,7 @@ export const CategoryBreakdownChart: React.FC<CategoryBreakdownChartProps> = ({
 
   if (sortedCategories.length === 0) {
     return (
-      <div className="bg-surface border border-neutral-200 rounded-xl p-5 shadow-2xs">
+      <div className="ui-card p-5">
         <h3 className="text-sm font-bold text-neutral-900 mb-1">Despesas por Categoria</h3>
         <p className="text-xs text-neutral-500 mb-6">Distribuição dos seus gastos no mês</p>
         <div className="py-8 text-center text-xs text-neutral-400">
@@ -66,7 +66,7 @@ export const CategoryBreakdownChart: React.FC<CategoryBreakdownChartProps> = ({
   }
 
   return (
-    <div className="bg-surface border border-neutral-200 rounded-xl p-5 shadow-2xs">
+    <div className="ui-card p-5">
       <div className="flex items-center justify-between mb-4">
         <div>
           <h3 className="text-sm font-bold text-neutral-900">Despesas por Categoria</h3>

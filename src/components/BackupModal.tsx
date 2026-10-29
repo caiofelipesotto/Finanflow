@@ -88,12 +88,12 @@ export const BackupModal: React.FC<BackupModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
-      <div className="bg-surface rounded-2xl shadow-xl border border-neutral-200 w-full max-w-md overflow-hidden animate-in fade-in duration-150">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-100">
+    <div className="ui-modal-overlay">
+      <div className="ui-modal max-w-md">
+        <div className="ui-modal-header justify-between">
           <div className="flex items-center gap-2">
             <ShieldCheck className="w-4 h-4 text-zinc-600" />
-            <h2 className="text-base font-bold text-neutral-900">Privacidade & Dados</h2>
+            <h2 className="ui-section-title">Privacidade & Dados</h2>
           </div>
           <button
             onClick={onClose}
@@ -103,20 +103,20 @@ export const BackupModal: React.FC<BackupModalProps> = ({
           </button>
         </div>
 
-        <div className="p-6 space-y-5">
-          <div className="p-3 bg-neutral-50 rounded-xl text-xs text-neutral-600 leading-relaxed border border-neutral-200/60">
+        <div className="ui-modal-body space-y-5">
+          <div className="ui-panel p-3 text-xs leading-relaxed text-zinc-400">
             <strong className="text-neutral-800 block mb-0.5">Seus dados são 100% seus</strong>
-            Todas as transações e orçamentos ficam armazenados localmente no seu próprio navegador, garantindo máxima privacidade e segurança.
+            Seus lançamentos ficam na sua conta na nuvem e também neste navegador, como cópia offline. Baixe um backup quando quiser.
           </div>
 
           <div className="space-y-2.5">
-            <span className="text-xs font-semibold text-neutral-700 block">
+            <span className="ui-label">
               Exportação e Backup
             </span>
 
             <button
               onClick={handleExportCsv}
-              className="w-full flex items-center justify-between p-3 border border-neutral-200 hover:border-neutral-300 rounded-xl text-xs font-medium text-neutral-800 hover:bg-neutral-50 transition-colors"
+              className="ui-panel w-full flex items-center justify-between p-3 text-xs font-medium text-zinc-200 hover:border-zinc-700 transition-colors"
             >
               <div className="flex items-center gap-2.5">
                 <FileSpreadsheet className="w-4 h-4 text-zinc-600" />
@@ -127,7 +127,7 @@ export const BackupModal: React.FC<BackupModalProps> = ({
 
             <button
               onClick={handleExportJson}
-              className="w-full flex items-center justify-between p-3 border border-neutral-200 hover:border-neutral-300 rounded-xl text-xs font-medium text-neutral-800 hover:bg-neutral-50 transition-colors"
+              className="ui-panel w-full flex items-center justify-between p-3 text-xs font-medium text-zinc-200 hover:border-zinc-700 transition-colors"
             >
               <div className="flex items-center gap-2.5">
                 <Download className="w-4 h-4 text-neutral-600" />
@@ -151,7 +151,7 @@ export const BackupModal: React.FC<BackupModalProps> = ({
                 onClose();
                 onOpenImportSpreadsheet();
               }}
-              className="w-full flex items-center justify-between p-3 border border-zinc-200 bg-zinc-50/50 hover:bg-zinc-50 rounded-xl text-xs font-medium text-zinc-100 transition-colors"
+              className="ui-panel w-full flex items-center justify-between p-3 text-xs font-medium text-zinc-200 hover:border-zinc-700 transition-colors"
             >
               <div className="flex items-center gap-2.5">
                 <FileSpreadsheet className="w-4 h-4 text-zinc-600" />
@@ -162,7 +162,7 @@ export const BackupModal: React.FC<BackupModalProps> = ({
 
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="w-full flex items-center justify-between p-3 border border-neutral-200 hover:border-neutral-300 rounded-xl text-xs font-medium text-neutral-800 hover:bg-neutral-50 transition-colors"
+              className="ui-panel w-full flex items-center justify-between p-3 text-xs font-medium text-zinc-200 hover:border-zinc-700 transition-colors"
             >
               <div className="flex items-center gap-2.5">
                 <Upload className="w-4 h-4 text-neutral-600" />
@@ -171,8 +171,8 @@ export const BackupModal: React.FC<BackupModalProps> = ({
             </button>
           </div>
 
-          <div className="pt-2 border-t border-neutral-100 space-y-2">
-            <span className="text-xs font-semibold text-neutral-700 block">
+          <div className="pt-3 border-t border-zinc-800 space-y-2">
+            <span className="ui-label">
               Gerenciar Estado
             </span>
 
@@ -184,7 +184,7 @@ export const BackupModal: React.FC<BackupModalProps> = ({
                     onClose();
                   }
                 }}
-                className="flex items-center justify-center gap-1.5 p-2.5 border border-neutral-200 hover:border-neutral-300 rounded-xl text-xs font-medium text-neutral-700 hover:bg-neutral-50 transition-colors"
+                className="ui-btn ui-btn-secondary flex-1"
               >
                 <RefreshCw className="w-3.5 h-3.5 text-neutral-500" />
                 <span>Dados de Teste</span>
@@ -197,7 +197,7 @@ export const BackupModal: React.FC<BackupModalProps> = ({
                     onClose();
                   }
                 }}
-                className="flex items-center justify-center gap-1.5 p-2.5 border border-rose-200 hover:bg-rose-50 rounded-xl text-xs font-medium text-rose-700 transition-colors"
+                className="ui-btn ui-btn-danger flex-1"
               >
                 <Trash2 className="w-3.5 h-3.5" />
                 <span>Zerar Tudo</span>

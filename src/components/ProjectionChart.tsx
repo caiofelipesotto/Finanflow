@@ -99,7 +99,7 @@ export const ProjectionChart: React.FC<ProjectionChartProps> = ({
   const availableHeight = chartHeight - paddingBottom - paddingTop;
 
   return (
-    <div className="bg-[#141416] border border-zinc-800 rounded-2xl p-5 shadow-xl relative overflow-hidden">
+    <div className="ui-card p-5 relative overflow-hidden">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
         <div>
@@ -148,7 +148,7 @@ export const ProjectionChart: React.FC<ProjectionChartProps> = ({
 
       {/* Floating Hover Card */}
       {hoveredMonth && (
-        <div className="mb-3 p-3 bg-[#1d1d20] border border-neutral-700 rounded-xl text-xs flex flex-wrap items-center justify-between gap-4 animate-in fade-in duration-100">
+        <div className="ui-panel mb-3 p-3 text-xs flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-orange-400" />
             <span className="font-bold text-white text-sm">{hoveredMonth.fullLabel}</span>

@@ -86,7 +86,7 @@ export const CreditCardsWidget: React.FC<CreditCardsWidgetProps> = ({
   if (creditAccounts.length === 0) return null;
 
   return (
-    <div className="bg-[#141416] border border-neutral-800 rounded-2xl p-5 shadow-xl space-y-4">
+    <div className="ui-card p-5 space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-neutral-800">
         <div>
           <div className="flex items-center gap-2">
@@ -166,7 +166,7 @@ export const CreditCardsWidget: React.FC<CreditCardsWidgetProps> = ({
                     {item.activeThisMonth.map((inst, idx) => (
                       <div
                         key={idx}
-                        className="text-xs bg-[#141416] p-2 rounded-lg border border-neutral-800 flex items-center justify-between"
+                        className="ui-panel p-2 text-xs flex items-center justify-between"
                       >
                         <div className="truncate pr-2">
                           <span className="text-white font-medium truncate block">

@@ -590,7 +590,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
 
               {/* Installment Summary Banner */}
               {parsedRawAmount > 0 && (
-                <div className="p-2.5 bg-[#1d1d20] border border-zinc-800/40 rounded-lg text-xs space-y-1">
+                <div className="ui-panel p-2.5 text-xs space-y-1">
                   <div className="flex items-center justify-between text-zinc-300 font-medium">
                     <span>Resumo do Parcelamento:</span>
                     <strong className="text-sm font-bold text-white font-mono">
@@ -638,7 +638,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
               </div>
 
               {parsedRawAmount > 0 && (
-                <div className="p-2.5 bg-[#1d1d20] border border-zinc-800/40 rounded-lg text-xs text-zinc-300 space-y-1">
+                <div className="ui-panel p-2.5 text-xs text-zinc-300 space-y-1">
                   <div className="text-zinc-300 text-[11px]">
                     🔄 Serão gerados <strong>{recurrentMonths} lançamentos mensais</strong> de <strong>{formatCurrency(parsedRawAmount)}</strong>
                   </div>

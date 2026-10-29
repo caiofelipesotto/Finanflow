@@ -31,7 +31,7 @@ export const KPICard: React.FC<KPICardProps> = ({
   }[variant];
 
   return (
-    <div className="bg-surface border border-neutral-200 rounded-xl p-5 shadow-2xs transition-shadow hover:shadow-xs">
+    <div className="ui-card p-5 transition-shadow hover:shadow-xs">
       <div className="flex items-center justify-between gap-2 mb-3">
         <span className="text-xs font-medium text-neutral-500 tracking-wide">{label}</span>
         <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${iconColor}`}>

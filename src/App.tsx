@@ -911,7 +911,7 @@ export default function App() {
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Celebration / Alert notification banner */}
         {notificationBanner && (
-          <div className="mb-6 p-4 rounded-2xl bg-zinc-900 border border-orange-500/40 flex items-center justify-between text-sm text-zinc-300 shadow-xl shadow-orange-950/20 animate-in fade-in">
+          <div className="mb-4 ui-card p-4 flex items-center justify-between gap-3 text-sm text-zinc-300">
             <div className="flex items-center gap-3">
               <CheckCircle2 className="w-5 h-5 text-orange-400 shrink-0" />
               <span className="font-semibold">{notificationBanner}</span>
@@ -927,7 +927,7 @@ export default function App() {
 
         {/* Lançamentos feitos sem conta: só entram no espaço compartilhado se o usuário mandar */}
         {currentUser && guestTxCount > 0 && (
-          <div className="mb-6 p-4 rounded-2xl bg-zinc-900 border border-orange-500/40 flex flex-col md:flex-row md:items-center justify-between gap-3 text-sm text-zinc-300 shadow-xl shadow-orange-950/20">
+          <div className="mb-4 ui-card p-4 flex flex-col md:flex-row md:items-center justify-between gap-3 text-sm text-zinc-300">
             <div className="flex items-center gap-3">
               <WalletCards className="w-5 h-5 text-orange-400 shrink-0" />
               <div>
@@ -958,7 +958,7 @@ export default function App() {
 
         {/* Guest mode bar with fast actions */}
         {!currentUser && (
-          <div className="mb-6 p-4 rounded-2xl bg-zinc-900/90 border border-zinc-800 flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs text-zinc-400 shadow-md">
+          <div className="mb-4 ui-card p-4 flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs text-zinc-400">
             <div className="flex items-center gap-3">
               <span className="w-2.5 h-2.5 rounded-full bg-orange-400 shrink-0 animate-pulse" />
               <div>
@@ -1169,8 +1169,8 @@ export default function App() {
 
       {/* Confirmação de saída da conta (disponível também no topo, não só no rodapé) */}
       {isLogoutConfirmOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-[#161618] border border-zinc-800 rounded-2xl w-full max-w-md p-6 shadow-2xl space-y-4">
+        <div className="ui-modal-overlay">
+          <div className="ui-modal max-w-md p-6 space-y-4">
             <div className="w-12 h-12 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 flex items-center justify-center mx-auto">
               <LogOut className="w-6 h-6" />
             </div>
@@ -1184,13 +1184,13 @@ export default function App() {
             <div className="flex items-center gap-3 pt-2">
               <button
                 onClick={() => setIsLogoutConfirmOpen(false)}
-                className="flex-1 py-2.5 px-4 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-semibold rounded-xl transition-colors cursor-pointer"
+                className="ui-btn ui-btn-secondary flex-1"
               >
                 Cancelar
               </button>
               <button
                 onClick={handleLogout}
-                className="flex-1 py-2.5 px-4 bg-red-600 hover:bg-red-500 text-white text-xs font-bold rounded-xl transition-colors cursor-pointer"
+                className="ui-btn ui-btn-primary flex-1 bg-red-600 hover:bg-red-500 text-white"
               >
                 Sim, sair
               </button>
@@ -1201,8 +1201,8 @@ export default function App() {
 
       {/* In-App Confirmation Modal for Zerar Dados */}
       {isConfirmClearModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-[#161618] border border-zinc-800 rounded-2xl w-full max-w-md p-6 shadow-2xl space-y-4">
+        <div className="ui-modal-overlay">
+          <div className="ui-modal max-w-md p-6 space-y-4">
             <div className="w-12 h-12 rounded-xl bg-orange-500/10 border border-orange-500/20 text-orange-400 flex items-center justify-center mx-auto">
               <Trash2 className="w-6 h-6" />
             </div>
@@ -1218,14 +1218,14 @@ export default function App() {
             <div className="flex items-center gap-3 pt-2">
               <button
                 onClick={() => setIsConfirmClearModalOpen(false)}
-                className="flex-1 py-2.5 px-4 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-semibold rounded-xl transition-colors cursor-pointer"
+                className="ui-btn ui-btn-secondary flex-1"
               >
                 Cancelar
               </button>
               <button
                 onClick={handleExecuteClearAll}
                 disabled={clearLoading}
-                className="flex-1 py-2.5 px-4 bg-orange-600 hover:bg-zinc-500 text-white text-xs font-bold rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-2"
+                className="ui-btn ui-btn-primary flex-1"
               >
                 {clearLoading ? 'Limpando...' : 'Sim, Zerar Tudo'}
               </button>

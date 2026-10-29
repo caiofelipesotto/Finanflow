@@ -37,7 +37,7 @@ export const MonthBalanceHero: React.FC<MonthBalanceHeroProps> = ({
   const hasData = totalIncome > 0 || totalExpense > 0;
 
   return (
-    <div className="bg-[#161618] border border-zinc-800 rounded-2xl p-5 sm:p-6 shadow-2xl relative overflow-hidden">
+    <div className="ui-card p-5 sm:p-6 relative overflow-hidden">
       {/* Background subtle orange glow */}
       <div className="absolute top-0 right-0 w-96 h-96 bg-orange-500/5 rounded-full blur-3xl pointer-events-none" />
 
@@ -97,7 +97,7 @@ export const MonthBalanceHero: React.FC<MonthBalanceHeroProps> = ({
 
           <button
             onClick={onOpenNewTransaction}
-            className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-zinc-950 bg-zinc-500 hover:bg-orange-400 rounded-xl transition-all shadow-md shadow-orange-500/20 whitespace-nowrap cursor-pointer active:scale-95"
+            className="ui-btn ui-btn-primary"
           >
             <PlusCircle className="w-4 h-4" />
             <span className="hidden sm:inline">Novo Lançamento</span>

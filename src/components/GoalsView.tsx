@@ -92,15 +92,15 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold text-white tracking-tight">Metas</h1>
-          <p className="text-xs text-zinc-400 mt-0.5">
+          <h1 className="ui-h1">Metas</h1>
+          <p className="ui-sub">
             Acompanhe o progresso dos seus objetivos: reserva de emergência, viagens, investimentos e projetos
           </p>
         </div>
 
         <button
           onClick={() => setIsAddModalOpen(true)}
-          className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-black bg-orange-400 hover:bg-orange-300 rounded-xl transition-all shadow-md shadow-orange-500/10 whitespace-nowrap"
+          className="ui-btn ui-btn-primary"
         >
           <Plus className="w-3.5 h-3.5 stroke-[3]" />
           <span>Nova Meta</span>
@@ -108,7 +108,7 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
       </div>
 
       {/* Aggregate Overview Card */}
-      <div className="bg-[#141416] border border-neutral-800 rounded-2xl p-5 shadow-xl">
+      <div className="ui-card p-5">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
           <div>
             <span className="text-xs font-medium text-zinc-400 block mb-1">
@@ -150,6 +150,24 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
         </div>
       </div>
 
+      {/* Estado vazio: sem metas ainda */}
+      {goals.length === 0 && (
+        <div className="ui-card p-8 text-center">
+          <div className="w-12 h-12 mx-auto rounded-xl bg-orange-500/10 border border-orange-500/25 text-orange-400 flex items-center justify-center mb-3">
+            <Target className="w-6 h-6" />
+          </div>
+          <h3 className="text-sm font-bold text-white">Nenhuma meta por aqui ainda</h3>
+          <p className="text-xs text-zinc-400 mt-1 max-w-sm mx-auto leading-relaxed">
+            Crie uma meta para acompanhar quanto já guardou e quanto falta por mês — reserva de
+            emergência, viagem, troca de carro, o que você quiser.
+          </p>
+          <button onClick={() => setIsAddModalOpen(true)} className="ui-btn ui-btn-primary mt-4">
+            <Plus className="w-3.5 h-3.5 stroke-[3]" />
+            Criar primeira meta
+          </button>
+        </div>
+      )}
+
       {/* Goals Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         {goals.map((goal) => {
@@ -160,7 +178,7 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
           return (
             <div
               key={goal.id}
-              className="bg-[#141416] border border-neutral-800 rounded-2xl p-5 shadow-xl hover:border-zinc-700 transition-all flex flex-col justify-between"
+              className="ui-card p-5 hover:border-zinc-700 transition-all flex flex-col justify-between"
             >
               <div>
                 <div className="flex items-start justify-between gap-3 mb-3">
@@ -175,7 +193,7 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
                       <h3 className="text-sm font-bold text-white leading-snug">
                         {goal.title}
                       </h3>
-                      <div className="flex items-center gap-1.5 text-xs text-zinc-400 mt-0.5">
+                      <div className="flex items-center gap-1.5 ui-sub">
                         <Calendar className="w-3 h-3 text-zinc-500" />
                         <span>Alvo: {formatDate(goal.deadline)}</span>
                       </div>
@@ -263,8 +281,8 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
 
       {/* Adjust Amount Modal (Deposit / Withdraw) */}
       {adjustingGoal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
-          <div className="bg-surface rounded-2xl shadow-xl border border-neutral-200 w-full max-w-sm overflow-hidden p-6 animate-in fade-in duration-150">
+        <div className="ui-modal-overlay">
+          <div className="ui-modal p-5 overflow-y-auto">
             <h2 className="text-base font-bold text-neutral-900 mb-1">
               {adjustingGoal.mode === 'deposit' ? 'Guardar Dinheiro' : 'Resgatar Dinheiro'}
             </h2>
@@ -274,7 +292,7 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
 
             <form onSubmit={handleAdjustSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-neutral-700 mb-1">
+                <label className="ui-label">
                   Valor a {adjustingGoal.mode === 'deposit' ? 'adicionar' : 'retirar'} (R$)
                 </label>
                 <div className="relative">
@@ -288,7 +306,7 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
                     placeholder="0,00"
                     value={adjustAmountInput}
                     onChange={(e) => setAdjustAmountInput(e.target.value)}
-                    className="w-full pl-11 pr-4 py-2.5 text-lg font-bold font-mono tabular-nums text-neutral-900 border border-neutral-300 rounded-xl outline-hidden focus:border-zinc-800 focus:ring-2 focus:ring-orange-100"
+                    className="ui-input pl-11 text-lg font-bold font-mono"
                     autoFocus
                   />
                 </div>
@@ -298,13 +316,13 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
                 <button
                   type="button"
                   onClick={() => setAdjustingGoal(null)}
-                  className="px-3.5 py-2 text-xs font-medium text-neutral-600 hover:text-neutral-900 rounded-lg transition-colors"
+                  className="ui-btn ui-btn-ghost"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 text-xs font-semibold text-white bg-orange-600 hover:bg-zinc-700 rounded-lg transition-colors shadow-xs"
+                  className="ui-btn ui-btn-primary"
                 >
                   Confirmar
                 </button>
@@ -316,8 +334,8 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
 
       {/* Add New Goal Modal */}
       {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
-          <div className="bg-surface rounded-2xl shadow-xl border border-neutral-200 w-full max-w-md overflow-hidden p-6 animate-in fade-in duration-150">
+        <div className="ui-modal-overlay">
+          <div className="ui-modal p-5 overflow-y-auto">
             <h2 className="text-base font-bold text-neutral-900 mb-1">Criar Nova Meta</h2>
             <p className="text-xs text-neutral-500 mb-4">
               Defina o objetivo e acompanhe sua evolução mês a mês
@@ -325,22 +343,22 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
 
             <form onSubmit={handleCreateGoal} className="space-y-3.5">
               <div>
-                <label className="block text-xs font-semibold text-neutral-700 mb-1">
-                  Nome da Meta / Caixinha
+                <label className="ui-label">
+                  Nome da meta
                 </label>
                 <input
                   type="text"
                   placeholder="Ex: Reserva de Emergência, Viagem Europa..."
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="w-full px-3 py-2 text-xs text-neutral-900 border border-neutral-300 rounded-lg outline-hidden focus:border-zinc-800 focus:ring-1 focus:ring-orange-600"
+                  className="ui-input"
                   required
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-neutral-700 mb-1">
+                  <label className="ui-label">
                     Valor Alvo (R$)
                   </label>
                   <input
@@ -350,13 +368,13 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
                     placeholder="10000.00"
                     value={targetAmount}
                     onChange={(e) => setTargetAmount(e.target.value)}
-                    className="w-full px-3 py-2 text-xs text-neutral-900 border border-neutral-300 rounded-lg outline-hidden focus:border-zinc-800 focus:ring-1 focus:ring-orange-600 font-mono"
+                    className="ui-input font-mono"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-neutral-700 mb-1">
+                  <label className="ui-label">
                     Já guardado (R$)
                   </label>
                   <input
@@ -366,27 +384,27 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
                     placeholder="0.00"
                     value={initialAmount}
                     onChange={(e) => setInitialAmount(e.target.value)}
-                    className="w-full px-3 py-2 text-xs text-neutral-900 border border-neutral-300 rounded-lg outline-hidden focus:border-zinc-800 focus:ring-1 focus:ring-orange-600 font-mono"
+                    className="ui-input font-mono"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-neutral-700 mb-1">
+                  <label className="ui-label">
                     Data Limite
                   </label>
                   <input
                     type="date"
                     value={deadline}
                     onChange={(e) => setDeadline(e.target.value)}
-                    className="w-full px-3 py-2 text-xs text-neutral-900 border border-neutral-300 rounded-lg outline-hidden focus:border-zinc-800 focus:ring-1 focus:ring-orange-600 font-mono"
+                    className="ui-input font-mono"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-neutral-700 mb-1">
+                  <label className="ui-label">
                     Cor de Destaque
                   </label>
                   <div className="flex items-center gap-2 pt-1">
@@ -406,15 +424,15 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-neutral-700 mb-1">
+                <label className="ui-label">
                   Notas / Observações
                 </label>
                 <input
                   type="text"
-                  placeholder="Ex: Guardado no Nubank Caixinha 100% CDI"
+                  placeholder="Ex: reserva de emergência, viagem, entrada do carro..."
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  className="w-full px-3 py-2 text-xs text-neutral-900 border border-neutral-300 rounded-lg outline-hidden focus:border-zinc-800 focus:ring-1 focus:ring-orange-600"
+                  className="ui-input"
                 />
               </div>
 
@@ -422,13 +440,13 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
                 <button
                   type="button"
                   onClick={() => setIsAddModalOpen(false)}
-                  className="px-3.5 py-2 text-xs font-medium text-neutral-600 hover:text-neutral-900 rounded-lg transition-colors"
+                  className="ui-btn ui-btn-ghost"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 text-xs font-semibold text-white bg-orange-600 hover:bg-zinc-700 rounded-lg transition-colors shadow-xs"
+                  className="ui-btn ui-btn-primary"
                 >
                   Criar Meta
                 </button>

@@ -79,7 +79,7 @@ export const MonthBreakdownTable: React.FC<MonthBreakdownTableProps> = ({
   }, [filteredList]);
 
   return (
-    <div className="bg-[#141416] border border-neutral-800 rounded-2xl p-5 shadow-xl space-y-4">
+    <div className="ui-card p-5 space-y-4">
       {/* Table Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-neutral-800">
         <div>
@@ -96,7 +96,7 @@ export const MonthBreakdownTable: React.FC<MonthBreakdownTableProps> = ({
 
         <button
           onClick={onOpenNewTransaction}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-orange-600 hover:bg-zinc-500 rounded-xl transition-colors shadow-xs self-start sm:self-auto whitespace-nowrap"
+          className="ui-btn ui-btn-primary self-start sm:self-auto"
         >
           <Plus className="w-3.5 h-3.5" />
           <span>Novo Lançamento</span>
@@ -113,7 +113,7 @@ export const MonthBreakdownTable: React.FC<MonthBreakdownTableProps> = ({
             placeholder="Buscar por descrição, cartão ou categoria..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 text-xs text-white bg-[#1d1d20] border border-zinc-700/80 rounded-xl outline-hidden focus:border-orange-500 placeholder:text-zinc-500"
+            className="ui-input pl-9 py-2"
           />
         </div>
 
@@ -195,7 +195,7 @@ export const MonthBreakdownTable: React.FC<MonthBreakdownTableProps> = ({
           </p>
           <button
             onClick={onOpenNewTransaction}
-            className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-orange-600 hover:bg-zinc-500 rounded-xl transition-all shadow-xs"
+            className="ui-btn ui-btn-primary"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Adicionar Primeiro Lançamento</span>
@@ -341,7 +341,7 @@ export const MonthBreakdownTable: React.FC<MonthBreakdownTableProps> = ({
           </div>
 
           {/* Footer Subtotals */}
-          <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 bg-[#1d1d20] border-t border-neutral-800 text-xs font-mono">
+          <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 ui-panel rounded-none border-x-0 border-b-0 text-xs font-mono">
             <span className="text-zinc-400 text-[11px]">
               Subtotal do Filtro: {filteredList.length} itens
             </span>
