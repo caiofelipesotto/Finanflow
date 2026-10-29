@@ -25,6 +25,39 @@ export const DEFAULT_CATEGORIES: Category[] = [
     color: '#fbbf24',
     type: 'income',
   },
+  {
+    id: 'cat_receitas',
+    name: 'Receitas',
+    icon: 'TrendingUp',
+    color: '#10b981',
+    type: 'income',
+    budget: 0,
+  },
+  {
+    id: 'cat_receitas_adicionais',
+    name: 'Receitas Adicionais',
+    icon: 'Sparkles',
+    color: '#fbbf24',
+    type: 'income',
+    budget: 0,
+  },
+  {
+    id: 'cat_receita_avulsa',
+    name: 'Receita Avulsa',
+    icon: 'MoreHorizontal',
+    color: '#64748b',
+    type: 'income',
+    budget: 0,
+  },
+  {
+    id: 'cat_outros_receitas',
+    name: 'Outras Receitas',
+    icon: 'MoreHorizontal',
+    color: '#64748b',
+    type: 'income',
+    budget: 0,
+  },
+
 
   // Despesas Fixas & Moradia
   {
@@ -56,6 +89,48 @@ export const DEFAULT_CATEGORIES: Category[] = [
     name: 'Assinaturas',
     icon: 'Tv',
     color: '#f43f5e',
+    type: 'expense',
+    budget: 0,
+  },
+
+  // Categorias de Despesas Fixas
+  {
+    id: 'cat_despesas_fixas',
+    name: 'Despesas Fixas',
+    icon: 'Bank',
+    color: '#f97316',
+    type: 'expense',
+    budget: 0,
+  },
+  {
+    id: 'cat_aluguel',
+    name: 'Aluguel',
+    icon: 'Home',
+    color: '#f59e0b',
+    type: 'expense',
+    budget: 0,
+  },
+  {
+    id: 'cat_contas',
+    name: 'Contas',
+    icon: 'Receipt',
+    color: '#3b82f6',
+    type: 'expense',
+    budget: 0,
+  },
+  {
+    id: 'cat_ip',
+    name: 'Internet/TV',
+    icon: 'Monitor',
+    color: '#8b5cf6',
+    type: 'expense',
+    budget: 0,
+  },
+  {
+    id: 'cat_outros_despesas',
+    name: 'Outras Despesas',
+    icon: 'MoreHorizontal',
+    color: '#64748b',
     type: 'expense',
     budget: 0,
   },
