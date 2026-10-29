@@ -14,7 +14,8 @@ const __dirname = path.dirname(__filename);
 // 1. API Freebuff (compatível com OpenAI) — usa OPENAI_API_KEY
 // 2. Gemini (Google AI Studio) — usa GEMINI_API_KEY
 // 3. Simulação local — quando nenhuma chave está configurada
-const OPENAI_BASE_URL = 'https://freebuff.com/api/v1/paid';
+const OPENAI_BASE_URL = process.env.OPENAI_BASE_URL || 'https://freebuff.com/api/v1/paid';
+const OPENAI_MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini';
 
 async function callOpenAIVision(prompt: string, base64Data: string, mimeType: string): Promise<string> {
   const res = await fetch(`${OPENAI_BASE_URL}/chat/completions`, {
@@ -24,7 +25,7 @@ async function callOpenAIVision(prompt: string, base64Data: string, mimeType: st
       Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
     },
     body: JSON.stringify({
-      model: 'gpt-4o-mini',
+      model: OPENAI_MODEL,
       messages: [
         {
           role: 'user',
