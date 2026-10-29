@@ -11,8 +11,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Provedores de IA para o scan de faturas, em ordem de prioridade:
-// 1. API Freebuff (compatível com OpenAI) — usa OPENAI_API_KEY
-// 2. Gemini (Google AI Studio) — usa GEMINI_API_KEY
+// 1. Gemini (Google AI Studio) — usa GEMINI_API_KEY (padrão)
+// 2. API compatível com OpenAI — usa OPENAI_API_KEY
 // 3. Simulação local — quando nenhuma chave está configurada
 const OPENAI_BASE_URL = process.env.OPENAI_BASE_URL || 'https://freebuff.com/api/v1/paid';
 const OPENAI_MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini';
@@ -202,14 +202,14 @@ Se a imagem estiver ilegível ou não for comprovante/print financeiro, retorne 
 
       let responseText = '';
       try {
-        if (process.env.OPENAI_API_KEY) {
-          // Provedor principal: API Freebuff (compatível com OpenAI)
-          responseText = await callOpenAIVision(prompt, base64Data, detectedMime);
-        } else if (process.env.GEMINI_API_KEY) {
-          // Fallback: Gemini (Google AI Studio)
+        if (process.env.GEMINI_API_KEY) {
+          // Provedor principal (padrão): Gemini (Google AI Studio)
           responseText = await callGeminiVision(ai, prompt, base64Data, detectedMime);
+        } else if (process.env.OPENAI_API_KEY) {
+          // Fallback: qualquer API compatível com OpenAI
+          responseText = await callOpenAIVision(prompt, base64Data, detectedMime);
         } else {
-          throw new Error('NENHUMA_CHAVE_IA_CONFIGURADA: defina OPENAI_API_KEY ou GEMINI_API_KEY');
+          throw new Error('NENHUMA_CHAVE_IA_CONFIGURADA: defina GEMINI_API_KEY ou OPENAI_API_KEY');
         }
       } catch (aiError: any) {
         console.warn('Provedor de IA indisponível, usando simulação:', aiError?.message || aiError);
