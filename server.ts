@@ -10,6 +10,132 @@ dotenv.config();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Provedores de IA para o scan de faturas, em ordem de prioridade:
+// 1. API Freebuff (compatível com OpenAI) — usa OPENAI_API_KEY
+// 2. Gemini (Google AI Studio) — usa GEMINI_API_KEY
+// 3. Simulação local — quando nenhuma chave está configurada
+const OPENAI_BASE_URL = 'https://freebuff.com/api/v1/paid';
+
+async function callOpenAIVision(prompt: string, base64Data: string, mimeType: string): Promise<string> {
+  const res = await fetch(`${OPENAI_BASE_URL}/chat/completions`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: 'gpt-4o-mini',
+      messages: [
+        {
+          role: 'user',
+          content: [
+            { type: 'text', text: prompt },
+            { type: 'image_url', image_url: { url: `data:${mimeType};base64,${base64Data}` } },
+          ],
+        },
+      ],
+      response_format: { type: 'json_object' },
+      max_tokens: 2000,
+    }),
+  });
+
+  if (!res.ok) {
+    const detail = await res.text().catch(() => '');
+    throw new Error(`API Freebuff respondeu ${res.status}: ${detail.slice(0, 200)}`);
+  }
+
+  const data = await res.json();
+  return data?.choices?.[0]?.message?.content || '';
+}
+
+async function callGeminiVision(
+  ai: GoogleGenAI,
+  prompt: string,
+  base64Data: string,
+  mimeType: string
+): Promise<string> {
+  const response = await ai.models.generateContent({
+    model: 'gemini-3.8-flash',
+    contents: {
+      parts: [
+        {
+          inlineData: {
+            mimeType,
+            data: base64Data,
+          },
+        },
+        {
+          text: prompt,
+        },
+      ],
+    },
+    config: {
+      responseMimeType: 'application/json',
+      responseSchema: {
+        type: Type.OBJECT,
+        properties: {
+          summary: {
+            type: Type.STRING,
+            description: 'Resumo amigável em português explicando os dados identificados.',
+          },
+          detectedInstitution: {
+            type: Type.STRING,
+            description: 'Nome da instituição bancária ou cartão detectado.',
+          },
+          items: {
+            type: Type.ARRAY,
+            description: 'Lista de compras ou lançamentos encontrados.',
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                description: {
+                  type: Type.STRING,
+                  description: 'Nome da compra ou estabelecimento.',
+                },
+                totalAmount: {
+                  type: Type.NUMBER,
+                  description: 'Valor total da compra em reais.',
+                },
+                installmentAmount: {
+                  type: Type.NUMBER,
+                  description: 'Valor unitário da parcela em reais.',
+                },
+                installmentsCount: {
+                  type: Type.INTEGER,
+                  description: 'Quantidade total de parcelas (1 se à vista).',
+                },
+                currentInstallment: {
+                  type: Type.INTEGER,
+                  description: 'Número da parcela atual (1 se nova compra).',
+                },
+                date: {
+                  type: Type.STRING,
+                  description: 'Data no formato YYYY-MM-DD.',
+                },
+                type: {
+                  type: Type.STRING,
+                  description: 'expense ou income',
+                },
+                suggestedCategoryId: {
+                  type: Type.STRING,
+                  description: 'ID da categoria sugerida (ex: cat_compras_cartao).',
+                },
+                paymentMethod: {
+                  type: Type.STRING,
+                  description: 'credit, debit, pix, ou transfer.',
+                },
+              },
+              required: ['description', 'totalAmount', 'installmentsCount'],
+            },
+          },
+        },
+        required: ['summary', 'items'],
+      },
+    },
+  });
+  return response.text || '';
+}
+
 async function startServer() {
   const app = express();
   const PORT = Number(process.env.PORT) || 3000;
@@ -75,94 +201,17 @@ Se a imagem estiver ilegível ou não for comprovante/print financeiro, retorne 
 
       let responseText = '';
       try {
-        if (!process.env.GEMINI_API_KEY) {
-          throw new Error('GEMINI_API_KEY_NOT_CONFIGURED');
+        if (process.env.OPENAI_API_KEY) {
+          // Provedor principal: API Freebuff (compatível com OpenAI)
+          responseText = await callOpenAIVision(prompt, base64Data, detectedMime);
+        } else if (process.env.GEMINI_API_KEY) {
+          // Fallback: Gemini (Google AI Studio)
+          responseText = await callGeminiVision(ai, prompt, base64Data, detectedMime);
+        } else {
+          throw new Error('NENHUMA_CHAVE_IA_CONFIGURADA: defina OPENAI_API_KEY ou GEMINI_API_KEY');
         }
-
-        const response = await ai.models.generateContent({
-          model: 'gemini-3.8-flash',
-          contents: {
-            parts: [
-              {
-                inlineData: {
-                  mimeType: detectedMime,
-                  data: base64Data,
-                },
-              },
-              {
-                text: prompt,
-              },
-            ],
-          },
-          config: {
-            responseMimeType: 'application/json',
-            responseSchema: {
-              type: Type.OBJECT,
-              properties: {
-                summary: {
-                  type: Type.STRING,
-                  description: 'Resumo amigável em português explicando os dados identificados.',
-                },
-                detectedInstitution: {
-                  type: Type.STRING,
-                  description: 'Nome da instituição bancária ou cartão detectado.',
-                },
-                items: {
-                  type: Type.ARRAY,
-                  description: 'Lista de compras ou lançamentos encontrados.',
-                  items: {
-                    type: Type.OBJECT,
-                    properties: {
-                      description: {
-                        type: Type.STRING,
-                        description: 'Nome da compra ou estabelecimento.',
-                      },
-                      totalAmount: {
-                        type: Type.NUMBER,
-                        description: 'Valor total da compra em reais.',
-                      },
-                      installmentAmount: {
-                        type: Type.NUMBER,
-                        description: 'Valor unitário da parcela em reais.',
-                      },
-                      installmentsCount: {
-                        type: Type.INTEGER,
-                        description: 'Quantidade total de parcelas (1 se à vista).',
-                      },
-                      currentInstallment: {
-                        type: Type.INTEGER,
-                        description: 'Número da parcela atual (1 se nova compra).',
-                      },
-                      date: {
-                        type: Type.STRING,
-                        description: 'Data no formato YYYY-MM-DD.',
-                      },
-                      type: {
-                        type: Type.STRING,
-                        description: 'expense ou income',
-                      },
-                      suggestedCategoryId: {
-                        type: Type.STRING,
-                        description: 'ID da categoria sugerida (ex: cat_compras_cartao).',
-                      },
-                      paymentMethod: {
-                        type: Type.STRING,
-                        description: 'credit, debit, pix, ou transfer.',
-                      },
-                    },
-                    required: ['description', 'totalAmount', 'installmentsCount'],
-                  },
-                },
-              },
-              required: ['summary', 'items'],
-            },
-          },
-        });
-        responseText = response.text || '';
-      } catch (geminiError: any) {
-        console.warn('Gemini vision API error, providing fallback simulation:', geminiError?.message || geminiError);
-        
-        // Intelligent fallback: return a detected purchase structure for testing
+      } catch (aiError: any) {
+        console.warn('Provedor de IA indisponível, usando simulação:', aiError?.message || aiError);
         const today = new Date().toISOString().slice(0, 10);
         return res.json({
           summary: 'Foto recebida com sucesso! (Modo Simulação Inteligente ativo: detectada compra parcelada em 5x). Você pode ajustar qualquer valor antes de salvar.',
@@ -182,6 +231,7 @@ Se a imagem estiver ilegível ou não for comprovante/print financeiro, retorne 
           ],
         });
       }
+
 
       if (!responseText) {
         return res.status(500).json({ error: 'Nenhuma resposta gerada pelo modelo.' });
