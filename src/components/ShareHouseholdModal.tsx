@@ -28,8 +28,9 @@ interface ShareHouseholdModalProps {
   household: HouseholdDoc | null;
   members: HouseholdMember[];
   onJoinHouseholdSuccess: (household: HouseholdDoc) => void;
-  onSyncLocalToCloud: () => void;
-  localTransactionsCount: number;
+  onSyncLocalToCloud: () => Promise<number>;
+  /** Lançamentos que ainda não estão na nuvem (não é o total da tela). */
+  pendingUploadCount: number;
 }
 
 export const ShareHouseholdModal: React.FC<ShareHouseholdModalProps> = ({
@@ -40,7 +41,7 @@ export const ShareHouseholdModal: React.FC<ShareHouseholdModalProps> = ({
   members,
   onJoinHouseholdSuccess,
   onSyncLocalToCloud,
-  localTransactionsCount,
+  pendingUploadCount,
 }) => {
   const [copied, setCopied] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
@@ -48,7 +49,8 @@ export const ShareHouseholdModal: React.FC<ShareHouseholdModalProps> = ({
   const [joinLoading, setJoinLoading] = useState(false);
   const [joinError, setJoinError] = useState<string | null>(null);
   const [joinSuccess, setJoinSuccess] = useState<string | null>(null);
-  const [syncDone, setSyncDone] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [sentCount, setSentCount] = useState<number | null>(null);
 
   if (!isOpen) return null;
 
@@ -102,10 +104,14 @@ export const ShareHouseholdModal: React.FC<ShareHouseholdModalProps> = ({
     }
   };
 
-  const handleLocalSync = () => {
-    onSyncLocalToCloud();
-    setSyncDone(true);
-    setTimeout(() => setSyncDone(false), 3000);
+  const handleLocalSync = async () => {
+    setSyncing(true);
+    try {
+      const sent = await onSyncLocalToCloud();
+      setSentCount(sent);
+    } finally {
+      setSyncing(false);
+    }
   };
 
   return (
@@ -313,26 +319,39 @@ export const ShareHouseholdModal: React.FC<ShareHouseholdModalProps> = ({
                 )}
               </div>
 
-              {/* Local Data Migration */}
-              {localTransactionsCount > 0 && (
+              {/* Só aparece quando existe algo realmente fora da nuvem */}
+              {pendingUploadCount > 0 ? (
                 <div className="p-3.5 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-between gap-3">
                   <div className="flex items-center gap-2.5">
-                    <UploadCloud className="w-5 h-5 text-zinc-400 shrink-0" />
+                    <UploadCloud className="w-5 h-5 text-orange-400 shrink-0" />
                     <div>
                       <div className="text-xs font-semibold text-white">
-                        Sincronizar dados locais com a Nuvem
+                        {pendingUploadCount} lançamento(s) fora da nuvem
                       </div>
                       <div className="text-[11px] text-zinc-400">
-                        {localTransactionsCount} lançamento(s) prontos para upload
+                        Criados neste aparelho (offline ou no modo sem conta).
                       </div>
                     </div>
                   </div>
                   <button
                     onClick={handleLocalSync}
-                    className="px-3 py-1.5 text-xs font-bold text-zinc-300 bg-zinc-950/80 hover:bg-zinc-900 border border-zinc-700/60 rounded-lg transition-colors shrink-0 cursor-pointer"
+                    disabled={syncing}
+                    className="px-3 py-1.5 text-xs font-bold text-zinc-950 bg-orange-500 hover:bg-orange-400 disabled:opacity-60 border border-orange-400/60 rounded-lg transition-colors shrink-0 cursor-pointer"
                   >
-                    {syncDone ? 'Enviado!' : 'Enviar agora'}
+                    {syncing ? 'Enviando...' : 'Enviar agora'}
                   </button>
+                </div>
+              ) : sentCount !== null && sentCount > 0 ? (
+                <div className="p-3.5 rounded-xl bg-zinc-900 border border-orange-500/40 flex items-center gap-2.5">
+                  <Check className="w-4 h-4 text-orange-400 shrink-0" />
+                  <div className="text-[11px] text-zinc-300">
+                    {sentCount} lançamento(s) enviados. Agora tudo está na nuvem.
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 px-1 text-[11px] text-zinc-500">
+                  <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                  Tudo o que está aqui já foi salvo na nuvem.
                 </div>
               )}
 

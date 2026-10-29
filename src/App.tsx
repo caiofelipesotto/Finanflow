@@ -767,32 +767,53 @@ export default function App() {
     setTimeout(() => setNotificationBanner(null), 6000);
   };
 
-  // Sync existing local records to cloud
-  const handleSyncLocalToCloud = async () => {
-    if (!currentUser || !currentHousehold) return;
-    try {
-      for (const tx of guestTxsRef.current) {
+  // Envia o que está de fato fora da nuvem: lançamentos pendentes + os do modo
+  // sem conta. Retorna quantos foram enviados.
+  const handleSyncLocalToCloud = async (): Promise<number> => {
+    if (!currentUser || !currentHousehold) return 0;
+    let sent = 0;
+
+    const failedGuest: Transaction[] = [];
+    for (const tx of guestTxsRef.current) {
+      try {
         await saveTransactionToCloud(tx);
+        sent += 1;
+      } catch (e) {
+        console.error('Erro ao enviar lançamento do modo sem conta:', e);
+        failedGuest.push(tx);
       }
-      persistGuestTxs([]);
-      for (const tx of transactions) {
-        markTxPending(tx.id);
+    }
+    persistGuestTxs(failedGuest);
+
+    const pending = pendingTxRef.current!;
+    for (const tx of transactions.filter((t) => pending.has(t.id))) {
+      markTxPending(tx.id);
+      try {
         await saveTransactionToCloud(tx);
         markTxSynced(tx.id);
+        sent += 1;
+      } catch (e) {
+        console.error('Erro ao sincronização de lançamento pendente:', e);
       }
-      for (const cat of categories) {
-        await saveCategoryToCloud(cat);
-      }
-      for (const acc of accounts) {
-        await saveAccountToCloud(acc);
-      }
-      for (const g of goals) {
-        await saveGoalToCloud(g);
-      }
-    } catch (e) {
-      console.error('Erro na sincronização de dados locais para a nuvem:', e);
     }
+
+    // Categorias, contas e metas locais também sobem (orçamentos e cartões).
+    try {
+      for (const cat of categories) await saveCategoryToCloud(cat);
+      for (const acc of accounts) await saveAccountToCloud(acc);
+      for (const g of goals) await saveGoalToCloud(g);
+    } catch (e) {
+      console.error('Erro ao sincronizar categorias/contas/metas:', e);
+    }
+
+    return sent;
   };
+
+  /** Quantos lançamentos ainda estão fora da nuvem (pendentes + modo sem conta). */
+  const pendingUploadCount = (() => {
+    const pending = pendingTxRef.current!;
+    return guestTxCount + transactions.filter((t) => pending.has(t.id)).length;
+  })();
 
   const handleLogout = async () => {
     setIsLogoutConfirmOpen(false);
@@ -1111,7 +1132,7 @@ export default function App() {
         members={householdMembers}
         onJoinHouseholdSuccess={(h) => setCurrentHousehold(h)}
         onSyncLocalToCloud={handleSyncLocalToCloud}
-        localTransactionsCount={transactions.length}
+        pendingUploadCount={pendingUploadCount}
       />
 
       {/* Backup and Data Management Modal */}
