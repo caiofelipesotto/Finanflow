@@ -118,29 +118,29 @@ export const ProjectionChart: React.FC<ProjectionChartProps> = ({
         </div>
 
         {/* View Mode Toggle */}
-        <div className="flex items-center gap-1 p-1 bg-[#1d1d20] rounded-xl border border-zinc-800">
+        <div className="flex items-center gap-1 p-1 ui-panel rounded-xl border border-zinc-800 w-full sm:w-auto">
           <button
             type="button"
             onClick={() => setChartMode('cashflow')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all whitespace-nowrap ${
+            className={`flex flex-1 sm:flex-none items-center justify-center gap-1.5 px-2 sm:px-3 py-1.5 text-[11px] sm:text-xs font-semibold rounded-lg transition-all whitespace-nowrap ${
               chartMode === 'cashflow'
                 ? 'bg-orange-600 text-white shadow-xs'
                 : 'text-zinc-400 hover:text-white'
             }`}
           >
-            <BarChart3 className="w-3.5 h-3.5" />
+            <BarChart3 className="w-3.5 h-3.5 shrink-0" />
             <span>Entradas vs Saídas</span>
           </button>
           <button
             type="button"
             onClick={() => setChartMode('card')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all whitespace-nowrap ${
+            className={`flex flex-1 sm:flex-none items-center justify-center gap-1.5 px-2 sm:px-3 py-1.5 text-[11px] sm:text-xs font-semibold rounded-lg transition-all whitespace-nowrap ${
               chartMode === 'card'
                 ? 'bg-orange-600 text-white shadow-xs'
                 : 'text-zinc-400 hover:text-white'
             }`}
           >
-            <CreditCard className="w-3.5 h-3.5" />
+            <CreditCard className="w-3.5 h-3.5 shrink-0" />
             <span>Faturas do Cartão</span>
           </button>
         </div>
@@ -150,7 +150,10 @@ export const ProjectionChart: React.FC<ProjectionChartProps> = ({
       {hoveredMonth && (
         <div className="ui-panel mb-3 p-3 text-xs flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-orange-400" />
+            <span
+              className="w-2.5 h-2.5 rounded-full"
+              style={{ backgroundColor: 'var(--chart-income)' }}
+            />
             <span className="font-bold text-white text-sm">{hoveredMonth.fullLabel}</span>
           </div>
 
@@ -159,20 +162,26 @@ export const ProjectionChart: React.FC<ProjectionChartProps> = ({
               <>
                 <div>
                   <span className="text-orange-400 text-[11px] block">Entradas:</span>
-                  <strong className="text-orange-400 font-bold">
+                  <strong className="font-bold" style={{ color: 'var(--chart-income)' }}>
                     {formatCurrency(hoveredMonth.income)}
                   </strong>
                 </div>
                 <div className="border-l border-neutral-700 pl-3">
                   <span className="text-zinc-400 text-[11px] block">Saídas Totais:</span>
-                  <strong className="text-rose-400 font-bold">
+                  <strong className="font-bold" style={{ color: 'var(--chart-expense)' }}>
                     {formatCurrency(hoveredMonth.expense)}
                   </strong>
                 </div>
                 <div className="border-l border-neutral-700 pl-3">
                   <span className="text-orange-400 text-[11px] block">Sobrou:</span>
                   <strong
-                    className={hoveredMonth.balance >= 0 ? 'text-orange-300 font-bold' : 'text-rose-300 font-bold'}
+                    className="font-bold"
+                    style={{
+                      color:
+                        hoveredMonth.balance >= 0
+                          ? 'var(--chart-income)'
+                          : 'var(--chart-expense)',
+                    }}
                   >
                     {formatCurrency(hoveredMonth.balance)}
                   </strong>
@@ -192,7 +201,7 @@ export const ProjectionChart: React.FC<ProjectionChartProps> = ({
 
       {/* SVG Chart Container */}
       {!hasAnyData ? (
-        <div className="py-12 px-4 text-center border border-dashed border-zinc-800 rounded-xl bg-[#101012]/60">
+        <div className="py-12 px-4 text-center border border-dashed border-zinc-800 rounded-xl">
           <Calendar className="w-8 h-8 text-zinc-500 mx-auto mb-2 opacity-50" />
           <h4 className="text-xs font-bold text-zinc-200">Nenhum lançamento no período</h4>
           <p className="text-[11px] text-zinc-400 max-w-md mx-auto mt-1">
@@ -216,7 +225,7 @@ export const ProjectionChart: React.FC<ProjectionChartProps> = ({
                       y1={y}
                       x2={monthsData.length * colWidth + 10}
                       y2={y}
-                      stroke="#27272a"
+                      stroke="var(--chart-grid-strong)"
                       strokeDasharray="2 3"
                       strokeWidth="1"
                     />
@@ -254,8 +263,7 @@ export const ProjectionChart: React.FC<ProjectionChartProps> = ({
                         y={paddingTop - 6}
                         width={colWidth - 8}
                         height={availableHeight + paddingBottom + 6}
-                        fill="#f97316"
-                        fillOpacity="0.1"
+                        fill="var(--chart-highlight)"
                         rx="6"
                       />
                     )}
@@ -268,7 +276,7 @@ export const ProjectionChart: React.FC<ProjectionChartProps> = ({
                           y={incomeY}
                           width={barWidth}
                           height={Math.max(incomeH, 2)}
-                          fill={isSelected ? '#f97316' : '#ea580c'}
+                          fill="var(--chart-income)" fillOpacity={isSelected ? 1 : 0.7}
                           rx="3"
                           className="transition-all duration-150 hover:brightness-125"
                         />
@@ -279,7 +287,7 @@ export const ProjectionChart: React.FC<ProjectionChartProps> = ({
                           y={expenseY}
                           width={barWidth}
                           height={Math.max(expenseH, 2)}
-                          fill={isSelected ? '#f43f5e' : '#e11d48'}
+                          fill="var(--chart-expense)" fillOpacity={isSelected ? 1 : 0.7}
                           rx="3"
                           className="transition-all duration-150 hover:brightness-125"
                         />
@@ -291,7 +299,7 @@ export const ProjectionChart: React.FC<ProjectionChartProps> = ({
                         y={cardY}
                         width={barWidth * 1.5}
                         height={Math.max(cardH, 2)}
-                        fill={isSelected ? '#fb923c' : '#f97316'}
+                        fill="var(--chart-card)" fillOpacity={isSelected ? 1 : 0.75}
                         rx="4"
                         className="transition-all duration-150 hover:brightness-125"
                       />
@@ -304,7 +312,7 @@ export const ProjectionChart: React.FC<ProjectionChartProps> = ({
                       textAnchor="middle"
                       fontSize="10"
                       fontWeight={isSelected ? 'bold' : 'normal'}
-                      fill={isSelected ? '#fb923c' : '#64748b'}
+                      fill={isSelected ? 'var(--chart-income)' : 'var(--chart-axis)'}
                       className="font-mono"
                     >
                       {m.label}
@@ -323,17 +331,23 @@ export const ProjectionChart: React.FC<ProjectionChartProps> = ({
           {chartMode === 'cashflow' ? (
             <>
               <div className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-xs bg-zinc-500" />
+                <span
+                  className="w-2.5 h-2.5 rounded-xs"
+                  style={{ backgroundColor: 'var(--chart-income)' }}
+                />
                 <span>Entradas (Receitas)</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-xs bg-rose-500" />
+                <span
+                  className="w-2.5 h-2.5 rounded-xs"
+                  style={{ backgroundColor: 'var(--chart-expense)' }}
+                />
                 <span>Saídas (Despesas)</span>
               </div>
             </>
           ) : (
             <div className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-xs bg-zinc-500" />
+              <span className="w-2.5 h-2.5 rounded-xs" style={{ backgroundColor: 'var(--chart-card)' }} />
               <span>Fatura do Cartão & Parcelas a Vencer</span>
             </div>
           )}

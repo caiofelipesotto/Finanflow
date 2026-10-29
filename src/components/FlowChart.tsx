@@ -65,11 +65,14 @@ export const FlowChart: React.FC<FlowChartProps> = ({ transactions, year, month 
         {/* Legend */}
         <div className="flex items-center gap-4 text-xs text-neutral-600">
           <div className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-sm bg-neutral-800" />
+            <span className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: 'var(--chart-bar)' }} />
             <span>Despesas</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-sm bg-zinc-500" />
+            <span
+              className="w-2.5 h-2.5 rounded-full"
+              style={{ backgroundColor: 'var(--chart-income)' }}
+            />
             <span>Receitas</span>
           </div>
         </div>
@@ -114,7 +117,7 @@ export const FlowChart: React.FC<FlowChartProps> = ({ transactions, year, month 
             y1={chartHeight - paddingY}
             x2={daysInMonth * 16}
             y2={chartHeight - paddingY}
-            stroke="#e5e7eb"
+            stroke="var(--chart-grid-strong)"
             strokeWidth="1"
           />
           <line
@@ -122,7 +125,7 @@ export const FlowChart: React.FC<FlowChartProps> = ({ transactions, year, month 
             y1={(chartHeight - paddingY) / 2}
             x2={daysInMonth * 16}
             y2={(chartHeight - paddingY) / 2}
-            stroke="#f3f4f6"
+            stroke="var(--chart-grid)"
             strokeWidth="1"
             strokeDasharray="4 4"
           />
@@ -136,7 +139,7 @@ export const FlowChart: React.FC<FlowChartProps> = ({ transactions, year, month 
             return (
               <g
                 key={d.day}
-                className="cursor-pointer group"
+                className="chart-group cursor-pointer"
                 onMouseEnter={(e) => {
                   const rect = e.currentTarget.getBoundingClientRect();
                   setHoveredDay({
@@ -156,7 +159,7 @@ export const FlowChart: React.FC<FlowChartProps> = ({ transactions, year, month 
                   width="16"
                   height={chartHeight}
                   fill="transparent"
-                  className="hover:fill-neutral-50 transition-colors"
+                  className="chart-hover-area"
                 />
 
                 {/* Expense bar */}
@@ -167,8 +170,7 @@ export const FlowChart: React.FC<FlowChartProps> = ({ transactions, year, month 
                     width={barWidth}
                     height={Math.max(expenseHeight, 3)}
                     rx="2"
-                    fill="#27272a"
-                    className="transition-all duration-150 group-hover:fill-neutral-900"
+                    className="chart-bar"
                   />
                 ) : (
                   <rect
@@ -177,7 +179,7 @@ export const FlowChart: React.FC<FlowChartProps> = ({ transactions, year, month 
                     width="2"
                     height="2"
                     rx="1"
-                    fill="#e2e8f0"
+                    fill="var(--chart-grid-strong)"
                   />
                 )}
 
@@ -187,8 +189,8 @@ export const FlowChart: React.FC<FlowChartProps> = ({ transactions, year, month 
                     cx={x + barWidth / 2}
                     cy={chartHeight - paddingY - Math.max(incomeHeight, 8) - 4}
                     r="3.5"
-                    fill="#f97316"
-                    stroke="#ffffff"
+                    fill="var(--chart-income)"
+                    stroke="var(--chart-dot-ring)"
                     strokeWidth="1.5"
                   />
                 )}

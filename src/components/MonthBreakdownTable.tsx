@@ -118,7 +118,7 @@ export const MonthBreakdownTable: React.FC<MonthBreakdownTableProps> = ({
         </div>
 
         {/* Quick Type Filter Tabs */}
-        <div className="flex items-center gap-1 p-1 bg-[#1d1d20] rounded-xl border border-neutral-800 overflow-x-auto text-xs">
+        <div className="flex items-center gap-1 p-1 ui-panel rounded-xl border border-neutral-800 overflow-x-auto text-xs">
           <button
             type="button"
             onClick={() => setTypeFilter('all')}
@@ -157,7 +157,7 @@ export const MonthBreakdownTable: React.FC<MonthBreakdownTableProps> = ({
             onClick={() => setTypeFilter('installment')}
             className={`flex items-center gap-1 px-2.5 py-1 rounded-lg font-medium transition-colors whitespace-nowrap ${
               typeFilter === 'installment'
-                ? 'bg-[#1d1d20] text-zinc-300 font-bold border border-zinc-800'
+                ? 'bg-zinc-800 text-zinc-300 font-bold border border-zinc-800'
                 : 'text-zinc-400 hover:text-white'
             }`}
           >
@@ -169,7 +169,7 @@ export const MonthBreakdownTable: React.FC<MonthBreakdownTableProps> = ({
             onClick={() => setTypeFilter('recurrent')}
             className={`flex items-center gap-1 px-2.5 py-1 rounded-lg font-medium transition-colors whitespace-nowrap ${
               typeFilter === 'recurrent'
-                ? 'bg-[#1d1d20] text-zinc-300 font-bold border border-zinc-800'
+                ? 'bg-zinc-800 text-zinc-300 font-bold border border-zinc-800'
                 : 'text-zinc-400 hover:text-white'
             }`}
           >
@@ -181,7 +181,7 @@ export const MonthBreakdownTable: React.FC<MonthBreakdownTableProps> = ({
 
       {/* Table Content */}
       {filteredList.length === 0 ? (
-        <div className="py-12 px-4 text-center border border-dashed border-neutral-800 rounded-xl bg-[#101012]/60">
+        <div className="py-12 px-4 text-center border border-dashed border-neutral-800 rounded-xl">
           <Calendar className="w-8 h-8 text-zinc-500 mx-auto mb-2 opacity-50" />
           <h4 className="text-xs font-bold text-zinc-200">
             {transactions.length === 0
@@ -205,7 +205,7 @@ export const MonthBreakdownTable: React.FC<MonthBreakdownTableProps> = ({
         <div className="border border-neutral-800 rounded-xl overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-[#1d1d20] text-[10px] uppercase text-zinc-400 border-b border-neutral-800 font-semibold tracking-wider">
+              <thead className="bg-zinc-900 text-[10px] uppercase text-zinc-400 border-b border-neutral-800 font-semibold tracking-wider">
                 <tr>
                   <th className="py-3 px-3.5 w-12 text-center">Status</th>
                   <th className="py-3 px-3.5">Descrição</th>

@@ -31,6 +31,18 @@
   --success-text: #34d399;
   --scrollbar: #2b2b33;
   --scrollbar-hover: #3f3f48;
+  /* Gráficos: grades, eixos e séries acompanham o tema */
+  --chart-grid: rgba(255, 255, 255, 0.06);
+  --chart-grid-strong: rgba(255, 255, 255, 0.14);
+  --chart-axis: #8b8b93;
+  --chart-bar: #3f3f48;
+  --chart-bar-hover: #a1a1aa;
+  --chart-track: rgba(255, 255, 255, 0.07);
+  --chart-income: #fb923c;
+  --chart-expense: #fb7185;
+  --chart-card: #fbbf24;
+  --chart-highlight: rgba(249, 115, 22, 0.12);
+  --chart-dot-ring: #0c0c0f;
   color-scheme: dark;
 }
 
@@ -53,6 +65,17 @@
   --success-text: #047857;
   --scrollbar: #d4d4d8;
   --scrollbar-hover: #a1a1aa;
+  --chart-grid: rgba(9, 9, 11, 0.07);
+  --chart-grid-strong: rgba(9, 9, 11, 0.16);
+  --chart-axis: #71717a;
+  --chart-bar: #cbcbd2;
+  --chart-bar-hover: #71717a;
+  --chart-track: rgba(9, 9, 11, 0.07);
+  --chart-income: #ea580c;
+  --chart-expense: #be123c;
+  --chart-card: #d97706;
+  --chart-highlight: rgba(194, 65, 12, 0.10);
+  --chart-dot-ring: #ffffff;
   color-scheme: light;
 }
 
@@ -606,6 +629,25 @@ html.theme-changing * {
     border-top: 1px solid var(--border-1);
     background-color: var(--surface-2);
   }
+}
+
+/* Barras de gráfico em SVG: a cor vem do tema e o hover escurece/clareia */
+.chart-bar {
+  fill: var(--chart-bar);
+  transition: fill 150ms ease;
+}
+
+.chart-group:hover .chart-bar {
+  fill: var(--chart-bar-hover);
+}
+
+.chart-hover-area {
+  fill: transparent;
+  transition: fill 150ms ease;
+}
+
+.chart-group:hover .chart-hover-area {
+  fill: var(--chart-grid);
 }
 
 /* Custom subtle scrollbar */

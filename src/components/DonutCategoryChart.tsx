@@ -66,7 +66,7 @@ export const DonutCategoryChart: React.FC<DonutCategoryChartProps> = ({
               cx="80"
               cy="80"
               r={radius}
-              stroke="#26262a"
+              stroke="var(--chart-track)"
               strokeWidth={strokeWidth}
               fill="transparent"
             />
