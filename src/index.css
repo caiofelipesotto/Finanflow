@@ -294,6 +294,7 @@ html.theme-changing * {
 /* Cores de apoio (erro/sucesso/destaque) legíveis nos dois temas */
 .text-orange-400,
 .text-orange-300,
+.text-orange-200,
 .text-amber-400,
 .text-amber-300 {
   color: var(--accent-text);
@@ -301,12 +302,15 @@ html.theme-changing * {
 
 .text-rose-400,
 .text-rose-300,
+.text-rose-200,
 .text-red-400,
 .text-red-300 {
   color: var(--danger-text);
 }
 
 .text-emerald-400,
+.text-emerald-300,
+.text-emerald-200,
 .text-green-400 {
   color: var(--success-text);
 }
@@ -393,6 +397,12 @@ html.theme-changing * {
 [data-theme="light"] .bg-zinc-500,
 [data-theme="light"] .hover\:bg-zinc-500:hover {
   background-color: #3f3f46;
+}
+
+/* Ícones de categoria usam cores fixas (pastéis pensados para fundo escuro).
+   No tema claro escurecemos o traço para o contraste não sumir. */
+[data-theme="light"] .cat-icon svg {
+  filter: brightness(0.55) saturate(1.8);
 }
 
 /* Custom subtle scrollbar */

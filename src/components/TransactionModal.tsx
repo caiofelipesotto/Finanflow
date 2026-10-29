@@ -1,5 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Check, CreditCard, Repeat, Calendar, DollarSign, Calculator, Layers, HelpCircle } from 'lucide-react';
+import {
+  X,
+  Check,
+  CreditCard,
+  Repeat,
+  Calendar,
+  DollarSign,
+  Calculator,
+  Layers,
+  HelpCircle,
+  Pencil,
+  PlusCircle,
+} from 'lucide-react';
 import { Transaction, Category, Account, TransactionType, PaymentMethod } from '../types/finance';
 import { getTodayString, formatCurrency, addMonthsToDate, formatMonthShort } from '../utils/formatters';
 import { CategoryIcon } from './CategoryIcon';
@@ -303,79 +315,90 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-xs animate-in fade-in duration-150">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-black/80 backdrop-blur-xs animate-in fade-in duration-150">
       <div
-        className="bg-[#1d1d20] rounded-2xl shadow-2xl border border-zinc-800 w-full max-w-lg overflow-hidden flex flex-col max-h-[94vh]"
+        className="bg-[#1d1d20] rounded-t-2xl sm:rounded-2xl shadow-2xl border border-zinc-800 w-full max-w-lg overflow-hidden flex flex-col max-h-[92vh] sm:max-h-[90vh]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-800 bg-[#101012]">
-          <div>
-            <h2 className="text-base font-bold text-white flex items-center gap-2">
-              {initialData ? 'Editar Lançamento' : 'Novo Lançamento Financeiro'}
+        <div className="flex items-start gap-3 px-5 py-4 border-b border-zinc-800">
+          <div className="w-9 h-9 rounded-xl bg-orange-500/12 border border-orange-500/25 text-orange-400 flex items-center justify-center shrink-0">
+            {initialData ? <Pencil className="w-4 h-4" /> : <PlusCircle className="w-4 h-4" />}
+          </div>
+          <div className="min-w-0 flex-1">
+            <h2 className="text-[15px] font-bold text-white leading-tight">
+              {initialData ? 'Editar lançamento' : 'Novo lançamento'}
             </h2>
-            <p className="text-xs text-zinc-400 mt-0.5">
-              À vista, parcelado no cartão em vezes ou contas fixas recorrentes
+            <p className="text-[11px] text-zinc-400 mt-0.5 leading-snug">
+              À vista, parcelado no cartão ou conta fixa
             </p>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-lg transition-colors"
+            aria-label="Fechar"
+            className="p-1.5 -mt-1 -mr-1 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-lg transition-colors shrink-0"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Modal Form */}
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto px-5 py-4 space-y-4 pb-6">
           {/* 1. Type Selector (Despesa vs Receita) */}
-          <div className="flex items-center gap-1 p-1 bg-[#1d1d20] rounded-xl border border-zinc-800">
+          <div className="grid grid-cols-2 gap-1 p-1 bg-[#141416] rounded-xl border border-zinc-800">
             <button
               type="button"
               onClick={() => handleTypeChange('expense')}
-              className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all whitespace-nowrap ${
+              className={`py-2 text-[11px] font-bold rounded-lg border transition-colors whitespace-nowrap ${
                 type === 'expense'
-                  ? 'bg-rose-600 text-white shadow-xs'
-                  : 'text-zinc-400 hover:text-white'
+                  ? 'bg-rose-500/12 text-rose-300 border-rose-500/40'
+                  : 'bg-transparent text-zinc-400 border-transparent hover:text-zinc-200'
               }`}
             >
-              Despesa (Saída)
+              Despesa (saída)
             </button>
             <button
               type="button"
               onClick={() => handleTypeChange('income')}
-              className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all whitespace-nowrap ${
+              className={`py-2 text-[11px] font-bold rounded-lg border transition-colors whitespace-nowrap ${
                 type === 'income'
-                  ? 'bg-orange-600 text-white shadow-xs'
-                  : 'text-orange-400 hover:text-white'
+                  ? 'bg-emerald-500/12 text-emerald-300 border-emerald-500/40'
+                  : 'bg-transparent text-zinc-400 border-transparent hover:text-zinc-200'
               }`}
             >
-              Receita (Entrada)
+              Receita (entrada)
             </button>
           </div>
 
           {/* 2. Modern Entry Mode (À vista vs Cartão Parcelado vs Fixo Recorrente) */}
           {!initialData && (
             <div>
-              <label className="block text-xs font-semibold text-zinc-300 mb-1.5">
-                Formato do Lançamento
+              <label className="block text-[11px] font-semibold uppercase tracking-wide text-zinc-400 mb-1.5">
+                Formato
               </label>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-3 gap-1.5 items-stretch">
                 <button
                   type="button"
                   onClick={() => handleEntryModeChange('single')}
-                  className={`p-2.5 rounded-xl border text-left flex flex-col gap-1 transition-all ${
+                  className={`relative p-2.5 rounded-xl border text-left flex flex-col gap-1 transition-colors ${
                     entryMode === 'single'
-                      ? 'border-orange-500 bg-zinc-950/40 text-zinc-300 ring-1 ring-orange-500'
-                      : 'border-zinc-800 bg-[#1d1d20] text-zinc-300 hover:border-zinc-700'
+                      ? 'border-orange-500/60 bg-orange-500/10'
+                      : 'border-zinc-800 bg-[#141416] hover:border-zinc-700'
                   }`}
                 >
-                  <div className="flex items-center gap-1.5 font-bold text-xs">
-                    <DollarSign className="w-3.5 h-3.5" />
-                    <span>À Vista / Único</span>
+                  {entryMode === 'single' && (
+                    <Check className="absolute top-1.5 right-1.5 w-3 h-3 text-orange-400" />
+                  )}
+                  <div
+                    className={`flex items-center gap-1.5 font-bold text-[11px] ${
+                      entryMode === 'single' ? 'text-orange-300' : 'text-zinc-200'
+                    }`}
+                  >
+                    <DollarSign className="w-3.5 h-3.5 shrink-0" />
+                    <span className="truncate">À vista</span>
                   </div>
-                  <span className="text-[10px] text-zinc-400 leading-tight">
-                    Pix, débito, boleto avulso
+                  <span className="text-[10px] text-zinc-500 leading-tight">
+                    Pix, débito, boleto
                   </span>
                 </button>
 
@@ -383,38 +406,52 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                   type="button"
                   disabled={type === 'income'}
                   onClick={() => handleEntryModeChange('installment')}
-                  className={`p-2.5 rounded-xl border text-left flex flex-col gap-1 transition-all ${
+                  className={`relative p-2.5 rounded-xl border text-left flex flex-col gap-1 transition-colors ${
                     type === 'income' ? 'opacity-40 cursor-not-allowed' : ''
                   } ${
                     entryMode === 'installment'
-                      ? 'border-orange-500 bg-zinc-950/40 text-zinc-300 ring-1 ring-orange-500'
-                      : 'border-zinc-800 bg-[#1d1d20] text-zinc-300 hover:border-zinc-700'
+                      ? 'border-orange-500/60 bg-orange-500/10'
+                      : 'border-zinc-800 bg-[#141416] hover:border-zinc-700'
                   }`}
                 >
-                  <div className="flex items-center gap-1.5 font-bold text-xs">
-                    <CreditCard className="w-3.5 h-3.5" />
-                    <span>Cartão em Vezes</span>
+                  {entryMode === 'installment' && (
+                    <Check className="absolute top-1.5 right-1.5 w-3 h-3 text-orange-400" />
+                  )}
+                  <div
+                    className={`flex items-center gap-1.5 font-bold text-[11px] ${
+                      entryMode === 'installment' ? 'text-orange-300' : 'text-zinc-200'
+                    }`}
+                  >
+                    <CreditCard className="w-3.5 h-3.5 shrink-0" />
+                    <span className="truncate">Parcelado</span>
                   </div>
-                  <span className="text-[10px] text-zinc-400 leading-tight">
-                    Divide em 2x, 6x, 12x...
+                  <span className="text-[10px] text-zinc-500 leading-tight">
+                    2x, 6x, 12x no cartão
                   </span>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => handleEntryModeChange('recurrent')}
-                  className={`p-2.5 rounded-xl border text-left flex flex-col gap-1 transition-all ${
+                  className={`relative p-2.5 rounded-xl border text-left flex flex-col gap-1 transition-colors ${
                     entryMode === 'recurrent'
-                      ? 'border-orange-500 bg-zinc-950/40 text-zinc-300 ring-1 ring-orange-500'
-                      : 'border-zinc-800 bg-[#1d1d20] text-zinc-300 hover:border-zinc-700'
+                      ? 'border-orange-500/60 bg-orange-500/10'
+                      : 'border-zinc-800 bg-[#141416] hover:border-zinc-700'
                   }`}
                 >
-                  <div className="flex items-center gap-1.5 font-bold text-xs">
-                    <Repeat className="w-3.5 h-3.5" />
-                    <span>Fixo / Recorrente</span>
+                  {entryMode === 'recurrent' && (
+                    <Check className="absolute top-1.5 right-1.5 w-3 h-3 text-orange-400" />
+                  )}
+                  <div
+                    className={`flex items-center gap-1.5 font-bold text-[11px] ${
+                      entryMode === 'recurrent' ? 'text-orange-300' : 'text-zinc-200'
+                    }`}
+                  >
+                    <Repeat className="w-3.5 h-3.5 shrink-0" />
+                    <span className="truncate">Fixo</span>
                   </div>
-                  <span className="text-[10px] text-zinc-400 leading-tight">
-                    Salário, aluguel, parcelas fixas
+                  <span className="text-[10px] text-zinc-500 leading-tight">
+                    Mensal e recorrente
                   </span>
                 </button>
               </div>
@@ -423,15 +460,15 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
 
           {/* 3. Description Input */}
           <div>
-            <label className="block text-xs font-semibold text-zinc-300 mb-1">
-              Descrição do Lançamento
+            <label className="block text-[11px] font-semibold uppercase tracking-wide text-zinc-400 mb-1.5">
+              Descrição
             </label>
             <input
               type="text"
-              placeholder="Ex: Compra Sofá, Financiamento Carro, Salário, Supermercado..."
+              placeholder="Ex: Supermercado, aluguel, salário..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className={`w-full px-3.5 py-2.5 text-sm text-white bg-[#1d1d20] border rounded-xl outline-hidden transition-all placeholder:text-zinc-500 ${
+              className={`w-full px-3.5 py-2.5 text-sm text-white bg-[#141416] border rounded-lg outline-hidden transition-colors placeholder:text-zinc-500 ${
                 errors.description
                   ? 'border-rose-500 focus:ring-2 focus:ring-rose-500/30'
                   : 'border-zinc-700 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20'
@@ -446,7 +483,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
           {/* 4. Amount Section (With Installment modes if applicable) */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-semibold text-zinc-300">
+              <label className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400">
                 {entryMode === 'installment'
                   ? installmentMode === 'total'
                     ? 'Valor Total da Compra (R$)'
@@ -493,7 +530,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                 placeholder="0,00"
                 value={amountInput}
                 onChange={(e) => setAmountInput(e.target.value)}
-                className={`w-full pl-11 pr-4 py-2.5 text-lg font-bold font-mono tabular-nums text-white bg-[#1d1d20] border rounded-xl outline-hidden transition-all ${
+                className={`w-full pl-11 pr-4 py-2.5 text-lg font-bold font-mono tabular-nums text-white bg-[#141416] border rounded-lg outline-hidden transition-colors ${
                   errors.amount
                     ? 'border-rose-500 focus:ring-2 focus:ring-rose-500/30'
                     : 'border-zinc-700 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20'
@@ -545,7 +582,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                     max="72"
                     value={totalInstallments}
                     onChange={(e) => setTotalInstallments(parseInt(e.target.value) || 2)}
-                    className="w-16 px-2 py-1 text-xs font-bold text-center text-white bg-[#1d1d20] border border-zinc-700 rounded-lg outline-hidden focus:border-orange-500"
+                    className="w-16 px-2 py-1 text-xs font-bold text-center text-white bg-[#141416] border border-zinc-700 rounded-lg outline-hidden focus:border-orange-500"
                   />
                   <span className="text-xs text-zinc-400">vezes</span>
                 </div>
@@ -615,10 +652,10 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
 
           {/* 7. Category Selector */}
           <div>
-            <label className="block text-xs font-semibold text-zinc-300 mb-1">
+            <label className="block text-[11px] font-semibold uppercase tracking-wide text-zinc-400 mb-1.5">
               Categoria
             </label>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-40 overflow-y-auto p-1.5 border border-zinc-800 rounded-xl bg-[#09090b]">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
               {filteredCategories.map((cat) => {
                 const isSelected = category === cat.id;
                 return (
@@ -626,26 +663,26 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                     key={cat.id}
                     type="button"
                     onClick={() => setCategory(cat.id)}
-                    className={`flex items-center gap-2 p-2 rounded-lg text-left text-xs transition-all ${
+                    className={`flex items-center gap-2 min-h-[42px] px-2 py-1.5 rounded-lg text-left text-[11px] leading-tight transition-colors ${
                       isSelected
-                        ? 'bg-orange-600 text-white font-medium shadow-xs'
-                        : 'bg-[#1d1d20] hover:bg-zinc-800 text-zinc-200 border border-zinc-700/40'
+                        ? 'bg-orange-500/15 text-orange-200 border border-orange-500/50 font-semibold'
+                        : 'bg-[#141416] text-zinc-300 border border-zinc-800 hover:border-zinc-700'
                     }`}
                   >
                     <div
-                      className="w-5 h-5 rounded flex items-center justify-center shrink-0"
+                      className="cat-icon w-5 h-5 rounded flex items-center justify-center shrink-0"
                       style={{
                         backgroundColor: isSelected ? 'transparent' : `${cat.color}25`,
-                        color: isSelected ? '#ffffff' : cat.color,
+                        color: isSelected ? '#f97316' : cat.color,
                       }}
                     >
                       <CategoryIcon
                         name={cat.icon}
-                        color={isSelected ? '#ffffff' : cat.color}
+                        color={isSelected ? '#f97316' : cat.color}
                         className="w-3.5 h-3.5"
                       />
                     </div>
-                    <span className="truncate">{cat.name}</span>
+                    <span className="min-w-0 flex-1 break-words">{cat.name}</span>
                   </button>
                 );
               })}
@@ -658,13 +695,13 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
           {/* 8. Account & Payment Method */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-zinc-300 mb-1">
+              <label className="block text-[11px] font-semibold uppercase tracking-wide text-zinc-400 mb-1.5">
                 {entryMode === 'installment' ? 'Cartão de Crédito' : 'Conta / Cartão'}
               </label>
               <select
                 value={account}
                 onChange={(e) => setAccount(e.target.value)}
-                className="w-full px-3 py-2 text-xs text-white border border-zinc-700 rounded-xl bg-[#1d1d20] outline-hidden focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
+                className="w-full px-3 py-2.5 text-xs text-white border border-zinc-700 rounded-lg bg-[#141416] outline-hidden focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
               >
                 {accounts.map((acc) => (
                   <option key={acc.id} value={acc.id} className="bg-[#1d1d20] text-white">
@@ -676,13 +713,13 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-zinc-300 mb-1">
+              <label className="block text-[11px] font-semibold uppercase tracking-wide text-zinc-400 mb-1.5">
                 Forma de Pagamento
               </label>
               <select
                 value={paymentMethod}
                 onChange={(e) => setPaymentMethod(e.target.value as PaymentMethod)}
-                className="w-full px-3 py-2 text-xs text-white border border-zinc-700 rounded-xl bg-[#1d1d20] outline-hidden focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
+                className="w-full px-3 py-2.5 text-xs text-white border border-zinc-700 rounded-lg bg-[#141416] outline-hidden focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
               >
                 <option value="credit" className="bg-[#1d1d20] text-white">Cartão de Crédito</option>
                 <option value="pix" className="bg-[#1d1d20] text-white">Pix</option>
@@ -697,14 +734,14 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
           {/* 9. Date & Paid Status */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
             <div>
-              <label className="block text-xs font-semibold text-zinc-300 mb-1">
+              <label className="block text-[11px] font-semibold uppercase tracking-wide text-zinc-400 mb-1.5">
                 {entryMode === 'installment' ? 'Data da 1ª Parcela' : 'Data do Lançamento'}
               </label>
               <input
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                className="w-full px-3 py-2 text-xs text-white border border-zinc-700 rounded-xl bg-[#1d1d20] outline-hidden focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 font-mono"
+                className="w-full px-3 py-2.5 text-xs text-white border border-zinc-700 rounded-lg bg-[#141416] outline-hidden focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 font-mono"
               />
             </div>
 
@@ -729,7 +766,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
 
           {/* 10. Optional notes */}
           <div>
-            <label className="block text-xs font-semibold text-zinc-300 mb-1">
+            <label className="block text-[11px] font-semibold uppercase tracking-wide text-zinc-400 mb-1.5">
               Observações (opcional)
             </label>
             <input
@@ -737,24 +774,24 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
               placeholder="Ex: Garantia de 1 ano, loja física, código de rastreio..."
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className="w-full px-3 py-2 text-xs text-white bg-[#1d1d20] border border-zinc-700 rounded-xl outline-hidden focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 placeholder:text-zinc-500"
+              className="w-full px-3 py-2.5 text-xs text-white bg-[#141416] border border-zinc-700 rounded-lg outline-hidden focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 placeholder:text-zinc-500"
             />
           </div>
         </form>
 
         {/* Modal Footer */}
-        <div className="flex items-center justify-between px-6 py-4 border-t border-zinc-800 bg-[#0d0d0f]">
+        <div className="flex items-center gap-2 px-5 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] border-t border-zinc-800 bg-[#141416]">
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 text-xs font-medium text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-lg transition-colors whitespace-nowrap"
+            className="px-4 py-2.5 text-xs font-semibold text-zinc-300 hover:text-white bg-transparent hover:bg-zinc-800 border border-zinc-700 rounded-lg transition-colors whitespace-nowrap"
           >
             Cancelar
           </button>
           <button
             type="button"
             onClick={handleSubmit}
-            className="flex items-center gap-1.5 px-5 py-2.5 text-xs font-semibold text-white bg-orange-600 hover:bg-zinc-500 rounded-xl transition-all shadow-md shadow-orange-950 whitespace-nowrap"
+            className="flex-1 flex items-center justify-center gap-1.5 px-5 py-2.5 text-xs font-bold text-zinc-950 bg-orange-500 hover:bg-orange-400 rounded-lg transition-colors whitespace-nowrap"
           >
             <Check className="w-4 h-4" />
             <span>
