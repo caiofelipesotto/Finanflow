@@ -41,6 +41,35 @@ import {
 } from './services/cloudSyncService';
 
 const PENDING_TX_KEY = 'finanflow_pending_txs';
+const GUEST_TXS_KEY = 'finanflow_guest_txs';
+
+/**
+ * Lançamentos criados no modo "Continuar sem conta".
+ *
+ * Antes eles eram marcados como pendentes e subiam sozinhos para o espaço
+ * compartilhado no próximo login (o total aparecia somado sem o usuário ter
+ * pedido). Agora ficam guardados à parte, só neste aparelho, e o app pergunta
+ * antes de enviá-los.
+ */
+function loadGuestTxs(): Transaction[] {
+  try {
+    const raw = localStorage.getItem(GUEST_TXS_KEY);
+    const parsed = raw ? (JSON.parse(raw) as Transaction[]) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (e) {
+    console.error(e);
+    return [];
+  }
+}
+
+function saveGuestTxs(list: Transaction[]): void {
+  try {
+    if (list.length === 0) localStorage.removeItem(GUEST_TXS_KEY);
+    else localStorage.setItem(GUEST_TXS_KEY, JSON.stringify(list));
+  } catch (e) {
+    console.error(e);
+  }
+}
 
 /**
  * Ids de lançamentos ainda não confirmados na nuvem.
@@ -188,6 +217,20 @@ export default function App() {
   };
   const markTxSynced = (id: string) => {
     if (pendingTxRef.current!.delete(id)) persistPendingTx();
+  };
+
+  // Lançamentos do modo sem conta (ver loadGuestTxs)
+  const guestTxsRef = useRef<Transaction[]>(loadGuestTxs());
+  const [guestTxCount, setGuestTxCount] = useState(() => guestTxsRef.current.length);
+  const persistGuestTxs = (list: Transaction[]) => {
+    guestTxsRef.current = list;
+    saveGuestTxs(list);
+    setGuestTxCount(list.length);
+  };
+  /** Remove do modo sem conta o que o usuário apagou da tela. */
+  const forgetGuestTxs = (shouldRemove: (tx: Transaction) => boolean) => {
+    if (!guestTxsRef.current.some(shouldRemove)) return;
+    persistGuestTxs(guestTxsRef.current.filter((t) => !shouldRemove(t)));
   };
 
   // Sessão: consulta /api/me ao montar. O backend cria o espaço compartilhado
@@ -397,12 +440,14 @@ export default function App() {
    * que a conta conectar — então nada local some por causa do snapshot.
    */
   const pushTxToCloud = (tx: Transaction) => {
-    markTxPending(tx.id);
     const { user, household } = syncContextRef.current;
     if (!user || !household) {
-      console.warn('[Sync] Cloud save SKIPPED - missing context:', { hasUser: !!user, hasHousehold: !!household });
+      // Modo sem conta: guarda no aparelho e NÃO coloca na fila da nuvem, para
+      // não cair no espaço compartilhado no próximo login.
+      persistGuestTxs([...guestTxsRef.current.filter((t) => t.id !== tx.id), tx]);
       return;
     }
+    markTxPending(tx.id);
     console.log('[Sync] Saving transaction to cloud:', tx.id, 'household:', household.id);
     saveTransactionToCloud(tx)
       .then(() => {
@@ -490,6 +535,9 @@ export default function App() {
           (t) =>
             t.installment?.installmentGroupId === target.installment?.installmentGroupId
         );
+        forgetGuestTxs(
+          (t) => t.installment?.installmentGroupId === target.installment?.installmentGroupId
+        );
         setTransactions((prev) =>
           prev.filter(
             (t) =>
@@ -514,6 +562,7 @@ export default function App() {
         const toDelete = transactions.filter(
           (t) => t.recurrenceGroupId === target.recurrenceGroupId
         );
+        forgetGuestTxs((t) => t.recurrenceGroupId === target.recurrenceGroupId);
         setTransactions((prev) =>
           prev.filter((t) => t.recurrenceGroupId !== target.recurrenceGroupId)
         );
@@ -525,6 +574,7 @@ export default function App() {
     }
 
     if (confirm('Tem certeza que deseja excluir este lançamento?')) {
+      forgetGuestTxs((t) => t.id === id);
       setTransactions((prev) => prev.filter((t) => t.id !== id));
       if (user && household) {
         deleteTransactionFromCloud(id).catch(console.error);
@@ -533,16 +583,11 @@ export default function App() {
   };
 
   const handleTogglePaid = (id: string) => {
-    setTransactions((prev) =>
-      prev.map((t) => {
-        if (t.id === id) {
-          const updated = { ...t, isPaid: !t.isPaid };
-          pushTxToCloud(updated);
-          return updated;
-        }
-        return t;
-      })
-    );
+    const target = transactions.find((t) => t.id === id);
+    if (!target) return;
+    const updated = { ...target, isPaid: !target.isPaid };
+    setTransactions((prev) => prev.map((t) => (t.id === id ? updated : t)));
+    pushTxToCloud(updated);
   };
 
   // Budget Handlers
@@ -658,6 +703,7 @@ export default function App() {
       localStorage.removeItem('finanflow_v2_blank_state');
       pendingTxRef.current!.clear();
       localStorage.removeItem(PENDING_TX_KEY);
+      persistGuestTxs([]);
 
       // 3. If authenticated in Cloud, wipe cloud transactions for this user
       if (currentUser) {
@@ -674,10 +720,47 @@ export default function App() {
     }
   };
 
+  // Envia os lançamentos feitos no modo sem conta (ação explícita do usuário).
+  const handleSendGuestTxs = async () => {
+    if (!currentUser || !currentHousehold) return;
+    const list = guestTxsRef.current;
+    if (list.length === 0) return;
+
+    setTransactions((prev) => {
+      const ids = new Set(prev.map((t) => t.id));
+      return [...list.filter((t) => !ids.has(t.id)), ...prev];
+    });
+
+    let failed = 0;
+    for (const tx of list) {
+      markTxPending(tx.id);
+      try {
+        await saveTransactionToCloud(tx);
+        markTxSynced(tx.id);
+      } catch (e) {
+        console.error('Erro ao enviar lançamento do modo sem conta:', e);
+        failed += 1;
+      }
+    }
+
+    if (failed === 0) {
+      persistGuestTxs([]);
+      setNotificationBanner(`✓ ${list.length} lançamento(s) do modo sem conta enviados para o espaço compartilhado.`);
+    } else {
+      persistGuestTxs(list.slice(list.length - failed));
+      setNotificationBanner(`⚠️ ${failed} lançamento(s) não puderam ser enviados. Tente novamente.`);
+    }
+    setTimeout(() => setNotificationBanner(null), 6000);
+  };
+
   // Sync existing local records to cloud
   const handleSyncLocalToCloud = async () => {
     if (!currentUser || !currentHousehold) return;
     try {
+      for (const tx of guestTxsRef.current) {
+        await saveTransactionToCloud(tx);
+      }
+      persistGuestTxs([]);
       for (const tx of transactions) {
         markTxPending(tx.id);
         await saveTransactionToCloud(tx);
@@ -804,6 +887,37 @@ export default function App() {
             >
               <X className="w-4 h-4" />
             </button>
+          </div>
+        )}
+
+        {/* Lançamentos feitos sem conta: só entram no espaço compartilhado se o usuário mandar */}
+        {currentUser && guestTxCount > 0 && (
+          <div className="mb-6 p-4 rounded-2xl bg-zinc-900 border border-orange-500/40 flex flex-col md:flex-row md:items-center justify-between gap-3 text-sm text-zinc-300 shadow-xl shadow-orange-950/20">
+            <div className="flex items-center gap-3">
+              <WalletCards className="w-5 h-5 text-orange-400 shrink-0" />
+              <div>
+                <p className="font-semibold text-white">
+                  {guestTxCount} lançamento(s) do modo sem conta neste aparelho
+                </p>
+                <p className="text-[11px] text-zinc-500 mt-0.5">
+                  Eles ficaram só aqui e não entram no espaço compartilhado sozinhos. Enviar para a nuvem?
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 self-start md:self-auto md:shrink-0">
+              <button
+                onClick={() => persistGuestTxs([])}
+                className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-400 border border-zinc-700 font-semibold rounded-xl text-xs transition-colors cursor-pointer"
+              >
+                Descartar
+              </button>
+              <button
+                onClick={handleSendGuestTxs}
+                className="px-3.5 py-1.5 bg-orange-500 hover:bg-orange-400 text-zinc-950 font-bold rounded-xl text-xs transition-colors cursor-pointer shadow-sm shadow-orange-500/20"
+              >
+                Enviar para o compartilhado
+              </button>
+            </div>
           </div>
         )}
 
