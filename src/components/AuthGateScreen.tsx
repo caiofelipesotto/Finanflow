@@ -12,15 +12,21 @@ import {
 import { signInUrl } from '../services/cloudSyncService';
 import { GoogleIcon } from './GoogleIcon';
 import { LogoMark } from './Logo';
+import { ThemeToggle } from './ThemeToggle';
+import type { Theme } from '../utils/theme';
 
 interface AuthGateScreenProps {
   onContinueAsGuest: () => void;
   inviteCode: string | null;
+  theme: Theme;
+  onToggleTheme: () => void;
 }
 
 export const AuthGateScreen: React.FC<AuthGateScreenProps> = ({
   onContinueAsGuest,
   inviteCode,
+  theme,
+  onToggleTheme,
 }) => {
 
   return (
@@ -41,14 +47,17 @@ export const AuthGateScreen: React.FC<AuthGateScreenProps> = ({
           </div>
         </div>
 
-        <button
-          onClick={onContinueAsGuest}
-          className="shrink-0 text-xs text-zinc-300 hover:text-white transition-colors py-1.5 px-3 rounded-xl border border-zinc-700/80 hover:border-zinc-800 bg-zinc-800/80 cursor-pointer flex items-center gap-1.5"
-        >
-          <span className="hidden sm:inline">Continuar sem conta (offline)</span>
-          <span className="sm:hidden">Visitante</span>
-          <ArrowRight className="w-3.5 h-3.5 text-zinc-400" />
-        </button>
+        <div className="flex items-center gap-2 shrink-0">
+          <ThemeToggle theme={theme} onToggle={onToggleTheme} />
+          <button
+            onClick={onContinueAsGuest}
+            className="shrink-0 text-xs text-zinc-300 hover:text-white transition-colors py-1.5 px-3 rounded-xl border border-zinc-700/80 hover:border-zinc-800 bg-zinc-800/80 cursor-pointer flex items-center gap-1.5"
+          >
+            <span className="hidden sm:inline">Continuar sem conta (offline)</span>
+            <span className="sm:hidden">Visitante</span>
+            <ArrowRight className="w-3.5 h-3.5 text-zinc-400" />
+          </button>
+        </div>
       </header>
 
       {/* Main card & hero */}

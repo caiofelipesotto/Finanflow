@@ -1,19 +1,288 @@
 @import "tailwindcss";
 
+/* ============================================================
+   Tema do FinanFlow
+   ------------------------------------------------------------
+   O app foi escrito com classes fixas (bg-zinc-900, text-white...).
+   Em vez de reescrever cada componente, definimos aqui os tokens de
+   cor do tema e remapeamos essas classes para eles. Assim:
+   - o tema escuro fica mais "preto" e com contraste calibrado;
+   - o tema claro vira uma inversão coerente;
+   - um único arquivo controla a identidade visual.
+   ============================================================ */
+
+:root,
+[data-theme="dark"] {
+  --app-bg: #050507;
+  --surface-1: #0c0c0f;
+  --surface-2: #131317;
+  --surface-3: #1c1c22;
+  --surface-4: #26262e;
+  --border-1: #23232a;
+  --border-2: #34343d;
+  --text-1: #fafafa;
+  --text-2: #d4d4d8;
+  --text-3: #a1a1aa;
+  --text-4: #71717a;
+  --scrim: rgba(0, 0, 0, 0.82);
+  --accent-text: #fb923c;
+  --accent-strong: #c2410c;
+  --danger-text: #fb7185;
+  --success-text: #34d399;
+  --scrollbar: #2b2b33;
+  --scrollbar-hover: #3f3f48;
+  color-scheme: dark;
+}
+
+[data-theme="light"] {
+  --app-bg: #f4f4f5;
+  --surface-1: #ffffff;
+  --surface-2: #fafafa;
+  --surface-3: #f1f1f3;
+  --surface-4: #e7e7ea;
+  --border-1: #e4e4e7;
+  --border-2: #d0d0d6;
+  --text-1: #0b0b0e;
+  --text-2: #27272a;
+  --text-3: #52525b;
+  --text-4: #71717a;
+  --scrim: rgba(9, 9, 11, 0.45);
+  --accent-text: #c2410c;
+  --accent-strong: #9a3412;
+  --danger-text: #be123c;
+  --success-text: #047857;
+  --scrollbar: #d4d4d8;
+  --scrollbar-hover: #a1a1aa;
+  color-scheme: light;
+}
+
 @layer base {
   body {
     font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: var(--app-bg);
+    color: var(--text-1);
+    /* Números alinhados: valores em R$ não "dançam" ao atualizar */
+    font-variant-numeric: tabular-nums;
+    -webkit-font-smoothing: antialiased;
   }
-  
+
+  @media (prefers-reduced-motion: reduce) {
+    html.theme-changing,
+    html.theme-changing * {
+      transition: none !important;
+    }
+  }
+
   .font-mono {
     font-family: 'JetBrains Mono', monospace;
   }
+
+  /* Foco visível e consistente (acessibilidade) */
+  :focus-visible {
+    outline: 2px solid #f97316;
+    outline-offset: 2px;
+  }
+}
+
+/* Transição suave ao trocar de tema (sem animar tudo o tempo todo) */
+html.theme-changing,
+html.theme-changing * {
+  transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease !important;
+}
+
+/* ============================================================
+   Remapeamento das classes utilitárias usadas no app
+   (CSS fora de @layer vence as utilities do Tailwind)
+   ============================================================ */
+
+/* --- Fundos --- */
+.bg-\[\#0a0a0c\],
+.bg-\[\#050507\],
+.bg-\[\#09090b\],
+.bg-\[\#0d0d0f\],
+.bg-\[\#101012\],
+.bg-zinc-950 {
+  background-color: var(--app-bg);
+}
+
+.bg-\[\#161618\],
+.bg-\[\#141416\],
+.bg-zinc-900,
+.bg-zinc-900\/90 {
+  background-color: var(--surface-1);
+}
+
+.bg-\[\#1d1d20\],
+.bg-zinc-950\/70,
+.bg-zinc-950\/80,
+.bg-zinc-950\/60,
+.bg-zinc-950\/40 {
+  background-color: var(--surface-2);
+}
+
+.bg-zinc-800,
+.bg-zinc-800\/90,
+.bg-zinc-800\/80,
+.bg-zinc-800\/60,
+.bg-zinc-800\/40 {
+  background-color: var(--surface-3);
+}
+
+.bg-\[\#26262a\],
+.bg-\[\#27272a\] {
+  background-color: var(--surface-4);
+}
+
+.bg-\[\#17171a\] {
+  background-color: var(--surface-1);
+}
+
+.bg-\[\#1d1d20\]\/80,
+.bg-\[\#101012\]\/60 {
+  background-color: var(--surface-2);
+}
+
+.bg-\[\#0a0a0c\]\/95,
+.bg-\[\#09090b\]\/70 {
+  background-color: var(--app-bg);
+}
+
+.hover\:bg-\[\#1d1d20\]:hover {
+  background-color: var(--surface-3);
+}
+
+.hover\:bg-zinc-900:hover,
+.hover\:bg-zinc-800:hover,
+.hover\:bg-zinc-800\/40:hover {
+  background-color: var(--surface-3);
+}
+
+.hover\:bg-zinc-700:hover {
+  background-color: var(--surface-4);
+}
+
+.bg-black\/80,
+.bg-black\/70,
+.bg-black\/60 {
+  background-color: var(--scrim);
+}
+
+.bg-black\/50,
+.bg-black\/40,
+.bg-black\/25 {
+  background-color: color-mix(in srgb, var(--app-bg) 70%, transparent);
+}
+
+/* --- Textos --- */
+.text-white,
+.text-zinc-50,
+.text-zinc-100 {
+  color: var(--text-1);
+}
+
+.text-zinc-200,
+.text-zinc-300 {
+  color: var(--text-2);
+}
+
+.text-zinc-400 {
+  color: var(--text-3);
+}
+
+.text-zinc-500,
+.text-zinc-600,
+.text-zinc-700 {
+  color: var(--text-4);
+}
+
+.hover\:text-white:hover {
+  color: var(--text-1);
+}
+
+.hover\:text-zinc-200:hover,
+.hover\:text-zinc-300:hover {
+  color: var(--text-2);
+}
+
+.hover\:text-zinc-400:hover {
+  color: var(--text-3);
+}
+
+.placeholder\:text-zinc-500::placeholder {
+  color: var(--text-4);
+  opacity: 1;
+}
+
+/* Cores de apoio (erro/sucesso/destaque) legíveis nos dois temas */
+.text-orange-400,
+.text-orange-300,
+.text-amber-400,
+.text-amber-300 {
+  color: var(--accent-text);
+}
+
+.text-rose-400,
+.text-rose-300,
+.text-red-400,
+.text-red-300 {
+  color: var(--danger-text);
+}
+
+.text-emerald-400,
+.text-green-400 {
+  color: var(--success-text);
+}
+
+/* --- Bordas --- */
+.border-zinc-800,
+.border-zinc-800\/80,
+.border-zinc-800\/60,
+.border-zinc-800\/40 {
+  border-color: var(--border-1);
+}
+
+.border-zinc-700,
+.border-zinc-700\/80,
+.border-zinc-700\/60,
+.border-zinc-700\/40 {
+  border-color: var(--border-2);
+}
+
+.hover\:border-zinc-700:hover,
+.hover\:border-zinc-800:hover {
+  border-color: var(--border-2);
+}
+
+.focus\:border-zinc-800:focus {
+  border-color: var(--border-2);
+}
+
+.divide-zinc-800 > :not([hidden]) ~ :not([hidden]) {
+  border-color: var(--border-1);
+}
+
+/* O botão branco (login Google) em tema claro ganha contorno para não sumir */
+[data-theme="light"] .bg-white {
+  background-color: #ffffff;
+}
+
+[data-theme="light"] .border-white {
+  border-color: var(--border-2);
+}
+
+[data-theme="light"] .hover\:bg-zinc-100:hover {
+  background-color: var(--surface-3);
+}
+
+[data-theme="light"] .bg-zinc-500,
+[data-theme="light"] .hover\:bg-zinc-500:hover {
+  background-color: #3f3f46;
 }
 
 /* Custom subtle scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
@@ -21,10 +290,10 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #27272a;
+  background: var(--scrollbar);
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #3f3f46;
+  background: var(--scrollbar-hover);
 }

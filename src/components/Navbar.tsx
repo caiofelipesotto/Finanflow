@@ -4,6 +4,8 @@ import { ViewTab } from '../types/finance';
 import { User, HouseholdDoc } from '../services/cloudSyncService';
 import { GoogleIcon } from './GoogleIcon';
 import { LogoMark } from './Logo';
+import { ThemeToggle } from './ThemeToggle';
+import type { Theme } from '../utils/theme';
 
 interface NavbarProps {
   currentTab: ViewTab;
@@ -17,6 +19,8 @@ interface NavbarProps {
   onOpenShareHousehold: () => void;
   onReturnToLogin?: () => void;
   onLogout?: () => void;
+  theme: Theme;
+  onToggleTheme: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -31,6 +35,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenShareHousehold,
   onReturnToLogin,
   onLogout,
+  theme,
+  onToggleTheme,
 }) => {
   const navItems: { id: ViewTab; label: string }[] = [
     { id: 'dashboard', label: 'Visão Geral' },
@@ -164,6 +170,8 @@ export const Navbar: React.FC<NavbarProps> = ({
             <FileSpreadsheet className="w-3.5 h-3.5 text-zinc-400" />
             <span>Planilha</span>
           </button>
+
+          <ThemeToggle theme={theme} onToggle={onToggleTheme} />
 
           <button
             onClick={onOpenBackupModal}

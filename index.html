@@ -6,8 +6,21 @@
     <link rel="icon" type="image/svg+xml" href="/logo-mark.svg" />
     <link rel="apple-touch-icon" href="/logo-mark.svg" />
     <link rel="mask-icon" href="/logo-mark.svg" color="#f97316" />
-    <meta name="theme-color" content="#0a0a0c" />
+    <meta name="theme-color" content="#050507" />
     <title>FinanFlow · Finanças Pessoais</title>
+    <script>
+      // Aplica o tema salvo antes do primeiro paint (evita piscar branco)
+      (function () {
+        try {
+          var t = localStorage.getItem('finanflow_theme');
+          if (t !== 'light' && t !== 'dark') t = 'dark';
+          document.documentElement.dataset.theme = t;
+          document.documentElement.style.colorScheme = t;
+        } catch (e) {
+          document.documentElement.dataset.theme = 'dark';
+        }
+      })();
+    </script>
     <meta name="description" content="Aplicativo simples, intuitivo e completo para organizar suas finanças pessoais, controlar receitas, despesas, orçamentos e metas financeiras." />
     <meta property="og:title" content="FinanFlow · Finanças Pessoais" />
     <meta property="og:description" content="Aplicativo simples, intuitivo e completo para organizar suas finanças pessoais, controlar receitas, despesas, orçamentos e metas financeiras." />
@@ -17,7 +30,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   </head>
-  <body class="bg-[#09090b] text-zinc-100 antialiased selection:bg-orange-500 selection:text-white font-sans min-h-screen">
+  <body class="bg-[#050507] text-zinc-100 antialiased selection:bg-orange-500 selection:text-white font-sans min-h-screen">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

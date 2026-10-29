@@ -25,6 +25,7 @@ import { AuthGateScreen } from './components/AuthGateScreen';
 import { CheckCircle2, X, Trash2, ArrowRight, ArrowLeft, LogOut, WalletCards } from 'lucide-react';
 import { GoogleIcon } from './components/GoogleIcon';
 import { LogoMark } from './components/Logo';
+import { readTheme, applyTheme, type Theme } from './utils/theme';
 import {
   User,
   HouseholdDoc,
@@ -117,6 +118,12 @@ export default function App() {
   const [selectedYear, setSelectedYear] = useState<number>(now.getFullYear());
   const [selectedMonth, setSelectedMonth] = useState<number>(now.getMonth());
   const [currentTab, setCurrentTab] = useState<ViewTab>('dashboard');
+  const [theme, setTheme] = useState<Theme>(() => readTheme());
+  const toggleTheme = () => setTheme((t) => (t === 'dark' ? 'light' : 'dark'));
+
+  useEffect(() => {
+    applyTheme(theme);
+  }, [theme]);
 
   // Firebase Auth & Cloud Sync States
   const [authChecking, setAuthChecking] = useState(true);
@@ -851,6 +858,8 @@ export default function App() {
       <AuthGateScreen
         onContinueAsGuest={() => setIsGuestMode(true)}
         inviteCode={inviteCodeParam}
+        theme={theme}
+        onToggleTheme={toggleTheme}
       />
     );
   }
@@ -873,6 +882,8 @@ export default function App() {
         onOpenShareHousehold={() => setIsShareHouseholdOpen(true)}
         onReturnToLogin={() => setIsGuestMode(false)}
         onLogout={() => setIsLogoutConfirmOpen(true)}
+        theme={theme}
+        onToggleTheme={toggleTheme}
       />
 
       {/* Main Content Area */}
