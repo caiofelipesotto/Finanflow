@@ -22,8 +22,9 @@ import { ImportSpreadsheetModal } from './components/ImportSpreadsheetModal';
 import { ScanInvoiceModal } from './components/ScanInvoiceModal';
 import { ShareHouseholdModal } from './components/ShareHouseholdModal';
 import { AuthGateScreen } from './components/AuthGateScreen';
-import { WalletCards, CheckCircle2, X, Trash2, ArrowRight, ArrowLeft, LogOut } from 'lucide-react';
+import { CheckCircle2, X, Trash2, ArrowRight, ArrowLeft, LogOut, WalletCards } from 'lucide-react';
 import { GoogleIcon } from './components/GoogleIcon';
+import { LogoMark } from './components/Logo';
 import {
   User,
   HouseholdDoc,
@@ -813,9 +814,7 @@ export default function App() {
   if (authChecking) {
     return (
       <div className="min-h-screen bg-[#0a0a0c] flex flex-col items-center justify-center gap-4 text-zinc-400">
-        <div className="w-14 h-14 rounded-2xl bg-orange-500 flex items-center justify-center text-zinc-950 font-black shadow-xl shadow-orange-500/25 animate-pulse">
-          <WalletCards className="w-7 h-7 stroke-[2.5]" />
-        </div>
+        <LogoMark className="w-14 h-14 shadow-xl shadow-orange-500/25 animate-pulse" />
         <div className="text-sm font-semibold tracking-wide text-zinc-400 flex items-center gap-2">
           <span>Carregando FinanFlow...</span>
         </div>
@@ -826,9 +825,7 @@ export default function App() {
   if (currentUser && !currentHousehold && !isGuestMode) {
     return (
       <div className="min-h-screen bg-[#0a0a0c] flex flex-col items-center justify-center gap-4 text-zinc-400">
-        <div className="w-12 h-12 rounded-2xl bg-orange-500 flex items-center justify-center text-zinc-950 font-black shadow-xl shadow-orange-500/25 animate-pulse">
-          <WalletCards className="w-7 h-7 stroke-[2.5]" />
-        </div>
+        <LogoMark className="w-12 h-12 shadow-xl shadow-orange-500/25 animate-pulse" />
         <div className="text-sm font-semibold tracking-wide text-zinc-400 flex items-center gap-2">
           {cloudTimeout ? (
             <>

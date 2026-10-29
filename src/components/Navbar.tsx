@@ -1,8 +1,9 @@
 import React from 'react';
-import { Plus, Download, WalletCards, FileSpreadsheet, Camera, Users, ArrowLeft, LogOut } from 'lucide-react';
+import { Plus, Download, FileSpreadsheet, Camera, Users, ArrowLeft, LogOut } from 'lucide-react';
 import { ViewTab } from '../types/finance';
 import { User, HouseholdDoc } from '../services/cloudSyncService';
 import { GoogleIcon } from './GoogleIcon';
+import { LogoMark } from './Logo';
 
 interface NavbarProps {
   currentTab: ViewTab;
@@ -48,9 +49,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             className="flex items-center gap-2.5 text-left group cursor-pointer focus:outline-none"
             title="Voltar para a Aba Principal (Visão Geral)"
           >
-            <div className="w-8 h-8 rounded-xl bg-zinc-500 flex items-center justify-center text-zinc-950 font-black shadow-md shadow-orange-500/20 group-hover:bg-orange-400 transition-colors">
-              <WalletCards className="w-4 h-4 stroke-[2.5]" />
-            </div>
+            <LogoMark className="w-8 h-8 shadow-md shadow-orange-500/20 group-hover:scale-105 transition-transform" />
             <div className="flex items-center gap-2">
               <span className="text-base sm:text-lg font-black tracking-tight text-white group-hover:text-zinc-400 transition-colors">
                 FinanFlow

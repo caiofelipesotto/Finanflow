@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-  WalletCards,
   Users,
   ShieldCheck,
   Sparkles,
@@ -12,6 +11,7 @@ import {
 } from 'lucide-react';
 import { signInUrl } from '../services/cloudSyncService';
 import { GoogleIcon } from './GoogleIcon';
+import { LogoMark } from './Logo';
 
 interface AuthGateScreenProps {
   onContinueAsGuest: () => void;
@@ -32,9 +32,7 @@ export const AuthGateScreen: React.FC<AuthGateScreenProps> = ({
       {/* Top micro-bar */}
       <header className="relative z-10 px-6 py-5 flex items-center justify-between max-w-6xl w-full mx-auto">
         <div className="flex items-center gap-3 shrink-0 min-w-0">
-          <div className="w-9 h-9 rounded-xl bg-zinc-500 flex items-center justify-center text-zinc-950 font-black shadow-lg shadow-orange-500/25 shrink-0">
-            <WalletCards className="w-5 h-5 stroke-[2.5]" />
-          </div>
+          <LogoMark className="w-9 h-9 shadow-lg shadow-orange-500/25 shrink-0" />
           <div className="flex items-center gap-2 min-w-0">
             <span className="text-xl font-black tracking-tight text-white whitespace-nowrap">FinanFlow</span>
             <span className="hidden sm:inline text-[10px] font-mono font-bold text-zinc-400 bg-zinc-950/70 border border-zinc-800/60 px-2 py-0.5 rounded-full whitespace-nowrap">
@@ -159,8 +157,9 @@ export const AuthGateScreen: React.FC<AuthGateScreenProps> = ({
       </main>
 
       {/* Footer minimal info */}
-      <footer className="relative z-10 py-4 text-center text-[11px] text-zinc-600 border-t border-zinc-800/80">
-        FinanFlow · Planejamento e Controle Financeiro Inteligente
+      <footer className="relative z-10 py-4 flex items-center justify-center gap-2 text-[11px] text-zinc-600 border-t border-zinc-800/80">
+        <LogoMark className="w-4 h-4" />
+        <span>FinanFlow · Planejamento e Controle Financeiro Inteligente</span>
       </footer>
     </div>
   );
