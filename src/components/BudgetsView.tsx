@@ -134,7 +134,7 @@ export const BudgetsView: React.FC<BudgetsViewProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {expenseCategories.map((cat) => {
           const spent = spentPerCategory[cat.id] || 0;
-          const budget = cat.budget || 0;
+          const budget = Math.max(0, cat.budget || 0);
           const percentage = budget > 0 ? (spent / budget) * 100 : 0;
           const remaining = budget - spent;
           const isOver = budget > 0 && spent > budget;
@@ -167,7 +167,7 @@ export const BudgetsView: React.FC<BudgetsViewProps> = ({
                     <div className="flex items-center gap-2 text-xs text-zinc-400 font-mono tabular-nums">
                       {budget > 0 ? (
                         <>
-                          <span>Teto: {formatCurrency(budget)}</span>
+                        <span>Meta: {formatCurrency(budget)}</span>
                           <span aria-hidden="true" className="text-neutral-700">·</span>
                           <span
                             className={
