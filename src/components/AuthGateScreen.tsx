@@ -11,6 +11,7 @@ import {
   Heart,
 } from 'lucide-react';
 import { signInUrl } from '../services/cloudSyncService';
+import { GoogleIcon } from './GoogleIcon';
 
 interface AuthGateScreenProps {
   onContinueAsGuest: () => void;
@@ -46,7 +47,7 @@ export const AuthGateScreen: React.FC<AuthGateScreenProps> = ({
           onClick={onContinueAsGuest}
           className="shrink-0 text-xs text-zinc-300 hover:text-white transition-colors py-1.5 px-3 rounded-xl border border-zinc-700/80 hover:border-zinc-800 bg-zinc-800/80 cursor-pointer flex items-center gap-1.5"
         >
-          <span className="hidden sm:inline">Continuar com Google (Offline)</span>
+          <span className="hidden sm:inline">Continuar sem conta (offline)</span>
           <span className="sm:hidden">Visitante</span>
           <ArrowRight className="w-3.5 h-3.5 text-zinc-400" />
         </button>
@@ -97,13 +98,13 @@ export const AuthGateScreen: React.FC<AuthGateScreenProps> = ({
               </p>
             </div>
 
-            {/* Sign in with Freebuff — redirect para o login da plataforma */}
+            {/* Login com Google via Supabase (redireciona e volta para o app) */}
             <div className="space-y-3">
               <a
               href={signInUrl(inviteCode ? '/household/join' : '/')}
                 className="w-full flex items-center justify-center gap-3.5 py-3.5 px-5 rounded-2xl font-semibold text-zinc-900 bg-white hover:bg-zinc-100 active:scale-[0.99] transition-all duration-150 shadow-lg shadow-white/10 border border-white group cursor-pointer"
               >
-                <WalletCards className="w-5 h-5 shrink-0 text-zinc-900" />
+                <GoogleIcon className="w-5 h-5 shrink-0" />
                 <span className="text-sm font-bold text-zinc-900">
                   Entrar com Google
                 </span>
@@ -143,7 +144,7 @@ export const AuthGateScreen: React.FC<AuthGateScreenProps> = ({
                   <ShieldCheck className="w-3.5 h-3.5 text-zinc-400" />
                 </div>
                 <span>
-                  <strong>Segurança e Backup na Nuvem:</strong> seus dados protegidos na Google Cloud com acesso restrito a você.
+                  <strong>Segurança e Backup na Nuvem:</strong> seus dados ficam no seu próprio banco, com acesso restrito à sua conta.
                 </span>
               </div>
             </div>

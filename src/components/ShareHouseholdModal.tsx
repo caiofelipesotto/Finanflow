@@ -7,7 +7,6 @@ import {
   Share2,
   Cloud,
   LogOut,
-  LogIn,
   Sparkles,
   ShieldCheck,
   UploadCloud,
@@ -15,16 +14,19 @@ import {
 import {
   User,
   HouseholdDoc,
+  HouseholdMember,
   joinHouseholdWithCode,
   signOutFromCloud,
   signInUrl,
 } from '../services/cloudSyncService';
+import { GoogleIcon } from './GoogleIcon';
 
 interface ShareHouseholdModalProps {
   isOpen: boolean;
   onClose: () => void;
   user: User | null;
   household: HouseholdDoc | null;
+  members: HouseholdMember[];
   onJoinHouseholdSuccess: (household: HouseholdDoc) => void;
   onSyncLocalToCloud: () => void;
   localTransactionsCount: number;
@@ -35,6 +37,7 @@ export const ShareHouseholdModal: React.FC<ShareHouseholdModalProps> = ({
   onClose,
   user,
   household,
+  members,
   onJoinHouseholdSuccess,
   onSyncLocalToCloud,
   localTransactionsCount,
@@ -141,7 +144,7 @@ export const ShareHouseholdModal: React.FC<ShareHouseholdModalProps> = ({
               </div>
               <div>
                 <h3 className="text-base font-semibold text-white">
-                  Entrar com Freebuff
+                  Entrar com o Google
                 </h3>
                 <p className="text-xs text-zinc-300 mt-1 max-w-xs mx-auto">
                   Acesse em qualquer celular ou computador sem perder dados e compartilhe em tempo real com outra pessoa.
@@ -152,8 +155,8 @@ export const ShareHouseholdModal: React.FC<ShareHouseholdModalProps> = ({
                 href={signInUrl('/')}
                 className="w-full flex items-center justify-center gap-2.5 py-3 px-4 bg-white hover:bg-zinc-100 text-zinc-900 font-bold rounded-xl transition-all shadow-md text-sm cursor-pointer"
               >
-                <LogIn className="w-4 h-4 text-zinc-600" />
-                <span>Entrar com Freebuff</span>
+                <GoogleIcon className="w-4 h-4" />
+                <span>Entrar com Google</span>
               </a>
             </div>
           ) : (
@@ -244,6 +247,72 @@ export const ShareHouseholdModal: React.FC<ShareHouseholdModalProps> = ({
                 </div>
               </div>
 
+              {/* Quem participa do espaço */}
+              <div className="p-4 rounded-xl bg-zinc-900/90 border border-zinc-800 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <Users className="w-3.5 h-3.5" />
+                    Quem compartilha este espaço
+                  </span>
+                  <span className="text-[11px] text-zinc-500">
+                    {members.length} {members.length === 1 ? 'pessoa' : 'pessoas'}
+                  </span>
+                </div>
+
+                <ul className="space-y-2">
+                  {members.map((m) => {
+                    const isMe = m.uid === user.sub;
+                    const isOwner = m.uid === household.ownerId;
+                    const displayName = m.name || (isMe ? user.name : null) || 'Membro';
+                    const picture = isMe ? user.picture : undefined;
+                    return (
+                      <li
+                        key={m.uid}
+                        className="flex items-center gap-2.5 p-2 rounded-lg bg-black/25 border border-zinc-800/70"
+                      >
+                        {picture ? (
+                          <img
+                            src={picture}
+                            alt={displayName}
+                            className="w-8 h-8 rounded-full object-cover border border-orange-500/40"
+                          />
+                        ) : (
+                          <div className="w-8 h-8 rounded-full bg-orange-600/25 border border-orange-500/40 flex items-center justify-center text-zinc-200 text-xs font-bold shrink-0">
+                            {displayName[0]?.toUpperCase() || 'U'}
+                          </div>
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="text-xs font-semibold text-white truncate">
+                              {displayName}
+                            </span>
+                            {isMe && (
+                              <span className="text-[10px] font-bold text-orange-300 bg-orange-500/15 border border-orange-500/30 px-1.5 py-0.5 rounded">
+                                Você
+                              </span>
+                            )}
+                            {isOwner && (
+                              <span className="text-[10px] font-bold text-zinc-300 bg-zinc-800 border border-zinc-700 px-1.5 py-0.5 rounded">
+                                Criou o espaço
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-[11px] text-zinc-500 truncate">
+                            {isMe && user.email ? user.email : `Entrou em ${m.joinedAt?.slice(0, 10).split('-').reverse().join('/')}`}
+                          </div>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+
+                {members.length < 2 && (
+                  <p className="text-[11px] text-zinc-500 leading-relaxed">
+                    Ninguém entrou ainda. Envie o link acima para a pessoa aceitar o convite: ela entra com a conta Google dela e já aparece aqui.
+                  </p>
+                )}
+              </div>
+
               {/* Local Data Migration */}
               {localTransactionsCount > 0 && (
                 <div className="p-3.5 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-between gap-3">
@@ -304,8 +373,8 @@ export const ShareHouseholdModal: React.FC<ShareHouseholdModalProps> = ({
         {/* Footer */}
         <div className="p-4 border-t border-zinc-800 bg-[#0a0a0c] flex items-center justify-between text-[11px] text-zinc-400">
           <span className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-zinc-500 animate-pulse" />
-            Nuvem Google Firestore
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            Nuvem segura · Supabase
           </span>
           <button
             onClick={onClose}

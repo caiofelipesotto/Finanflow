@@ -22,10 +22,12 @@ import { ImportSpreadsheetModal } from './components/ImportSpreadsheetModal';
 import { ScanInvoiceModal } from './components/ScanInvoiceModal';
 import { ShareHouseholdModal } from './components/ShareHouseholdModal';
 import { AuthGateScreen } from './components/AuthGateScreen';
-import { WalletCards, CheckCircle2, X, Trash2, ArrowRight, ArrowLeft } from 'lucide-react';
+import { WalletCards, CheckCircle2, X, Trash2, ArrowRight, ArrowLeft, LogOut } from 'lucide-react';
+import { GoogleIcon } from './components/GoogleIcon';
 import {
   User,
   HouseholdDoc,
+  HouseholdMember,
   CloudSyncPayload,
   CloudAuthError,
   fetchMe,
@@ -140,6 +142,8 @@ export default function App() {
   const [notificationBanner, setNotificationBanner] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [currentHousehold, setCurrentHousehold] = useState<HouseholdDoc | null>(null);
+  const [householdMembers, setHouseholdMembers] = useState<HouseholdMember[]>([]);
+  const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
   const [isShareHouseholdOpen, setIsShareHouseholdOpen] = useState(false);
   const [isConfirmClearModalOpen, setIsConfirmClearModalOpen] = useState(false);
   const [clearLoading, setClearLoading] = useState(false);
@@ -259,6 +263,7 @@ export default function App() {
           }
           setCurrentUser(me.user);
           setCurrentHousehold(household);
+          setHouseholdMembers(me.members);
         } else {
           setCurrentUser(null);
           setCurrentHousehold(null);
@@ -368,6 +373,7 @@ export default function App() {
     }
 
     setCurrentHousehold((prev) => (sameContent(prev, data.household) ? prev : data.household));
+    setHouseholdMembers((prev) => (sameContent(prev, data.members) ? prev : data.members));
   };
 
   // Auto-sync: reenvia para a nuvem apenas os lançamentos ainda pendentes
@@ -781,15 +787,14 @@ export default function App() {
   };
 
   const handleLogout = async () => {
-    if (confirm('Deseja realmente sair da sua conta?')) {
-      try {
-        await signOutFromCloud();
-      } catch (err) {
-        console.error('Erro ao sair:', err);
-      } finally {
-        // Recarrega: zera todo o estado e volta para a tela de login.
-        window.location.reload();
-      }
+    setIsLogoutConfirmOpen(false);
+    try {
+      await signOutFromCloud();
+    } catch (err) {
+      console.error('Erro ao sair:', err);
+    } finally {
+      // Recarrega: zera todo o estado e volta para a tela de login.
+      window.location.reload();
     }
   };
 
@@ -870,6 +875,7 @@ export default function App() {
         household={currentHousehold}
         onOpenShareHousehold={() => setIsShareHouseholdOpen(true)}
         onReturnToLogin={() => setIsGuestMode(false)}
+        onLogout={() => setIsLogoutConfirmOpen(true)}
       />
 
       {/* Main Content Area */}
@@ -956,6 +962,7 @@ export default function App() {
                 onClick={() => setIsGuestMode(false)}
                 className="px-3.5 py-1.5 bg-orange-500 hover:bg-orange-400 text-zinc-950 font-bold rounded-xl text-xs transition-colors cursor-pointer shadow-sm shadow-orange-500/20 flex items-center gap-1.5"
               >
+                <GoogleIcon className="w-3.5 h-3.5" />
                 <span>Entrar com Google</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
@@ -1063,7 +1070,7 @@ export default function App() {
                 )}
                 {cloudSaveStatus && <span aria-hidden="true" className="text-zinc-700">·</span>}
                 <button
-                  onClick={handleLogout}
+                  onClick={() => setIsLogoutConfirmOpen(true)}
                   className="text-zinc-500 hover:text-zinc-400 transition-colors cursor-pointer"
                 >
                   Sair da Conta
@@ -1093,6 +1100,7 @@ export default function App() {
         onClose={() => setIsShareHouseholdOpen(false)}
         user={currentUser}
         household={currentHousehold}
+        members={householdMembers}
         onJoinHouseholdSuccess={(h) => setCurrentHousehold(h)}
         onSyncLocalToCloud={handleSyncLocalToCloud}
         localTransactionsCount={transactions.length}
@@ -1129,6 +1137,38 @@ export default function App() {
         categories={categories}
         accounts={accounts}
       />
+
+      {/* Confirmação de saída da conta (disponível também no topo, não só no rodapé) */}
+      {isLogoutConfirmOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-[#161618] border border-zinc-800 rounded-2xl w-full max-w-md p-6 shadow-2xl space-y-4">
+            <div className="w-12 h-12 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 flex items-center justify-center mx-auto">
+              <LogOut className="w-6 h-6" />
+            </div>
+            <div className="text-center">
+              <h3 className="text-lg font-bold text-white">Sair da conta?</h3>
+              <p className="text-xs text-zinc-500 mt-2 leading-relaxed">
+                Seus lançamentos continuam salvos na nuvem e voltam quando você entrar de novo.
+                O que foi criado no modo sem conta fica neste aparelho.
+              </p>
+            </div>
+            <div className="flex items-center gap-3 pt-2">
+              <button
+                onClick={() => setIsLogoutConfirmOpen(false)}
+                className="flex-1 py-2.5 px-4 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-semibold rounded-xl transition-colors cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleLogout}
+                className="flex-1 py-2.5 px-4 bg-red-600 hover:bg-red-500 text-white text-xs font-bold rounded-xl transition-colors cursor-pointer"
+              >
+                Sim, sair
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* In-App Confirmation Modal for Zerar Dados */}
       {isConfirmClearModalOpen && (
