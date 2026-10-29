@@ -24,10 +24,10 @@ export const DonutCategoryChart: React.FC<DonutCategoryChartProps> = ({
 
   if (items.length === 0 || totalExpense === 0) {
     return (
-      <div className="ui-card p-5">
-        <h3 className="text-sm font-bold text-white mb-1">Distribuição de Despesas</h3>
-        <p className="text-xs text-zinc-400 mb-6">{monthLabel}</p>
-        <div className="py-12 text-center text-xs text-zinc-500">
+      <div className="ui-card p-4 sm:p-5">
+        <h3 className="ui-section-title">Onde foi o dinheiro?</h3>
+        <p className="ui-sub">{monthLabel}</p>
+        <div className="py-12 text-center text-xs text-[var(--text-4)]">
           Nenhuma despesa registrada para este mês.
         </div>
       </div>
@@ -44,24 +44,19 @@ export const DonutCategoryChart: React.FC<DonutCategoryChartProps> = ({
   const displayItem = hoveredItem || items[0];
 
   return (
-    <div className="ui-card p-5 flex flex-col justify-between">
+    <div className="ui-card p-4 sm:p-5 flex flex-col justify-between">
       <div>
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h3 className="text-sm font-bold text-white tracking-tight">
-              Onde foi o Dinheiro?
-            </h3>
-            <p className="text-xs text-zinc-400 mt-0.5">{monthLabel}</p>
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h3 className="ui-section-title">Onde foi o dinheiro?</h3>
+            <p className="ui-sub">{monthLabel}</p>
           </div>
-          <span className="text-xs font-semibold text-zinc-300 font-mono tabular-nums">
-            {formatCurrency(totalExpense)}
-          </span>
+          <span className="ui-badge tabular-nums">{formatCurrency(totalExpense)}</span>
         </div>
 
-        {/* Donut SVG and Center Display */}
-        <div className="relative flex items-center justify-center py-2">
-          <svg className="w-48 h-48 -rotate-90 transform" viewBox="0 0 160 160">
-            {/* Background ring */}
+        {/* Rosca e valor central */}
+        <div className="relative flex items-center justify-center py-3">
+          <svg className="w-44 h-44 -rotate-90 transform" viewBox="0 0 160 160">
             <circle
               cx="80"
               cy="80"
@@ -98,47 +93,46 @@ export const DonutCategoryChart: React.FC<DonutCategoryChartProps> = ({
             })}
           </svg>
 
-          {/* Center text */}
           <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none p-4">
-            <span className="text-[11px] text-zinc-400 font-medium truncate max-w-[120px]">
+            <span className="text-[10px] text-[var(--text-4)] font-semibold truncate max-w-[110px]">
               {displayItem?.name || 'Total'}
             </span>
-            <span className="text-sm font-bold text-white font-mono tabular-nums mt-0.5">
+            <span className="text-sm font-bold text-[var(--text-1)] tabular-nums mt-0.5">
               {formatCurrency(displayItem?.amount || totalExpense)}
             </span>
-            <span className="text-[10px] text-zinc-400 font-mono tabular-nums font-semibold">
+            <span className="text-[10px] text-[var(--text-4)] tabular-nums font-semibold">
               {displayItem ? `${displayItem.percentage.toFixed(1)}%` : '100%'}
             </span>
           </div>
         </div>
       </div>
 
-      {/* Ranked Category List */}
-      <div className="space-y-2.5 mt-4 pt-3 border-t border-zinc-800/80 max-h-56 overflow-y-auto pr-1">
+      {/* Lista de categorias */}
+      <div className="space-y-1 mt-3 pt-3 border-t border-[var(--border-1)] max-h-56 overflow-y-auto pr-1">
         {items.map((cat) => {
           const isHovered = hoveredItem?.id === cat.id;
           return (
             <div
               key={cat.id}
-              className={`flex items-center justify-between py-1 px-2 rounded-lg cursor-pointer transition-colors ${
-                isHovered ? 'bg-[#26262a]' : 'hover:bg-zinc-800/40'
+              className={`flex items-center justify-between gap-2 py-1.5 px-2 rounded-[var(--r-control)] cursor-pointer transition-colors ${
+                isHovered ? 'bg-[var(--surface-3)]' : 'hover:bg-[var(--surface-2)]'
               }`}
               onMouseEnter={() => setHoveredItem(cat)}
               onMouseLeave={() => setHoveredItem(null)}
             >
               <div className="flex items-center gap-2 min-w-0">
                 <span
-                  className="w-2.5 h-2.5 rounded-full shrink-0"
+                  className="w-2 h-2 rounded-full shrink-0"
                   style={{ backgroundColor: cat.color }}
                 />
-                <span className="text-xs text-zinc-300 truncate font-medium">
+                <span className="text-[11px] text-[var(--text-2)] truncate font-medium">
                   {cat.name}
                 </span>
               </div>
 
-              <div className="text-right shrink-0 font-mono tabular-nums text-xs">
-                <span className="font-bold text-white">{formatCurrency(cat.amount)}</span>
-                <span className="text-[10px] text-zinc-400 ml-2">
+              <div className="text-right shrink-0 tabular-nums text-[11px]">
+                <span className="font-bold text-[var(--text-1)]">{formatCurrency(cat.amount)}</span>
+                <span className="text-[10px] text-[var(--text-4)] ml-2">
                   {cat.percentage.toFixed(0)}%
                 </span>
               </div>

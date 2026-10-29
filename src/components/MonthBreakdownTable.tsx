@@ -1,8 +1,9 @@
 import React, { useState, useMemo } from 'react';
-import { Search, CheckCircle2, Circle, CreditCard, Repeat, Trash2, Edit2, Plus, Calendar, DollarSign, Filter } from 'lucide-react';
+import { Search, CheckCircle2, Circle, CreditCard, Repeat, Trash2, Edit2, Plus, Calendar } from 'lucide-react';
 import { Transaction, Category, Account } from '../types/finance';
 import { formatCurrency, formatDateShort } from '../utils/formatters';
 import { CategoryIcon } from './CategoryIcon';
+import { TransactionMobileList } from './TransactionMobileList';
 
 interface MonthBreakdownTableProps {
   transactions: Transaction[];
@@ -78,193 +79,149 @@ export const MonthBreakdownTable: React.FC<MonthBreakdownTableProps> = ({
     return filteredList.filter((t) => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
   }, [filteredList]);
 
+  const filterTabs: { id: typeof typeFilter; label: string; icon?: React.ReactNode }[] = [
+    { id: 'all', label: 'Todos' },
+    { id: 'expense', label: 'Despesas' },
+    { id: 'income', label: 'Receitas' },
+    { id: 'installment', label: 'Parcelados', icon: <CreditCard className="w-3 h-3" /> },
+    { id: 'recurrent', label: 'Fixos', icon: <Repeat className="w-3 h-3" /> },
+  ];
+
   return (
-    <div className="ui-card p-5 space-y-4">
-      {/* Table Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-neutral-800">
-        <div>
-          <h3 className="text-sm font-bold text-white tracking-tight flex items-center gap-2">
-            Movimentações Detalhadas do Mês
-            <span className="text-[11px] font-mono font-medium px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-300">
+    <section className="ui-card p-4 sm:p-5">
+      {/* Cabeçalho */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[var(--border-1)]">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="ui-section-title">Movimentações do mês</h3>
+            <span className="ui-badge">
               {filteredList.length} {filteredList.length === 1 ? 'item' : 'itens'}
             </span>
-          </h3>
-          <p className="text-xs text-zinc-400 mt-0.5">
-            Lançamentos de {monthLabel} com controle de pagamento e parcelamento
-          </p>
+          </div>
+          <p className="ui-sub">Lançamentos de {monthLabel} com controle de pagamento e parcelamento</p>
         </div>
 
-        <button
-          onClick={onOpenNewTransaction}
-          className="ui-btn ui-btn-primary self-start sm:self-auto"
-        >
+        <button onClick={onOpenNewTransaction} className="ui-btn ui-btn-primary self-start sm:self-auto">
           <Plus className="w-3.5 h-3.5" />
-          <span>Novo Lançamento</span>
+          <span>Novo lançamento</span>
         </button>
       </div>
 
-      {/* Filters Bar */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-        {/* Search */}
-        <div className="relative flex-1">
-          <Search className="w-4 h-4 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
+      {/* Busca e filtros */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 py-3">
+        <div className="relative flex-1 min-w-0">
+          <Search className="w-4 h-4 text-[var(--text-4)] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
           <input
             type="text"
             placeholder="Buscar por descrição, cartão ou categoria..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="ui-input pl-9 py-2"
+            className="ui-input !pl-9"
           />
         </div>
 
-        {/* Quick Type Filter Tabs */}
-        <div className="flex items-center gap-1 p-1 ui-panel rounded-xl border border-neutral-800 overflow-x-auto text-xs">
-          <button
-            type="button"
-            onClick={() => setTypeFilter('all')}
-            className={`px-2.5 py-1 rounded-lg font-medium transition-colors whitespace-nowrap ${
-              typeFilter === 'all'
-                ? 'bg-zinc-800 text-white font-bold'
-                : 'text-zinc-400 hover:text-white'
-            }`}
-          >
-            Todos
-          </button>
-          <button
-            type="button"
-            onClick={() => setTypeFilter('expense')}
-            className={`px-2.5 py-1 rounded-lg font-medium transition-colors whitespace-nowrap ${
-              typeFilter === 'expense'
-                ? 'bg-rose-950 text-rose-300 font-bold border border-rose-800'
-                : 'text-zinc-400 hover:text-white'
-            }`}
-          >
-            Despesas
-          </button>
-          <button
-            type="button"
-            onClick={() => setTypeFilter('income')}
-            className={`px-2.5 py-1 rounded-lg font-medium transition-colors whitespace-nowrap ${
-              typeFilter === 'income'
-                ? 'bg-orange-950 text-orange-300 font-bold border border-orange-800'
-                : 'text-orange-400 hover:text-white'
-            }`}
-          >
-            Receitas
-          </button>
-          <button
-            type="button"
-            onClick={() => setTypeFilter('installment')}
-            className={`flex items-center gap-1 px-2.5 py-1 rounded-lg font-medium transition-colors whitespace-nowrap ${
-              typeFilter === 'installment'
-                ? 'bg-zinc-800 text-zinc-300 font-bold border border-zinc-800'
-                : 'text-zinc-400 hover:text-white'
-            }`}
-          >
-            <CreditCard className="w-3 h-3" />
-            <span>Parcelados</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setTypeFilter('recurrent')}
-            className={`flex items-center gap-1 px-2.5 py-1 rounded-lg font-medium transition-colors whitespace-nowrap ${
-              typeFilter === 'recurrent'
-                ? 'bg-zinc-800 text-zinc-300 font-bold border border-zinc-800'
-                : 'text-zinc-400 hover:text-white'
-            }`}
-          >
-            <Repeat className="w-3 h-3" />
-            <span>Fixos</span>
-          </button>
+        <div className="ui-segmented flex-wrap w-full sm:w-auto">
+          {filterTabs.map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setTypeFilter(tab.id)}
+              className={`ui-seg-item ${typeFilter === tab.id ? 'ui-seg-item-active' : ''}`}
+            >
+              {tab.icon}
+              <span>{tab.label}</span>
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* Table Content */}
+      {/* Conteúdo */}
       {filteredList.length === 0 ? (
-        <div className="py-12 px-4 text-center border border-dashed border-neutral-800 rounded-xl">
-          <Calendar className="w-8 h-8 text-zinc-500 mx-auto mb-2 opacity-50" />
-          <h4 className="text-xs font-bold text-zinc-200">
+        <div className="py-12 px-4 text-center border border-dashed border-[var(--border-2)] rounded-[var(--r-panel)]">
+          <Calendar className="w-8 h-8 text-[var(--text-4)] mx-auto mb-2" />
+          <h4 className="text-xs font-bold text-[var(--text-1)]">
             {transactions.length === 0
               ? 'Nenhum lançamento cadastrado neste mês'
               : 'Nenhum item corresponde ao filtro selecionado'}
           </h4>
-          <p className="text-[11px] text-zinc-400 max-w-sm mx-auto mt-1 mb-4">
+          <p className="text-[11px] text-[var(--text-3)] max-w-sm mx-auto mt-1 mb-4 leading-relaxed">
             {transactions.length === 0
               ? 'Adicione suas despesas fixas, compras no cartão ou salários para organizar suas contas.'
               : 'Tente alterar os termos da busca ou os filtros aplicados.'}
           </p>
-          <button
-            onClick={onOpenNewTransaction}
-            className="ui-btn ui-btn-primary"
-          >
+          <button onClick={onOpenNewTransaction} className="ui-btn ui-btn-primary">
             <Plus className="w-3.5 h-3.5" />
-            <span>Adicionar Primeiro Lançamento</span>
+            <span>Adicionar primeiro lançamento</span>
           </button>
         </div>
       ) : (
-        <div className="border border-neutral-800 rounded-xl overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-zinc-900 text-[10px] uppercase text-zinc-400 border-b border-neutral-800 font-semibold tracking-wider">
+        <div className="border border-[var(--border-1)] rounded-[var(--r-panel)] overflow-hidden">
+          <div className="md:hidden px-3 py-1">
+            <TransactionMobileList
+              transactions={filteredList}
+              categoriesMap={categoriesMap}
+              accountsMap={accountsMap}
+              onTogglePaid={onTogglePaid}
+              onEdit={onEditTransaction}
+              onDelete={onDeleteTransaction}
+            />
+          </div>
+
+          <div className="hidden md:block overflow-x-auto">
+            <table className="ui-table">
+              <thead>
                 <tr>
-                  <th className="py-3 px-3.5 w-12 text-center">Status</th>
-                  <th className="py-3 px-3.5">Descrição</th>
-                  <th className="py-3 px-3.5">Categoria</th>
-                  <th className="py-3 px-3.5">Conta / Cartão</th>
-                  <th className="py-3 px-3.5 text-center">Data</th>
-                  <th className="py-3 px-3.5 text-right">Valor</th>
-                  <th className="py-3 px-3.5 text-right w-20">Ações</th>
+                  <th className="w-10 text-center">Status</th>
+                  <th>Descrição</th>
+                  <th className="hidden sm:table-cell">Categoria</th>
+                  <th className="hidden md:table-cell">Conta / Cartão</th>
+                  <th className="hidden md:table-cell text-center">Data</th>
+                  <th className="text-right">Valor</th>
+                  <th className="text-right w-16">Ações</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-neutral-800/80">
+              <tbody>
                 {filteredList.map((tx) => {
                   const cat = categoriesMap[tx.category];
                   const acc = accountsMap[tx.account];
                   const isIncome = tx.type === 'income';
 
                   return (
-                    <tr
-                      key={tx.id}
-                      className="hover:bg-zinc-800/40 transition-colors group"
-                    >
-                      {/* Status / Paid checkmark */}
-                      <td className="py-3 px-3.5 text-center">
+                    <tr key={tx.id} className="group">
+                      <td className="text-center">
                         <button
                           type="button"
                           onClick={() => onTogglePaid(tx.id)}
                           title={tx.isPaid ? 'Marcado como pago' : 'Marcar como pago'}
-                          className={`p-1 rounded-lg transition-colors ${
+                          className={`p-1 rounded-[var(--r-control)] transition-colors ${
                             tx.isPaid
-                              ? 'text-zinc-400 hover:text-zinc-300'
-                              : 'text-zinc-500 hover:text-zinc-300'
+                              ? 'text-[var(--accent-text)] hover:text-[var(--text-1)]'
+                              : 'text-[var(--text-4)] hover:text-[var(--text-2)]'
                           }`}
                         >
-                          {tx.isPaid ? (
-                            <CheckCircle2 className="w-4 h-4" />
-                          ) : (
-                            <Circle className="w-4 h-4" />
-                          )}
+                          {tx.isPaid ? <CheckCircle2 className="w-4 h-4" /> : <Circle className="w-4 h-4" />}
                         </button>
                       </td>
 
-                      {/* Description + Badges */}
-                      <td className="py-3 px-3.5">
-                        <div className="flex items-center gap-2">
-                          <span className={`font-semibold ${tx.isPaid ? 'text-zinc-200' : 'text-white'}`}>
+                      <td>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span
+                            className={`font-semibold max-w-[9rem] sm:max-w-none truncate ${
+                              tx.isPaid ? 'text-[var(--text-2)]' : 'text-[var(--text-1)]'
+                            }`}
+                          >
                             {tx.description}
                           </span>
 
-                          {/* Installment Badge */}
                           {tx.installment && (
-                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-zinc-950/80 border border-zinc-800 text-zinc-300">
+                            <span className="ui-badge">
                               <CreditCard className="w-2.5 h-2.5" />
                               {tx.installment.current}/{tx.installment.total}
                             </span>
                           )}
 
-                          {/* Recurrent Badge */}
                           {tx.recurrence === 'monthly' && (
-                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-zinc-950/80 border border-zinc-800 text-zinc-300">
+                            <span className="ui-badge">
                               <Repeat className="w-2.5 h-2.5" />
                               Fixo
                             </span>
@@ -272,62 +229,53 @@ export const MonthBreakdownTable: React.FC<MonthBreakdownTableProps> = ({
                         </div>
 
                         {tx.notes && (
-                          <div className="text-[10px] text-zinc-500 mt-0.5 truncate max-w-xs">
+                          <div className="text-[10px] text-[var(--text-4)] mt-0.5 truncate max-w-[9rem] sm:max-w-xs">
                             {tx.notes}
                           </div>
                         )}
                       </td>
 
-                      {/* Category */}
-                      <td className="py-3 px-3.5">
-                        <div className="flex items-center gap-1.5 text-zinc-300 text-xs">
+                      <td className="hidden sm:table-cell">
+                        <div className="flex items-center gap-1.5 text-[var(--text-2)] text-xs">
                           {cat && (
-                            <CategoryIcon
-                              name={cat.icon}
-                              color={cat.color}
-                              className="w-3.5 h-3.5"
-                            />
+                            <CategoryIcon name={cat.icon} color={cat.color} className="w-3.5 h-3.5" />
                           )}
                           <span className="truncate">{cat?.name || 'Geral'}</span>
                         </div>
                       </td>
 
-                      {/* Account / Card */}
-                      <td className="py-3 px-3.5">
-                        <span className="text-zinc-400 text-xs truncate block">
-                          {acc?.name || 'Conta Padrão'}
+                      <td className="hidden md:table-cell">
+                        <span className="text-[var(--text-3)] text-xs truncate block">
+                          {acc?.name || 'Conta padrão'}
                         </span>
                       </td>
 
-                      {/* Date */}
-                      <td className="py-3 px-3.5 text-center font-mono text-xs text-zinc-400 whitespace-nowrap">
+                      <td className="hidden md:table-cell text-center text-xs text-[var(--text-4)] whitespace-nowrap tabular-nums">
                         {formatDateShort(tx.date)}
                       </td>
 
-                      {/* Amount */}
-                      <td className="py-3 px-3.5 text-right font-mono tabular-nums font-bold whitespace-nowrap">
-                        <span className={isIncome ? 'text-orange-400' : 'text-orange-200'}>
+                      <td className="text-right font-bold whitespace-nowrap tabular-nums">
+                        <span className={isIncome ? 'text-[var(--accent-text)]' : 'text-[var(--text-1)]'}>
                           {isIncome ? '+ ' : '- '}
                           {formatCurrency(tx.amount)}
                         </span>
                       </td>
 
-                      {/* Actions */}
-                      <td className="py-3 px-3.5 text-right">
-                        <div className="flex items-center justify-end gap-1 opacity-80 group-hover:opacity-100 transition-opacity">
+                      <td className="text-right">
+                        <div className="flex items-center justify-end gap-1 opacity-100 md:opacity-70 md:group-hover:opacity-100 transition-opacity">
                           <button
                             type="button"
                             onClick={() => onEditTransaction(tx)}
-                            title="Editar Lançamento"
-                            className="p-1 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-md transition-colors"
+                            title="Editar lançamento"
+                            className="p-1 text-[var(--text-3)] hover:text-[var(--text-1)] hover:bg-[var(--surface-3)] rounded-[var(--r-control)] transition-colors"
                           >
                             <Edit2 className="w-3.5 h-3.5" />
                           </button>
                           <button
                             type="button"
                             onClick={() => onDeleteTransaction(tx.id)}
-                            title="Excluir Lançamento"
-                            className="p-1 text-zinc-400 hover:text-rose-400 hover:bg-rose-950/40 rounded-md transition-colors"
+                            title="Excluir lançamento"
+                            className="p-1 text-[var(--text-3)] hover:text-[var(--danger-text)] hover:bg-[var(--danger-soft)] rounded-[var(--r-control)] transition-colors"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
@@ -340,28 +288,28 @@ export const MonthBreakdownTable: React.FC<MonthBreakdownTableProps> = ({
             </table>
           </div>
 
-          {/* Footer Subtotals */}
-          <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 ui-panel rounded-none border-x-0 border-b-0 text-xs font-mono">
-            <span className="text-zinc-400 text-[11px]">
-              Subtotal do Filtro: {filteredList.length} itens
+          {/* Subtotais */}
+          <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-2.5 bg-[var(--surface-2)] border-t border-[var(--border-1)] text-xs tabular-nums">
+            <span className="text-[var(--text-4)] text-[11px]">
+              Subtotal do filtro: {filteredList.length} itens
             </span>
-            <div className="flex items-center gap-4 text-xs">
+            <div className="flex items-center gap-4">
               {filteredIncome > 0 && (
-                <div className="text-zinc-400">
-                  <span className="text-orange-400 mr-1.5 font-sans">Entradas:</span>
-                  +{formatCurrency(filteredIncome)}
+                <div className="text-[var(--text-3)]">
+                  <span className="mr-1.5">Entradas:</span>
+                  <strong className="text-[var(--accent-text)]">+{formatCurrency(filteredIncome)}</strong>
                 </div>
               )}
               {filteredExpense > 0 && (
-                <div className="text-rose-400">
-                  <span className="text-zinc-400 mr-1.5 font-sans">Saídas:</span>
-                  -{formatCurrency(filteredExpense)}
+                <div className="text-[var(--text-3)]">
+                  <span className="mr-1.5">Saídas:</span>
+                  <strong className="text-[var(--danger-text)]">-{formatCurrency(filteredExpense)}</strong>
                 </div>
               )}
             </div>
           </div>
         </div>
       )}
-    </div>
+    </section>
   );
 };

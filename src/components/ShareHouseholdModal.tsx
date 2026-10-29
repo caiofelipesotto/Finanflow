@@ -115,28 +115,23 @@ export const ShareHouseholdModal: React.FC<ShareHouseholdModalProps> = ({
   };
 
   return (
-    <div className="ui-modal-overlay">
-      <div className="ui-modal max-w-lg">
-        {/* Header */}
-        <div className="ui-modal-header justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-orange-600 to-amber-400 flex items-center justify-center text-zinc-950 font-bold shadow-lg shadow-orange-500/20">
-              <Users className="w-5 h-5" />
-            </div>
-            <div>
-              <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                Espaço Financeiro na Nuvem
-              </h2>
-              <p className="text-xs text-zinc-400">
-                Sincronização em tempo real entre membros e aparelhos
-              </p>
-            </div>
+    <div className="ui-modal-overlay" onClick={onClose}>
+      <div className="ui-modal max-w-lg" onClick={(e) => e.stopPropagation()}>
+        {/* Cabeçalho */}
+        <div className="ui-modal-header">
+          <span className="ui-icon ui-icon-accent !w-9 !h-9">
+            <Users className="w-4 h-4" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <h2 className="ui-modal-title">Espaço financeiro na nuvem</h2>
+            <p className="ui-modal-sub">Sincronização em tempo real entre membros e aparelhos</p>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 text-zinc-400 hover:text-white rounded-lg hover:bg-zinc-800 transition-colors cursor-pointer"
+            aria-label="Fechar"
+            className="p-1.5 -mt-1 -mr-1 rounded-[var(--r-control)] text-[var(--text-4)] hover:text-[var(--text-1)] hover:bg-[var(--surface-3)] transition-colors shrink-0"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
@@ -144,56 +139,48 @@ export const ShareHouseholdModal: React.FC<ShareHouseholdModalProps> = ({
         <div className="ui-modal-body space-y-5">
           {/* Auth State */}
           {!user ? (
-            <div className="ui-panel p-5 text-center space-y-4">
-              <div className="w-12 h-12 mx-auto rounded-full bg-orange-500/10 border border-orange-500/30 flex items-center justify-center text-orange-400">
-                <Cloud className="w-6 h-6" />
+            <div className="ui-tile p-5 text-center space-y-4">
+              <div className="ui-icon ui-icon-accent !w-11 !h-11 mx-auto">
+                <Cloud className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="text-base font-semibold text-white">
-                  Entrar com o Google
-                </h3>
-                <p className="text-xs text-zinc-300 mt-1 max-w-xs mx-auto">
+                <h3 className="ui-section-title">Entrar com o Google</h3>
+                <p className="ui-sub max-w-xs mx-auto leading-relaxed">
                   Acesse em qualquer celular ou computador sem perder dados e compartilhe em tempo real com outra pessoa.
                 </p>
               </div>
 
-              <a
-                href={signInUrl('/')}
-                className="btn-google w-full flex items-center justify-center gap-2.5 py-3 px-4 font-bold rounded-xl transition-all shadow-md text-sm cursor-pointer"
-              >
+              <a href={signInUrl('/')} className="btn-google ui-btn w-full !py-3">
                 <GoogleIcon className="w-4 h-4" />
-                <span>Entrar com Google</span>
+                <span className="text-sm font-bold">Entrar com Google</span>
               </a>
             </div>
           ) : (
-            <div className="ui-panel p-4 flex items-center justify-between">
+            <div className="ui-tile p-4 flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 {user.picture ? (
                   <img
                     src={user.picture}
                     alt={user.name || 'Avatar'}
-                    className="w-10 h-10 rounded-full border border-orange-500/50 object-cover"
+                    className="w-10 h-10 rounded-full object-cover"
                   />
                 ) : (
-                  <div className="w-10 h-10 rounded-full bg-orange-600/30 border border-orange-500/40 flex items-center justify-center text-zinc-400 font-bold">
+                  <div className="w-10 h-10 rounded-full bg-[var(--accent-soft)] border border-[color-mix(in_srgb,var(--accent-text)_35%,transparent)] flex items-center justify-center text-[var(--accent-text)] font-bold">
                     {(user.name || user.email || 'U')[0].toUpperCase()}
                   </div>
                 )}
-                <div>
-                  <div className="text-sm font-semibold text-white flex items-center gap-1.5">
-                    <span>{user.name || 'Usuário'}</span>
-                    <ShieldCheck className="w-4 h-4 text-zinc-400" />
+                <div className="min-w-0">
+                  <div className="text-xs font-semibold text-[var(--text-1)] flex items-center gap-1.5">
+                    <span className="truncate">{user.name || 'Usuário'}</span>
+                    <ShieldCheck className="w-3.5 h-3.5 text-[var(--success-text)] shrink-0" />
                   </div>
-                  <div className="text-xs text-zinc-400 truncate max-w-[200px]">
+                  <div className="text-[11px] text-[var(--text-4)] truncate max-w-[200px]">
                     {user.email}
                   </div>
                 </div>
               </div>
 
-              <button
-                onClick={handleLogout}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-red-400 hover:text-red-300 bg-red-950/30 hover:bg-red-950/60 border border-red-800/40 rounded-lg transition-colors cursor-pointer"
-              >
+              <button onClick={handleLogout} className="ui-btn ui-btn-danger shrink-0">
                 <LogOut className="w-3.5 h-3.5" />
                 <span>Sair</span>
               </button>
@@ -203,24 +190,23 @@ export const ShareHouseholdModal: React.FC<ShareHouseholdModalProps> = ({
           {/* Household Connection details */}
           {user && household && (
             <div className="space-y-4">
-              <div className="ui-panel p-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
+              <div className="ui-tile p-4 space-y-3">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="ui-label !mb-0 flex items-center gap-1.5">
                     <Sparkles className="w-3.5 h-3.5" />
-                    Espaço Compartilhado Ativo
+                    Espaço compartilhado ativo
                   </span>
+                  <span className="ui-badge ui-badge-success">Conectado</span>
                 </div>
 
-                <div className="text-base font-bold text-white">
+                <div className="text-sm font-bold text-[var(--text-1)]">
                   {household.name}
                 </div>
 
-                <div className="pt-2 border-t border-zinc-800 flex flex-col gap-2">
-                  <div className="text-xs text-zinc-300 font-medium">
-                    Código de Convite / Conexão:
-                  </div>
+                <div className="pt-3 border-t border-[var(--border-1)] flex flex-col gap-2">
+                  <div className="ui-label !mb-0">Código de convite</div>
                   <div className="flex items-center gap-2">
-                    <div className="flex-1 py-2 px-3 bg-black/50 border border-zinc-700 rounded-lg font-mono text-center text-lg font-bold tracking-widest text-zinc-300 select-all">
+                    <div className="flex-1 py-2 px-3 bg-[var(--surface-1)] border border-[var(--border-2)] rounded-[var(--r-control)] text-center text-base font-bold tracking-[0.2em] text-[var(--text-2)] tabular-nums select-all">
                       {household.inviteCode}
                     </div>
                     <button
@@ -241,26 +227,23 @@ export const ShareHouseholdModal: React.FC<ShareHouseholdModalProps> = ({
                     </button>
                   </div>
 
-                  <button
-                    onClick={handleCopyLink}
-                    className="w-full mt-1 flex items-center justify-center gap-2 py-2 px-3 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-200 text-xs font-medium rounded-lg transition-colors cursor-pointer"
-                  >
-                    <Share2 className="w-3.5 h-3.5 text-zinc-400" />
+                  <button onClick={handleCopyLink} className="ui-btn ui-btn-secondary w-full mt-1">
+                    <Share2 className="w-3.5 h-3.5" />
                     <span>
-                      {copiedLink ? 'Link direto copiado para WhatsApp!' : 'Copiar Link direto para WhatsApp'}
+                      {copiedLink ? 'Link copiado para o WhatsApp' : 'Copiar link do convite'}
                     </span>
                   </button>
                 </div>
               </div>
 
               {/* Quem participa do espaço */}
-              <div className="ui-panel p-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
+              <div className="ui-tile p-4 space-y-3">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="ui-label !mb-0 flex items-center gap-1.5">
                     <Users className="w-3.5 h-3.5" />
-                    Quem compartilha este espaço
+                    Quem compartilha
                   </span>
-                  <span className="text-[11px] text-zinc-500">
+                  <span className="ui-badge">
                     {members.length} {members.length === 1 ? 'pessoa' : 'pessoas'}
                   </span>
                 </div>
@@ -274,36 +257,28 @@ export const ShareHouseholdModal: React.FC<ShareHouseholdModalProps> = ({
                     return (
                       <li
                         key={m.uid}
-                        className="flex items-center gap-2.5 p-2 rounded-lg bg-black/25 border border-zinc-800/70"
+                        className="flex items-center gap-2.5 p-2 rounded-[var(--r-control)] bg-[var(--surface-1)] border border-[var(--border-1)]"
                       >
                         {picture ? (
                           <img
                             src={picture}
                             alt={displayName}
-                            className="w-8 h-8 rounded-full object-cover border border-orange-500/40"
+                            className="w-8 h-8 rounded-full object-cover"
                           />
                         ) : (
-                          <div className="w-8 h-8 rounded-full bg-orange-600/25 border border-orange-500/40 flex items-center justify-center text-zinc-200 text-xs font-bold shrink-0">
+                          <div className="w-8 h-8 rounded-full bg-[var(--accent-soft)] border border-[color-mix(in_srgb,var(--accent-text)_35%,transparent)] flex items-center justify-center text-[var(--accent-text)] text-[11px] font-bold shrink-0">
                             {displayName[0]?.toUpperCase() || 'U'}
                           </div>
                         )}
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className="text-xs font-semibold text-white truncate">
+                            <span className="text-xs font-semibold text-[var(--text-1)] truncate">
                               {displayName}
                             </span>
-                            {isMe && (
-                              <span className="text-[10px] font-bold text-orange-300 bg-orange-500/15 border border-orange-500/30 px-1.5 py-0.5 rounded">
-                                Você
-                              </span>
-                            )}
-                            {isOwner && (
-                              <span className="text-[10px] font-bold text-zinc-300 bg-zinc-800 border border-zinc-700 px-1.5 py-0.5 rounded">
-                                Criou o espaço
-                              </span>
-                            )}
+                            {isMe && <span className="ui-badge ui-badge-accent">Você</span>}
+                            {isOwner && <span className="ui-badge">Criou o espaço</span>}
                           </div>
-                          <div className="text-[11px] text-zinc-500 truncate">
+                          <div className="text-[11px] text-[var(--text-4)] truncate">
                             {isMe && user.email ? user.email : `Entrou em ${m.joinedAt?.slice(0, 10).split('-').reverse().join('/')}`}
                           </div>
                         </div>
@@ -313,7 +288,7 @@ export const ShareHouseholdModal: React.FC<ShareHouseholdModalProps> = ({
                 </ul>
 
                 {members.length < 2 && (
-                  <p className="text-[11px] text-zinc-500 leading-relaxed">
+                  <p className="text-[11px] text-[var(--text-4)] leading-relaxed">
                     Ninguém entrou ainda. Envie o link acima para a pessoa aceitar o convite: ela entra com a conta Google dela e já aparece aqui.
                   </p>
                 )}
@@ -321,14 +296,16 @@ export const ShareHouseholdModal: React.FC<ShareHouseholdModalProps> = ({
 
               {/* Só aparece quando existe algo realmente fora da nuvem */}
               {pendingUploadCount > 0 ? (
-                <div className="p-3.5 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-2.5">
-                    <UploadCloud className="w-5 h-5 text-orange-400 shrink-0" />
-                    <div>
-                      <div className="text-xs font-semibold text-white">
+                <div className="ui-tile p-3.5 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <span className="ui-icon ui-icon-accent">
+                      <UploadCloud className="w-4 h-4" />
+                    </span>
+                    <div className="min-w-0">
+                      <div className="text-xs font-semibold text-[var(--text-1)]">
                         {pendingUploadCount} lançamento(s) fora da nuvem
                       </div>
-                      <div className="text-[11px] text-zinc-400">
+                      <div className="text-[11px] text-[var(--text-4)]">
                         Criados neste aparelho (offline ou no modo sem conta).
                       </div>
                     </div>
@@ -342,24 +319,22 @@ export const ShareHouseholdModal: React.FC<ShareHouseholdModalProps> = ({
                   </button>
                 </div>
               ) : sentCount !== null && sentCount > 0 ? (
-                <div className="p-3.5 rounded-xl bg-zinc-900 border border-orange-500/40 flex items-center gap-2.5">
-                  <Check className="w-4 h-4 text-orange-400 shrink-0" />
-                  <div className="text-[11px] text-zinc-300">
+                <div className="ui-tile p-3.5 flex items-center gap-2.5 !border-[color-mix(in_srgb,var(--success-text)_30%,transparent)] !bg-[var(--success-soft)]">
+                  <Check className="w-4 h-4 text-[var(--success-text)] shrink-0" />
+                  <div className="text-[11px] text-[var(--text-2)]">
                     {sentCount} lançamento(s) enviados. Agora tudo está na nuvem.
                   </div>
                 </div>
               ) : (
-                <div className="flex items-center gap-2 px-1 text-[11px] text-zinc-500">
-                  <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                <div className="flex items-center gap-2 px-1 text-[11px] text-[var(--text-4)]">
+                  <Check className="w-3.5 h-3.5 text-[var(--success-text)] shrink-0" />
                   Tudo o que está aqui já foi salvo na nuvem.
                 </div>
               )}
 
-              {/* Enter another code to connect */}
-              <div className="pt-2 border-t border-zinc-800 space-y-2">
-                <div className="text-xs text-zinc-400">
-                  Ou já tem o código de outro espaço?
-                </div>
+              {/* Entrar com código de outro espaço */}
+              <div className="pt-3 border-t border-[var(--border-1)] space-y-2">
+                <div className="ui-label !mb-0">Ou já tem o código de outro espaço?</div>
                 <form onSubmit={handleJoinByCode} className="flex gap-2">
                   <input
                     type="text"
@@ -379,10 +354,10 @@ export const ShareHouseholdModal: React.FC<ShareHouseholdModalProps> = ({
                 </form>
 
                 {joinError && (
-                  <p className="text-xs text-red-400 font-medium">{joinError}</p>
+                  <p className="text-[11px] text-[var(--danger-text)] font-medium">{joinError}</p>
                 )}
                 {joinSuccess && (
-                  <p className="text-xs text-orange-400 font-medium">{joinSuccess}</p>
+                  <p className="text-[11px] text-[var(--success-text)] font-medium">{joinSuccess}</p>
                 )}
               </div>
             </div>
@@ -390,15 +365,12 @@ export const ShareHouseholdModal: React.FC<ShareHouseholdModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="ui-modal-footer justify-between text-[11px] text-zinc-400">
-          <span className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+        <div className="ui-modal-footer justify-between">
+          <span className="flex items-center gap-1.5 text-[11px] text-[var(--text-4)]">
+            <span className="w-1.5 h-1.5 rounded-full bg-[var(--success-text)]" />
             Nuvem segura · Supabase
           </span>
-          <button
-            onClick={onClose}
-            className="ui-btn ui-btn-secondary"
-          >
+          <button onClick={onClose} className="ui-btn ui-btn-secondary">
             Fechar
           </button>
         </div>

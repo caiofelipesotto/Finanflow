@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Edit3, AlertTriangle, CheckCircle2, SlidersHorizontal, Plus } from 'lucide-react';
+import { Edit3, AlertTriangle, SlidersHorizontal, Plus } from 'lucide-react';
 import { Category, Transaction } from '../types/finance';
 import { formatCurrency } from '../utils/formatters';
 import { CategoryIcon } from './CategoryIcon';
@@ -68,42 +68,29 @@ export const BudgetsView: React.FC<BudgetsViewProps> = ({
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="ui-h1">
-            Limites de gasto
-          </h1>
-          <p className="ui-sub">
-            Defina quanto pretende gastar em cada categoria e acompanhe o quanto já usou
-          </p>
-        </div>
-      </div>
+    <div className="space-y-5">
+      {/* Cabeçalho */}
+      <header>
+        <span className="ui-label mb-0">Planejamento</span>
+        <h1 className="ui-h1 mt-1">Limites de gasto</h1>
+        <p className="ui-sub">
+          Defina quanto pretende gastar em cada categoria e acompanhe o quanto já usou
+        </p>
+      </header>
 
-      {/* Overview Card */}
-      <div className="ui-card p-5">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+      {/* Resumo */}
+      <section className="ui-card p-4 sm:p-5">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
-            <span className="text-xs font-medium text-zinc-400 block mb-1">
-              Total planejado no mês
-            </span>
-            <div className="text-2xl font-bold text-white font-mono tabular-nums">
-              {formatCurrency(totalBudgeted)}
-            </div>
-            <span className="text-xs text-zinc-500 mt-1 block">
-              Soma dos limites de categorias
-            </span>
+            <span className="ui-stat-label">Total planejado no mês</span>
+            <div className="ui-stat-value mt-0.5">{formatCurrency(totalBudgeted)}</div>
+            <span className="ui-stat-note">Soma dos limites de categorias</span>
           </div>
 
           <div>
-            <span className="text-xs font-medium text-zinc-400 block mb-1">
-              Total Gasto no Mês
-            </span>
-            <div className="text-2xl font-bold text-white font-mono tabular-nums">
-              {formatCurrency(totalSpentInBudgeted)}
-            </div>
-            <span className="text-xs text-zinc-500 mt-1 block font-mono tabular-nums">
+            <span className="ui-stat-label">Total gasto no mês</span>
+            <div className="ui-stat-value mt-0.5">{formatCurrency(totalSpentInBudgeted)}</div>
+            <span className="ui-stat-note tabular-nums">
               {totalBudgeted > 0
                 ? `${((totalSpentInBudgeted / totalBudgeted) * 100).toFixed(1)}% do limite já usado`
                 : 'Nenhum limite definido'}
@@ -111,153 +98,162 @@ export const BudgetsView: React.FC<BudgetsViewProps> = ({
           </div>
 
           <div>
-            <span className="text-xs font-medium text-zinc-400 block mb-1">
-              Saldo Restante para Gastar
-            </span>
+            <span className="ui-stat-label">Saldo restante para gastar</span>
             <div
-              className={`text-2xl font-bold font-mono tabular-nums ${
-                totalRemaining >= 0 ? 'text-orange-400' : 'text-rose-400'
+              className={`ui-stat-value mt-0.5 ${
+                totalRemaining >= 0 ? '!text-[var(--accent-text)]' : '!text-[var(--danger-text)]'
               }`}
             >
               {formatCurrency(totalRemaining)}
             </div>
-            <span className="text-xs text-orange-500 mt-1 block">
+            <span className="ui-stat-note">
               {totalRemaining >= 0
-                ? 'Disponível dentro da sua meta'
+                ? 'Disponível dentro do planejado'
                 : 'Limite estourado neste mês'}
             </span>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Category Budgets Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {expenseCategories.map((cat) => {
-          const spent = spentPerCategory[cat.id] || 0;
-          const budget = Math.max(0, cat.budget || 0);
-          const percentage = budget > 0 ? (spent / budget) * 100 : 0;
-          const remaining = budget - spent;
-          const isOver = budget > 0 && spent > budget;
+      {/* Categorias */}
+      {expenseCategories.length === 0 ? (
+        <section className="ui-card p-8 text-center">
+          <div className="ui-icon ui-icon-accent w-12 h-12 mx-auto mb-3">
+            <SlidersHorizontal className="w-6 h-6" />
+          </div>
+          <h3 className="ui-section-title">Nenhuma categoria de despesa</h3>
+          <p className="ui-sub max-w-sm mx-auto">
+            Cadastre uma categoria de despesa para poder definir um limite mensal.
+          </p>
+        </section>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {expenseCategories.map((cat) => {
+            const spent = spentPerCategory[cat.id] || 0;
+            const budget = Math.max(0, cat.budget || 0);
+            const percentage = budget > 0 ? (spent / budget) * 100 : 0;
+            const remaining = budget - spent;
+            const isOver = budget > 0 && spent > budget;
 
-          // Progress color status
-          let progressBarColor = 'bg-zinc-500';
-          if (isOver) {
-            progressBarColor = 'bg-rose-500';
-          } else if (percentage >= 80) {
-            progressBarColor = 'bg-amber-500';
-          }
+            const barColor = isOver
+              ? 'var(--danger-text)'
+              : percentage >= 80
+              ? '#d97706'
+              : 'var(--accent-text)';
 
-          return (
-            <div
-              key={cat.id}
-              className="ui-card p-5 hover:border-neutral-700 transition-colors relative group"
-            >
-              <div className="flex items-start justify-between gap-3 mb-3">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div
-                    className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-                    style={{ backgroundColor: `${cat.color}25`, color: cat.color }}
-                  >
-                    <CategoryIcon name={cat.icon} color={cat.color} className="w-4 h-4" />
-                  </div>
-                  <div className="min-w-0">
-                    <h3 className="text-sm font-bold text-white truncate">
-                      {cat.name}
-                    </h3>
-                    <div className="flex items-center gap-2 text-xs text-zinc-400 font-mono tabular-nums">
-                      {budget > 0 ? (
-                        <>
-                        <span>Meta: {formatCurrency(budget)}</span>
-                          <span aria-hidden="true" className="text-neutral-700">·</span>
-                          <span
-                            className={
-                              isOver
-                                ? 'text-rose-400 font-semibold'
-                                : percentage >= 80
-                                ? 'text-amber-400 font-semibold'
-                                : 'text-zinc-300'
-                            }
-                          >
-                            {percentage.toFixed(0)}% usado
-                          </span>
-                        </>
-                      ) : (
-                        <span className="text-zinc-500">Sem limite definido</span>
-                      )}
+            return (
+              <article key={cat.id} className="ui-card p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div
+                      className="w-8 h-8 rounded-[var(--r-control)] flex items-center justify-center shrink-0 border"
+                      style={{
+                        backgroundColor: `${cat.color}1f`,
+                        borderColor: `${cat.color}40`,
+                        color: cat.color,
+                      }}
+                    >
+                      <CategoryIcon name={cat.icon} color={cat.color} className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="text-xs font-bold text-[var(--text-1)] truncate">{cat.name}</h3>
+                      <div className="flex items-center gap-1.5 text-[11px] text-[var(--text-3)] tabular-nums">
+                        {budget > 0 ? (
+                          <>
+                            <span>Limite: {formatCurrency(budget)}</span>
+                            <span aria-hidden="true" className="text-[var(--text-4)]">·</span>
+                            <span
+                              className={`font-semibold ${
+                                isOver
+                                  ? 'text-[var(--danger-text)]'
+                                  : percentage >= 80
+                                  ? 'text-[#d97706]'
+                                  : 'text-[var(--text-2)]'
+                              }`}
+                            >
+                              {percentage.toFixed(0)}% usado
+                            </span>
+                          </>
+                        ) : (
+                          <span>Sem limite definido</span>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                <button
-                  onClick={() => handleStartEdit(cat)}
-                  className="p-1.5 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-lg transition-colors shrink-0"
-                  title="Editar Limite"
-                >
-                  <Edit3 className="w-3.5 h-3.5" />
-                </button>
-              </div>
-
-              {/* Progress Bar */}
-              {budget > 0 ? (
-                <div className="mt-4">
-                  <div className="h-2 w-full bg-[#1d1d20] rounded-full overflow-hidden">
-                    <div
-                      className={`h-full ${progressBarColor} transition-all duration-300 rounded-full`}
-                      style={{ width: `${Math.min(percentage, 100)}%` }}
-                    />
-                  </div>
-
-                  <div className="flex items-center justify-between text-xs mt-2.5 font-mono tabular-nums">
-                    <span className="text-zinc-400">
-                      Gasto: <strong className="text-white">{formatCurrency(spent)}</strong>
-                    </span>
-                    <span
-                      className={`font-semibold ${
-                        isOver ? 'text-rose-400' : 'text-zinc-400'
-                      }`}
-                    >
-                      {isOver
-                        ? `Estourou por ${formatCurrency(Math.abs(remaining))}`
-                        : `Resta ${formatCurrency(remaining)}`}
-                    </span>
-                  </div>
-                </div>
-              ) : (
-                <div className="mt-3 pt-3 border-t border-neutral-800 flex items-center justify-between text-xs">
-                  <span className="text-zinc-400">
-                    Gasto no mês: <strong className="font-mono tabular-nums text-white">{formatCurrency(spent)}</strong>
-                  </span>
                   <button
                     onClick={() => handleStartEdit(cat)}
-                    className="text-zinc-400 hover:text-zinc-300 font-semibold"
+                    className="p-1.5 text-[var(--text-4)] hover:text-[var(--text-1)] hover:bg-[var(--surface-3)] rounded-[var(--r-control)] transition-colors shrink-0"
+                    title="Editar limite"
                   >
-                    + Definir limite
+                    <Edit3 className="w-3.5 h-3.5" />
                   </button>
                 </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
 
-      {/* Edit Budget Modal */}
+                {budget > 0 ? (
+                  <div className="mt-3.5">
+                    <div className="ui-progress">
+                      <div
+                        className="ui-progress-bar"
+                        style={{ width: `${Math.min(percentage, 100)}%`, backgroundColor: barColor }}
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between gap-2 text-[11px] mt-2 tabular-nums">
+                      <span className="text-[var(--text-3)]">
+                        Gasto: <strong className="text-[var(--text-1)]">{formatCurrency(spent)}</strong>
+                      </span>
+                      <span
+                        className={`font-semibold flex items-center gap-1 ${
+                          isOver ? 'text-[var(--danger-text)]' : 'text-[var(--text-3)]'
+                        }`}
+                      >
+                        {isOver && <AlertTriangle className="w-3 h-3" />}
+                        {isOver
+                          ? `Estourou em ${formatCurrency(Math.abs(remaining))}`
+                          : `Resta ${formatCurrency(remaining)}`}
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="mt-3 pt-3 border-t border-[var(--border-1)] flex items-center justify-between gap-2 text-[11px]">
+                    <span className="text-[var(--text-3)]">
+                      Gasto no mês:{' '}
+                      <strong className="text-[var(--text-1)] tabular-nums">{formatCurrency(spent)}</strong>
+                    </span>
+                    <button
+                      onClick={() => handleStartEdit(cat)}
+                      className="text-[var(--accent-text)] hover:underline font-semibold flex items-center gap-0.5"
+                    >
+                      <Plus className="w-3 h-3" />
+                      Definir limite
+                    </button>
+                  </div>
+                )}
+              </article>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Modal de limite */}
       {editingCategory && (
-        <div className="ui-modal-overlay">
-          <div className="ui-modal p-5 overflow-y-auto">
-            <h2 className="text-base font-bold text-white mb-1">
-              Definir limite mensal
-            </h2>
-            <p className="text-xs text-zinc-400 mb-4">
-              Categoria: <strong className="text-zinc-200">{editingCategory.name}</strong>
-            </p>
+        <div className="ui-modal-overlay" onClick={() => setEditingCategory(null)}>
+          <div className="ui-modal max-w-md" onClick={(e) => e.stopPropagation()}>
+            <div className="ui-modal-header">
+              <div className="min-w-0 flex-1">
+                <h2 className="ui-modal-title">Definir limite mensal</h2>
+                <p className="ui-modal-sub">
+                  Categoria: <strong className="text-[var(--text-2)]">{editingCategory.name}</strong>
+                </p>
+              </div>
+            </div>
 
-            <form onSubmit={handleSaveBudget} className="space-y-4">
+            <form onSubmit={handleSaveBudget} className="ui-modal-body space-y-4">
               <div>
-                <label className="ui-label">
-                  Limite Mensal (R$)
-                </label>
+                <label className="ui-label">Limite mensal (R$)</label>
                 <div className="relative">
-                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-bold text-zinc-400 font-mono">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-[var(--text-4)]">
                     R$
                   </span>
                   <input
@@ -266,28 +262,19 @@ export const BudgetsView: React.FC<BudgetsViewProps> = ({
                     min="0"
                     value={budgetInputValue}
                     onChange={(e) => setBudgetInputValue(e.target.value)}
-                    className="ui-input pl-11 text-lg font-bold font-mono"
+                    className="ui-input !pl-10 font-bold tabular-nums"
                     autoFocus
                   />
                 </div>
-                <span className="text-[11px] text-zinc-500 mt-1 block">
-                  Defina 0 para remover o limite desta categoria.
-                </span>
+                <span className="ui-stat-note">Defina 0 para remover o limite desta categoria.</span>
               </div>
 
-              <div className="flex items-center justify-end gap-2.5 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setEditingCategory(null)}
-                  className="ui-btn ui-btn-ghost"
-                >
+              <div className="flex items-center justify-end gap-2">
+                <button type="button" onClick={() => setEditingCategory(null)} className="ui-btn ui-btn-ghost">
                   Cancelar
                 </button>
-                <button
-                  type="submit"
-                  className="ui-btn ui-btn-primary"
-                >
-                  Salvar Limite
+                <button type="submit" className="ui-btn ui-btn-primary">
+                  Salvar limite
                 </button>
               </div>
             </form>

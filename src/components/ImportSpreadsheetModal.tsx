@@ -412,130 +412,102 @@ export const ImportSpreadsheetModal: React.FC<ImportSpreadsheetModalProps> = ({
   }, {});
 
   return (
-    <div className="ui-modal-overlay">
-      <div className="ui-modal max-w-2xl">
-        {/* Header */}
-        <div className="ui-modal-header justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-orange-500/10 text-orange-400 flex items-center justify-center">
-              <FileSpreadsheet className="w-4 h-4" />
-            </div>
-            <div>
-              <h2 className="ui-section-title">
-                Importar Planilha (Excel / Google Sheets / CSV)
-              </h2>
-              <p className="text-xs text-zinc-400">
-                Copie e cole as linhas da sua planilha ou envie um arquivo .csv
-              </p>
-            </div>
+    <div className="ui-modal-overlay" onClick={onClose}>
+      <div className="ui-modal max-w-2xl" onClick={(e) => e.stopPropagation()}>
+        {/* Cabeçalho */}
+        <div className="ui-modal-header">
+          <span className="ui-icon ui-icon-accent !w-9 !h-9">
+            <FileSpreadsheet className="w-4 h-4" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <h2 className="ui-modal-title">Importar planilha</h2>
+            <p className="ui-modal-sub">Excel, Google Sheets ou CSV: cole as linhas ou envie o arquivo</p>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-lg transition-colors"
+            aria-label="Fechar"
+            className="p-1.5 -mt-1 -mr-1 rounded-[var(--r-control)] text-[var(--text-4)] hover:text-[var(--text-1)] hover:bg-[var(--surface-3)] transition-colors shrink-0"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
-        {/* Content */}
-        <div className="p-6 overflow-y-auto flex-1 space-y-4">
+        {/* Conteúdo */}
+        <div className="ui-modal-body space-y-4">
           {step === 'input' ? (
             <>
               {/* Mode Tabs */}
-              <div className="flex items-center gap-1 p-1 bg-[#1d1d20] rounded-lg border border-zinc-800">
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('link')}
-                  className={`flex-1 py-1.5 text-xs font-semibold rounded-md transition-all whitespace-nowrap ${
-                    activeTab === 'link'
-                      ? 'bg-orange-600 text-white shadow-xs'
-                      : 'text-zinc-400 hover:text-white'
-                  }`}
-                >
-                  Link do Google Sheets
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('paste')}
-                  className={`flex-1 py-1.5 text-xs font-semibold rounded-md transition-all whitespace-nowrap ${
-                    activeTab === 'paste'
-                      ? 'bg-orange-600 text-white shadow-xs'
-                      : 'text-zinc-400 hover:text-white'
-                  }`}
-                >
-                  Colar do Excel / Sheets
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('file')}
-                  className={`flex-1 py-1.5 text-xs font-semibold rounded-md transition-all whitespace-nowrap ${
-                    activeTab === 'file'
-                      ? 'bg-orange-600 text-white shadow-xs'
-                      : 'text-zinc-400 hover:text-white'
-                  }`}
-                >
-                  Arquivo .CSV
-                </button>
+              <div className="ui-segmented w-full">
+                {([
+                  { id: 'link', label: 'Link do Sheets' },
+                  { id: 'paste', label: 'Colar células' },
+                  { id: 'file', label: 'Arquivo .CSV' },
+                ] as const).map((tab) => (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`ui-seg-item flex-1 !py-1.5 ${activeTab === tab.id ? 'ui-seg-item-active' : ''}`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
               </div>
 
               {/* Tab 1: Google Sheets Link */}
               {activeTab === 'link' && (
                 <div className="space-y-3.5">
                   <div>
-                    <label className="ui-label">
-                      Cole o Link da sua Planilha do Google Sheets:
-                    </label>
-                    <div className="flex items-center gap-2">
+                    <label className="ui-label">Link da planilha do Google Sheets</label>
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2">
                       <input
                         type="url"
                         placeholder="https://docs.google.com/spreadsheets/d/.../edit"
                         value={sheetUrl}
                         onChange={(e) => setSheetUrl(e.target.value)}
-                        className="flex-1 px-3.5 py-2 text-xs font-mono text-white bg-[#1d1d20] border border-zinc-700 rounded-xl outline-hidden focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+                        className="ui-input flex-1"
                       />
                       <button
                         type="button"
                         onClick={handleFetchGoogleSheet}
                         disabled={isLoadingLink}
-                        className="ui-btn ui-btn-primary"
+                        className="ui-btn ui-btn-primary shrink-0"
                       >
-                        {isLoadingLink ? 'Carregando...' : 'Carregar Planilha'}
+                        {isLoadingLink ? 'Carregando...' : 'Carregar planilha'}
                       </button>
                     </div>
                   </div>
 
                   {linkError && (
-                    <div className="p-3.5 bg-amber-950/40 border border-amber-800/80 rounded-xl text-xs text-amber-200 space-y-2">
+                    <div className="ui-alert flex-col !border-[color-mix(in_srgb,var(--warning-text)_32%,transparent)] !bg-[var(--warning-soft)]">
                       <div className="flex items-start gap-2">
-                        <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-                        <div>
-                          <strong className="block text-amber-100 font-semibold mb-1">
-                            Acesso Restrito no Google Drive
-                          </strong>
-                          <span>{linkError}</span>
+                        <AlertCircle className="w-4 h-4 text-[var(--warning-text)] shrink-0 mt-0.5" />
+                        <div className="text-[var(--warning-text)]">
+                          <strong className="block font-semibold mb-1">Acesso restrito no Google Drive</strong>
+                          <span className="text-[var(--text-2)]">{linkError}</span>
                         </div>
                       </div>
 
-                      <div className="pt-2 border-t border-amber-800/60 flex items-center justify-between gap-2">
-                        <span className="text-[11px] text-amber-300">
-                          Prefere copiar e colar em 5 segundos?
+                      <div className="w-full pt-2 border-t border-[color-mix(in_srgb,var(--warning-text)_28%,transparent)] flex items-center justify-between gap-2">
+                        <span className="text-[11px] text-[var(--text-3)]">
+                          Prefere copiar e colar?
                         </span>
                         <button
                           type="button"
                           onClick={() => setActiveTab('paste')}
-                          className="px-2.5 py-1 text-xs font-semibold bg-[#1d1d20] text-amber-300 border border-amber-700/60 rounded-md hover:bg-zinc-800 transition-colors whitespace-nowrap"
+                          className="ui-btn ui-btn-secondary shrink-0"
                         >
-                          Ir para Colar Células →
+                          Colar células
                         </button>
                       </div>
                     </div>
                   )}
 
-                  <div className="p-3 bg-[#1d1d20] rounded-xl border border-zinc-800 text-xs text-zinc-300 space-y-1.5">
-                    <span className="font-semibold text-white block">
-                      Como permitir leitura por link no Google Sheets:
+                  <div className="ui-tile p-3 text-xs text-[var(--text-3)] space-y-1.5">
+                    <span className="font-semibold text-[var(--text-1)] block">
+                      Como permitir leitura por link no Google Sheets
                     </span>
-                    <ol className="list-decimal list-inside space-y-1 text-zinc-400 text-[11px]">
+                    <ol className="list-decimal list-inside space-y-1 text-[var(--text-4)] text-[11px]">
                       <li>No Google Sheets, clique no botão azul <strong>Compartilhar</strong> (canto superior direito).</li>
                       <li>Em <strong>Acesso geral</strong>, mude de <em>Restrito</em> para <strong>Qualquer pessoa com o link</strong> (Leitor).</li>
                       <li>Pronto! Clique em <strong>Carregar Planilha</strong> acima.</li>
@@ -547,14 +519,12 @@ export const ImportSpreadsheetModal: React.FC<ImportSpreadsheetModalProps> = ({
               {/* Tab 2: Paste Rows */}
               {activeTab === 'paste' && (
                 <div className="space-y-3">
-                  <div className="p-2.5 bg-[#1d1d20] rounded-xl border border-zinc-800 text-xs text-zinc-300">
+                  <div className="ui-tile p-2.5 text-xs text-[var(--text-3)]">
                     Basta abrir sua planilha no Google Sheets ou Excel, selecionar os dados (ou apertar <strong>Ctrl+A</strong>), copiar com <strong>Ctrl+C</strong> e colar no campo abaixo.
                   </div>
 
                   <div>
-                    <label className="ui-label">
-                      Linhas coladas:
-                    </label>
+                    <label className="ui-label">Linhas coladas</label>
                     <textarea
                       rows={7}
                       placeholder={`Data	Descrição	Categoria	Valor	Tipo
@@ -563,7 +533,7 @@ export const ImportSpreadsheetModal: React.FC<ImportSpreadsheetModalProps> = ({
 18/10/2026	Posto Combustível	Transporte	120,00	Despesa`}
                       value={pastedText}
                       onChange={(e) => setPastedText(e.target.value)}
-                      className="w-full p-3 text-xs font-mono border border-zinc-700 rounded-xl outline-hidden focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 text-white bg-[#1d1d20]"
+                      className="ui-input !p-3 font-mono"
                     />
                   </div>
                 </div>
@@ -572,16 +542,16 @@ export const ImportSpreadsheetModal: React.FC<ImportSpreadsheetModalProps> = ({
               {/* Tab 3: CSV File Upload */}
               {activeTab === 'file' && (
                 <div className="space-y-4 py-2">
-                  <div className="border-2 border-dashed border-zinc-700 hover:border-orange-500 rounded-2xl p-8 text-center transition-colors bg-zinc-950/50">
-                    <Upload className="w-8 h-8 text-zinc-400 mx-auto mb-2" />
-                    <p className="text-xs font-semibold text-zinc-200">
+                  <div className="border border-dashed border-[var(--border-2)] hover:border-[var(--accent-text)] rounded-[var(--r-card)] p-8 text-center transition-colors bg-[var(--surface-2)]">
+                    <Upload className="w-7 h-7 text-[var(--text-4)] mx-auto mb-2" />
+                    <p className="text-xs font-semibold text-[var(--text-1)]">
                       Escolha seu arquivo de planilha (.csv ou .tsv)
                     </p>
-                    <p className="text-[11px] text-zinc-500 mt-1 mb-4">
+                    <p className="text-[11px] text-[var(--text-4)] mt-1 mb-4">
                       No Google Sheets: Arquivo → Fazer download → Valores separados por vírgula (.csv)
                     </p>
                     <label className="ui-btn ui-btn-primary cursor-pointer">
-                      <span>Selecionar Arquivo .CSV</span>
+                      <span>Selecionar arquivo .CSV</span>
                       <input
                         type="file"
                         accept=".csv,.tsv,.txt"
@@ -597,7 +567,7 @@ export const ImportSpreadsheetModal: React.FC<ImportSpreadsheetModalProps> = ({
               )}
 
               {errorsList.length > 0 && (
-                <div className="p-3 bg-rose-950/40 border border-rose-800 rounded-xl text-xs text-rose-300 flex items-start gap-2">
+                <div className="ui-alert !border-[color-mix(in_srgb,var(--danger-text)_32%,transparent)] !bg-[var(--danger-soft)] text-[var(--danger-text)] items-start">
                   <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-400" />
                   <div>
                     {errorsList.map((err, i) => (
@@ -612,60 +582,56 @@ export const ImportSpreadsheetModal: React.FC<ImportSpreadsheetModalProps> = ({
               {/* Preview Mode */}
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-xs font-bold text-white">
+                  <h3 className="text-xs font-bold text-[var(--text-1)]">
                     Pré-visualização: {parsedRows.length} transações identificadas
                   </h3>
-                  <p className="text-[11px] text-zinc-400">
+                  <p className="text-[11px] text-[var(--text-3)]">
                     Revise os dados antes de adicionar ao FinanFlow.
                   </p>
                 </div>
 
-                <div className="flex items-center gap-2 text-xs">
-                  <span className="text-zinc-400">Modo:</span>
+                <div className="flex items-center gap-2">
+                  <span className="ui-label !mb-0">Modo</span>
                   <select
                     value={importMode}
                     onChange={(e) => setImportMode(e.target.value as 'append' | 'replace')}
-                    className="px-2 py-1 border border-zinc-700 bg-[#1d1d20] text-white rounded-md text-xs font-medium"
+                    className="ui-input !w-auto !py-1.5"
                   >
                     <option value="append">Somar às existentes</option>
-                    <option value="replace">Substituir todas atuais</option>
+                    <option value="replace">Substituir todas as atuais</option>
                   </select>
                 </div>
               </div>
 
-              <div className="border border-zinc-800 rounded-xl overflow-hidden max-h-64 overflow-y-auto">
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-[#1d1d20] text-[10px] uppercase text-zinc-400 border-b border-zinc-800">
+              <div className="border border-[var(--border-1)] rounded-[var(--r-panel)] overflow-hidden max-h-64 overflow-y-auto">
+                <table className="ui-table">
+                  <thead>
                     <tr>
-                      <th className="px-3 py-2">Data</th>
-                      <th className="px-3 py-2">Descrição</th>
-                      <th className="px-3 py-2">Categoria</th>
-                      <th className="px-3 py-2 text-right">Valor</th>
-                      <th className="px-3 py-2">Tipo</th>
+                      <th>Data</th>
+                      <th>Descrição</th>
+                      <th>Categoria</th>
+                      <th className="text-right">Valor</th>
+                      <th>Tipo</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-neutral-800">
+                  <tbody>
                     {parsedRows.slice(0, 50).map((row, idx) => (
-                      <tr key={idx} className="hover:bg-zinc-800/40">
-                        <td className="px-3 py-2 font-mono tabular-nums text-zinc-400">
+                      <tr key={idx}>
+                        <td className="tabular-nums text-[var(--text-4)] whitespace-nowrap">
                           {row.date}
                         </td>
-                        <td className="px-3 py-2 font-medium text-white">
+                        <td className="font-medium text-[var(--text-1)]">
                           {row.description}
                         </td>
-                        <td className="px-3 py-2 text-zinc-400">
+                        <td className="text-[var(--text-3)]">
                           {categoriesMap[row.category]?.name || 'Outros'}
                         </td>
-                        <td className="px-3 py-2 text-right font-mono tabular-nums font-bold">
-                          <span
-                            className={
-                              row.type === 'income' ? 'text-orange-400' : 'text-zinc-200'
-                            }
-                          >
+                        <td className="text-right tabular-nums font-bold whitespace-nowrap">
+                          <span className={row.type === 'income' ? 'text-[var(--accent-text)]' : 'text-[var(--text-1)]'}>
                             {row.type === 'income' ? '+' : '-'} {formatCurrency(row.amount)}
                           </span>
                         </td>
-                        <td className="px-3 py-2 text-zinc-400 capitalize">
+                        <td className="text-[var(--text-3)] whitespace-nowrap">
                           {row.type === 'income' ? 'Receita' : 'Despesa'}
                         </td>
                       </tr>
@@ -674,7 +640,7 @@ export const ImportSpreadsheetModal: React.FC<ImportSpreadsheetModalProps> = ({
                 </table>
               </div>
               {parsedRows.length > 50 && (
-                <div className="text-[11px] text-zinc-500 text-center">
+                <div className="text-[11px] text-[var(--text-4)] text-center">
                   + {parsedRows.length - 50} outras transações serão importadas...
                 </div>
               )}

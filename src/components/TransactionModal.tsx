@@ -315,56 +315,41 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-black/80 backdrop-blur-xs animate-in fade-in duration-150">
-      <div
-        className="bg-[#1d1d20] rounded-t-2xl sm:rounded-2xl shadow-2xl border border-zinc-800 w-full max-w-lg overflow-hidden flex flex-col max-h-[92vh] sm:max-h-[90vh]"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Modal Header */}
-        <div className="flex items-start gap-3 px-5 py-4 border-b border-zinc-800">
-          <div className="w-9 h-9 rounded-xl bg-orange-500/12 border border-orange-500/25 text-orange-400 flex items-center justify-center shrink-0">
+    <div className="ui-modal-overlay" onClick={onClose}>
+      <div className="ui-modal max-w-lg" onClick={(e) => e.stopPropagation()}>
+        {/* Cabeçalho */}
+        <div className="ui-modal-header">
+          <span className="ui-icon ui-icon-accent !w-9 !h-9">
             {initialData ? <Pencil className="w-4 h-4" /> : <PlusCircle className="w-4 h-4" />}
-          </div>
+          </span>
           <div className="min-w-0 flex-1">
-            <h2 className="text-[15px] font-bold text-white leading-tight">
-              {initialData ? 'Editar lançamento' : 'Novo lançamento'}
-            </h2>
-            <p className="text-[11px] text-zinc-400 mt-0.5 leading-snug">
-              À vista, parcelado no cartão ou conta fixa
-            </p>
+            <h2 className="ui-modal-title">{initialData ? 'Editar lançamento' : 'Novo lançamento'}</h2>
+            <p className="ui-modal-sub">À vista, parcelado no cartão ou conta fixa</p>
           </div>
           <button
             onClick={onClose}
             aria-label="Fechar"
-            className="p-1.5 -mt-1 -mr-1 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-lg transition-colors shrink-0"
+            className="p-1.5 -mt-1 -mr-1 rounded-[var(--r-control)] text-[var(--text-4)] hover:text-[var(--text-1)] hover:bg-[var(--surface-3)] transition-colors shrink-0"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
-        {/* Modal Form */}
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto px-5 py-4 space-y-4 pb-6">
-          {/* 1. Type Selector (Despesa vs Receita) */}
-          <div className="grid grid-cols-2 gap-1 p-1 bg-[#141416] rounded-xl border border-zinc-800">
+        {/* Formulário */}
+        <form onSubmit={handleSubmit} className="ui-modal-body space-y-4">
+          {/* 1. Tipo do lançamento */}
+          <div className="ui-segmented w-full">
             <button
               type="button"
               onClick={() => handleTypeChange('expense')}
-              className={`py-2 text-[11px] font-bold rounded-lg border transition-colors whitespace-nowrap ${
-                type === 'expense'
-                  ? 'bg-rose-500/12 text-rose-300 border-rose-500/40'
-                  : 'bg-transparent text-zinc-400 border-transparent hover:text-zinc-200'
-              }`}
+              className={`ui-seg-item flex-1 !py-2 ${type === 'expense' ? 'ui-seg-item-active' : ''}`}
             >
               Despesa (saída)
             </button>
             <button
               type="button"
               onClick={() => handleTypeChange('income')}
-              className={`py-2 text-[11px] font-bold rounded-lg border transition-colors whitespace-nowrap ${
-                type === 'income'
-                  ? 'bg-emerald-500/12 text-emerald-300 border-emerald-500/40'
-                  : 'bg-transparent text-zinc-400 border-transparent hover:text-zinc-200'
-              }`}
+              className={`ui-seg-item flex-1 !py-2 ${type === 'income' ? 'ui-seg-item-active' : ''}`}
             >
               Receita (entrada)
             </button>
@@ -373,25 +358,23 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
           {/* 2. Modern Entry Mode (À vista vs Cartão Parcelado vs Fixo Recorrente) */}
           {!initialData && (
             <div>
-              <label className="block text-[11px] font-semibold uppercase tracking-wide text-zinc-400 mb-1.5">
-                Formato
-              </label>
+              <label className="ui-label">Formato</label>
               <div className="grid grid-cols-3 gap-1.5 items-stretch">
                 <button
                   type="button"
                   onClick={() => handleEntryModeChange('single')}
-                  className={`relative p-2.5 rounded-xl border text-left flex flex-col gap-1 transition-colors ${
+                  className={`relative p-2.5 rounded-[var(--r-panel)] border text-left flex flex-col gap-1 transition-colors ${
                     entryMode === 'single'
-                      ? 'border-orange-500/60 bg-orange-500/10'
-                      : 'border-zinc-800 bg-[#141416] hover:border-zinc-700'
+                      ? 'border-[color-mix(in_srgb,var(--accent-text)_45%,transparent)] bg-[var(--accent-soft)]'
+                      : 'border-[var(--border-1)] bg-[var(--surface-2)] hover:border-[var(--border-2)]'
                   }`}
                 >
                   {entryMode === 'single' && (
-                    <Check className="absolute top-1.5 right-1.5 w-3 h-3 text-orange-400" />
+                    <Check className="absolute top-1.5 right-1.5 w-3 h-3 text-[var(--accent-text)]" />
                   )}
                   <div
                     className={`flex items-center gap-1.5 font-bold text-[11px] ${
-                      entryMode === 'single' ? 'text-orange-300' : 'text-zinc-200'
+                      entryMode === 'single' ? 'text-[var(--accent-text)]' : 'text-[var(--text-2)]'
                     }`}
                   >
                     <DollarSign className="w-3.5 h-3.5 shrink-0" />
@@ -406,20 +389,20 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                   type="button"
                   disabled={type === 'income'}
                   onClick={() => handleEntryModeChange('installment')}
-                  className={`relative p-2.5 rounded-xl border text-left flex flex-col gap-1 transition-colors ${
+                  className={`relative p-2.5 rounded-[var(--r-panel)] border text-left flex flex-col gap-1 transition-colors ${
                     type === 'income' ? 'opacity-40 cursor-not-allowed' : ''
                   } ${
                     entryMode === 'installment'
-                      ? 'border-orange-500/60 bg-orange-500/10'
-                      : 'border-zinc-800 bg-[#141416] hover:border-zinc-700'
+                      ? 'border-[color-mix(in_srgb,var(--accent-text)_45%,transparent)] bg-[var(--accent-soft)]'
+                      : 'border-[var(--border-1)] bg-[var(--surface-2)] hover:border-[var(--border-2)]'
                   }`}
                 >
                   {entryMode === 'installment' && (
-                    <Check className="absolute top-1.5 right-1.5 w-3 h-3 text-orange-400" />
+                    <Check className="absolute top-1.5 right-1.5 w-3 h-3 text-[var(--accent-text)]" />
                   )}
                   <div
                     className={`flex items-center gap-1.5 font-bold text-[11px] ${
-                      entryMode === 'installment' ? 'text-orange-300' : 'text-zinc-200'
+                      entryMode === 'installment' ? 'text-[var(--accent-text)]' : 'text-[var(--text-2)]'
                     }`}
                   >
                     <CreditCard className="w-3.5 h-3.5 shrink-0" />
@@ -433,18 +416,18 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                 <button
                   type="button"
                   onClick={() => handleEntryModeChange('recurrent')}
-                  className={`relative p-2.5 rounded-xl border text-left flex flex-col gap-1 transition-colors ${
+                  className={`relative p-2.5 rounded-[var(--r-panel)] border text-left flex flex-col gap-1 transition-colors ${
                     entryMode === 'recurrent'
-                      ? 'border-orange-500/60 bg-orange-500/10'
-                      : 'border-zinc-800 bg-[#141416] hover:border-zinc-700'
+                      ? 'border-[color-mix(in_srgb,var(--accent-text)_45%,transparent)] bg-[var(--accent-soft)]'
+                      : 'border-[var(--border-1)] bg-[var(--surface-2)] hover:border-[var(--border-2)]'
                   }`}
                 >
                   {entryMode === 'recurrent' && (
-                    <Check className="absolute top-1.5 right-1.5 w-3 h-3 text-orange-400" />
+                    <Check className="absolute top-1.5 right-1.5 w-3 h-3 text-[var(--accent-text)]" />
                   )}
                   <div
                     className={`flex items-center gap-1.5 font-bold text-[11px] ${
-                      entryMode === 'recurrent' ? 'text-orange-300' : 'text-zinc-200'
+                      entryMode === 'recurrent' ? 'text-[var(--accent-text)]' : 'text-[var(--text-2)]'
                     }`}
                   >
                     <Repeat className="w-3.5 h-3.5 shrink-0" />
@@ -460,30 +443,24 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
 
           {/* 3. Description Input */}
           <div>
-            <label className="block text-[11px] font-semibold uppercase tracking-wide text-zinc-400 mb-1.5">
-              Descrição
-            </label>
+            <label className="ui-label">Descrição</label>
             <input
               type="text"
               placeholder="Ex: Supermercado, aluguel, salário..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className={`w-full px-3.5 py-2.5 text-sm text-white bg-[#141416] border rounded-lg outline-hidden transition-colors placeholder:text-zinc-500 ${
-                errors.description
-                  ? 'border-rose-500 focus:ring-2 focus:ring-rose-500/30'
-                  : 'border-zinc-700 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20'
-              }`}
+              className={`ui-input ${errors.description ? '!border-[var(--danger-text)]' : ''}`}
               autoFocus
             />
             {errors.description && (
-              <span className="text-xs text-rose-400 mt-1 block">{errors.description}</span>
+              <span className="text-[11px] text-[var(--danger-text)] mt-1 block">{errors.description}</span>
             )}
           </div>
 
           {/* 4. Amount Section (With Installment modes if applicable) */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <label className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400">
+              <label className="ui-label !mb-0">
                 {entryMode === 'installment'
                   ? installmentMode === 'total'
                     ? 'Valor Total da Compra (R$)'
@@ -492,35 +469,27 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
               </label>
 
               {entryMode === 'installment' && (
-                <div className="flex items-center gap-1 text-[11px]">
+                <div className="ui-segmented">
                   <button
                     type="button"
                     onClick={() => setInstallmentMode('total')}
-                    className={`px-2 py-0.5 rounded-md transition-colors ${
-                      installmentMode === 'total'
-                        ? 'bg-orange-600 text-white font-semibold'
-                        : 'text-zinc-400 hover:text-white'
-                    }`}
+                    className={`ui-seg-item ${installmentMode === 'total' ? 'ui-seg-item-active' : ''}`}
                   >
-                    Digitar Total
+                    Digitar total
                   </button>
                   <button
                     type="button"
                     onClick={() => setInstallmentMode('per_installment')}
-                    className={`px-2 py-0.5 rounded-md transition-colors ${
-                      installmentMode === 'per_installment'
-                        ? 'bg-orange-600 text-white font-semibold'
-                        : 'text-zinc-400 hover:text-white'
-                    }`}
+                    className={`ui-seg-item ${installmentMode === 'per_installment' ? 'ui-seg-item-active' : ''}`}
                   >
-                    Digitar Parcela
+                    Digitar parcela
                   </button>
                 </div>
               )}
             </div>
 
             <div className="relative">
-              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-bold text-zinc-500 font-mono">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-[var(--text-4)]">
                 R$
               </span>
               <input
@@ -530,27 +499,23 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                 placeholder="0,00"
                 value={amountInput}
                 onChange={(e) => setAmountInput(e.target.value)}
-                className={`w-full pl-11 pr-4 py-2.5 text-lg font-bold font-mono tabular-nums text-white bg-[#141416] border rounded-lg outline-hidden transition-colors ${
-                  errors.amount
-                    ? 'border-rose-500 focus:ring-2 focus:ring-rose-500/30'
-                    : 'border-zinc-700 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20'
-                }`}
+                className={`ui-input !pl-10 !text-lg !font-bold tabular-nums ${errors.amount ? '!border-[var(--danger-text)]' : ''}`}
               />
             </div>
             {errors.amount && (
-              <span className="text-xs text-rose-400 block">{errors.amount}</span>
+              <span className="text-[11px] text-[var(--danger-text)] block">{errors.amount}</span>
             )}
           </div>
 
           {/* 5. Special Mode: Cartão em Vezes Details */}
           {entryMode === 'installment' && (
-            <div className="p-3.5 bg-zinc-950/20 border border-zinc-800/60 rounded-xl space-y-3">
+            <div className="ui-tile p-3 space-y-3">
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-xs font-semibold text-zinc-200">
+                  <span className="text-[11px] font-semibold text-[var(--text-2)]">
                     Em quantas vezes deseja parcelar?
                   </span>
-                  <span className="text-xs font-bold font-mono text-zinc-300">
+                  <span className="text-[11px] font-bold text-[var(--text-1)] tabular-nums">
                     {totalInstallments}x
                   </span>
                 </div>
@@ -562,10 +527,10 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                       key={num}
                       type="button"
                       onClick={() => setTotalInstallments(num)}
-                      className={`px-2.5 py-1 text-xs font-semibold rounded-lg border transition-all ${
+                      className={`ui-seg-item !border ${
                         totalInstallments === num
-                          ? 'bg-orange-600 text-white border-orange-500 shadow-xs'
-                          : 'bg-[#1d1d20] text-zinc-300 border-zinc-700 hover:border-neutral-600'
+                          ? 'ui-seg-item-active !border-[color-mix(in_srgb,var(--accent-text)_40%,transparent)]'
+                          : '!border-[var(--border-1)]'
                       }`}
                     >
                       {num}x
@@ -575,34 +540,35 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
 
                 {/* Custom installment input */}
                 <div className="flex items-center gap-2">
-                  <span className="text-[11px] text-zinc-400">Ou digite o número exato:</span>
+                  <span className="text-[11px] text-[var(--text-3)]">Ou digite o número exato:</span>
                   <input
                     type="number"
                     min="2"
                     max="72"
                     value={totalInstallments}
                     onChange={(e) => setTotalInstallments(parseInt(e.target.value) || 2)}
-                    className="w-16 px-2 py-1 text-xs font-bold text-center text-white bg-[#141416] border border-zinc-700 rounded-lg outline-hidden focus:border-orange-500"
+                    className="ui-input !w-16 !px-2 !py-1 text-center font-bold tabular-nums"
                   />
-                  <span className="text-xs text-zinc-400">vezes</span>
+                  <span className="text-[11px] text-[var(--text-3)]">vezes</span>
                 </div>
               </div>
 
               {/* Installment Summary Banner */}
               {parsedRawAmount > 0 && (
-                <div className="ui-panel p-2.5 text-xs space-y-1">
-                  <div className="flex items-center justify-between text-zinc-300 font-medium">
-                    <span>Resumo do Parcelamento:</span>
-                    <strong className="text-sm font-bold text-white font-mono">
+                <div className="ui-tile !bg-[var(--surface-1)] p-2.5 text-xs space-y-1">
+                  <div className="flex items-center justify-between text-[var(--text-2)] font-medium gap-2">
+                    <span>Resumo do parcelamento:</span>
+                    <strong className="text-sm font-bold text-[var(--text-1)] tabular-nums">
                       {totalInstallments}x de {formatCurrency(calculatedInstallmentAmount)}
                     </strong>
                   </div>
-                  <div className="flex items-center justify-between text-zinc-400 text-[11px]">
+                  <div className="flex items-center justify-between text-[var(--text-3)] text-[11px] tabular-nums">
                     <span>Total da compra:</span>
-                    <span className="font-mono text-zinc-300">{formatCurrency(calculatedTotalPurchase)}</span>
+                    <span className="text-[var(--text-2)]">{formatCurrency(calculatedTotalPurchase)}</span>
                   </div>
-                  <div className="text-[11px] text-zinc-300/80 pt-1 border-t border-zinc-800">
-                    📅 1ª parcela em <strong>{firstMonthLabel}</strong> até a {totalInstallments}ª em <strong>{lastInstallmentLabel}</strong>
+                  <div className="text-[11px] text-[var(--text-3)] pt-1 border-t border-[var(--border-1)]">
+                    1ª parcela em <strong className="text-[var(--text-2)]">{firstMonthLabel}</strong> e a última em{' '}
+                    <strong className="text-[var(--text-2)]">{lastInstallmentLabel}</strong>
                   </div>
                 </div>
               )}
@@ -611,8 +577,8 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
 
           {/* 6. Special Mode: Recorrente (Fixo todo mês) Details */}
           {entryMode === 'recurrent' && (
-            <div className="p-3.5 bg-zinc-950/20 border border-zinc-800/60 rounded-xl space-y-2.5">
-              <span className="text-xs font-semibold text-zinc-200 block">
+            <div className="ui-tile p-3 space-y-2.5">
+              <span className="text-[11px] font-semibold text-[var(--text-2)] block">
                 Por quantos meses deseja projetar este valor fixo?
               </span>
               <div className="grid grid-cols-4 gap-1.5">
@@ -626,10 +592,10 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                     key={item.val}
                     type="button"
                     onClick={() => setRecurrentMonths(item.val)}
-                    className={`py-1.5 px-2 text-[11px] font-semibold rounded-lg border text-center transition-all ${
+                    className={`ui-seg-item !border !py-1.5 ${
                       recurrentMonths === item.val
-                        ? 'bg-zinc-600 text-white border-orange-500 shadow-xs'
-                        : 'bg-[#1d1d20] text-zinc-300 border-zinc-700 hover:border-neutral-600'
+                        ? 'ui-seg-item-active !border-[color-mix(in_srgb,var(--accent-text)_40%,transparent)]'
+                        : '!border-[var(--border-1)]'
                     }`}
                   >
                     {item.label}
@@ -638,12 +604,14 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
               </div>
 
               {parsedRawAmount > 0 && (
-                <div className="ui-panel p-2.5 text-xs text-zinc-300 space-y-1">
-                  <div className="text-zinc-300 text-[11px]">
-                    🔄 Serão gerados <strong>{recurrentMonths} lançamentos mensais</strong> de <strong>{formatCurrency(parsedRawAmount)}</strong>
+                <div className="ui-tile !bg-[var(--surface-1)] p-2.5 text-xs space-y-1 tabular-nums">
+                  <div className="text-[var(--text-3)] text-[11px]">
+                    Serão gerados <strong className="text-[var(--text-1)]">{recurrentMonths} lançamentos mensais</strong> de{' '}
+                    <strong className="text-[var(--text-1)]">{formatCurrency(parsedRawAmount)}</strong>
                   </div>
-                  <div className="text-[11px] text-zinc-400">
-                    Do mês de <strong>{firstMonthLabel}</strong> até <strong>{lastRecurrentLabel}</strong>.
+                  <div className="text-[11px] text-[var(--text-4)]">
+                    De <strong className="text-[var(--text-2)]">{firstMonthLabel}</strong> até{' '}
+                    <strong className="text-[var(--text-2)]">{lastRecurrentLabel}</strong>.
                   </div>
                 </div>
               )}
@@ -652,9 +620,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
 
           {/* 7. Category Selector */}
           <div>
-            <label className="block text-[11px] font-semibold uppercase tracking-wide text-zinc-400 mb-1.5">
-              Categoria
-            </label>
+            <label className="ui-label">Categoria</label>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
               {filteredCategories.map((cat) => {
                 const isSelected = category === cat.id;
@@ -663,10 +629,10 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                     key={cat.id}
                     type="button"
                     onClick={() => setCategory(cat.id)}
-                    className={`flex items-center gap-2 min-h-[42px] px-2 py-1.5 rounded-lg text-left text-[11px] leading-tight transition-colors ${
+                    className={`flex items-center gap-2 min-h-[40px] px-2 py-1.5 rounded-[var(--r-control)] border text-left text-[11px] leading-tight transition-colors ${
                       isSelected
-                        ? 'bg-orange-500/15 text-orange-200 border border-orange-500/50 font-semibold'
-                        : 'bg-[#141416] text-zinc-300 border border-zinc-800 hover:border-zinc-700'
+                        ? 'bg-[var(--accent-soft)] text-[var(--accent-text)] border-[color-mix(in_srgb,var(--accent-text)_45%,transparent)] font-semibold'
+                        : 'bg-[var(--surface-2)] text-[var(--text-2)] border-[var(--border-1)] hover:border-[var(--border-2)]'
                     }`}
                   >
                     <div
@@ -688,23 +654,23 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
               })}
             </div>
             {errors.category && (
-              <span className="text-xs text-rose-400 mt-1 block">{errors.category}</span>
+              <span className="text-[11px] text-[var(--danger-text)] mt-1 block">{errors.category}</span>
             )}
           </div>
 
           {/* 8. Account & Payment Method */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-[11px] font-semibold uppercase tracking-wide text-zinc-400 mb-1.5">
-                {entryMode === 'installment' ? 'Cartão de Crédito' : 'Conta / Cartão'}
+              <label className="ui-label">
+                {entryMode === 'installment' ? 'Cartão de crédito' : 'Conta / cartão'}
               </label>
               <select
                 value={account}
                 onChange={(e) => setAccount(e.target.value)}
-                className="w-full px-3 py-2.5 text-xs text-white border border-zinc-700 rounded-lg bg-[#141416] outline-hidden focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
+                className="ui-input"
               >
                 {accounts.map((acc) => (
-                  <option key={acc.id} value={acc.id} className="bg-[#1d1d20] text-white">
+                  <option key={acc.id} value={acc.id}>
                     {acc.type === 'credit' ? '💳 ' : '🏦 '}
                     {acc.name}
                   </option>
@@ -713,20 +679,18 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
             </div>
 
             <div>
-              <label className="block text-[11px] font-semibold uppercase tracking-wide text-zinc-400 mb-1.5">
-                Forma de Pagamento
-              </label>
+              <label className="ui-label">Forma de pagamento</label>
               <select
                 value={paymentMethod}
                 onChange={(e) => setPaymentMethod(e.target.value as PaymentMethod)}
-                className="w-full px-3 py-2.5 text-xs text-white border border-zinc-700 rounded-lg bg-[#141416] outline-hidden focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
+                className="ui-input"
               >
-                <option value="credit" className="bg-[#1d1d20] text-white">Cartão de Crédito</option>
-                <option value="pix" className="bg-[#1d1d20] text-white">Pix</option>
-                <option value="debit" className="bg-[#1d1d20] text-white">Cartão de Débito</option>
-                <option value="cash" className="bg-[#1d1d20] text-white">Dinheiro em Espécie</option>
-                <option value="transfer" className="bg-[#1d1d20] text-white">Transferência / TED</option>
-                <option value="investment" className="bg-[#1d1d20] text-white">Investimento</option>
+                <option value="credit">Cartão de crédito</option>
+                <option value="pix">Pix</option>
+                <option value="debit">Cartão de débito</option>
+                <option value="cash">Dinheiro em espécie</option>
+                <option value="transfer">Transferência / TED</option>
+                <option value="investment">Investimento</option>
               </select>
             </div>
           </div>
@@ -734,24 +698,24 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
           {/* 9. Date & Paid Status */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
             <div>
-              <label className="block text-[11px] font-semibold uppercase tracking-wide text-zinc-400 mb-1.5">
-                {entryMode === 'installment' ? 'Data da 1ª Parcela' : 'Data do Lançamento'}
+              <label className="ui-label">
+                {entryMode === 'installment' ? 'Data da 1ª parcela' : 'Data do lançamento'}
               </label>
               <input
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                className="w-full px-3 py-2.5 text-xs text-white border border-zinc-700 rounded-lg bg-[#141416] outline-hidden focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 font-mono"
+                className="ui-input tabular-nums"
               />
             </div>
 
             <div className="pt-4 sm:pt-5">
-              <label className="flex items-center gap-2 cursor-pointer select-none text-xs text-zinc-300">
+              <label className="flex items-center gap-2 cursor-pointer select-none text-[11px] text-[var(--text-2)]">
                 <input
                   type="checkbox"
                   checked={isPaid}
                   onChange={(e) => setIsPaid(e.target.checked)}
-                  className="w-4 h-4 text-zinc-500 rounded border-zinc-700 bg-[#1d1d20] focus:ring-orange-500"
+                  className="w-4 h-4 accent-[var(--accent-text)]"
                 />
                 <span className="font-medium">
                   {entryMode === 'installment'
@@ -766,42 +730,32 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
 
           {/* 10. Optional notes */}
           <div>
-            <label className="block text-[11px] font-semibold uppercase tracking-wide text-zinc-400 mb-1.5">
-              Observações (opcional)
-            </label>
+            <label className="ui-label">Observações (opcional)</label>
             <input
               type="text"
-              placeholder="Ex: Garantia de 1 ano, loja física, código de rastreio..."
+              placeholder="Ex: garantia de 1 ano, loja física, código de rastreio..."
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className="w-full px-3 py-2.5 text-xs text-white bg-[#141416] border border-zinc-700 rounded-lg outline-hidden focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 placeholder:text-zinc-500"
+              className="ui-input"
             />
           </div>
         </form>
 
         {/* Modal Footer */}
-        <div className="flex items-center gap-2 px-5 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] border-t border-zinc-800 bg-[#141416]">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2.5 text-xs font-semibold text-zinc-300 hover:text-white bg-transparent hover:bg-zinc-800 border border-zinc-700 rounded-lg transition-colors whitespace-nowrap"
-          >
+        <div className="ui-modal-footer">
+          <button type="button" onClick={onClose} className="ui-btn ui-btn-ghost">
             Cancelar
           </button>
-          <button
-            type="button"
-            onClick={handleSubmit}
-            className="flex-1 flex items-center justify-center gap-1.5 px-5 py-2.5 text-xs font-bold text-zinc-950 bg-orange-500 hover:bg-orange-400 rounded-lg transition-colors whitespace-nowrap"
-          >
+          <button type="button" onClick={handleSubmit} className="ui-btn ui-btn-primary flex-1">
             <Check className="w-4 h-4" />
             <span>
               {initialData
-                ? 'Salvar Alterações'
+                ? 'Salvar alterações'
                 : entryMode === 'installment'
-                ? `Gerar ${totalInstallments} Parcelas`
+                ? `Gerar ${totalInstallments} parcelas`
                 : entryMode === 'recurrent'
-                ? `Projetar ${recurrentMonths} Meses`
-                : 'Adicionar Lançamento'}
+                ? `Projetar ${recurrentMonths} meses`
+                : 'Adicionar lançamento'}
             </span>
           </button>
         </div>

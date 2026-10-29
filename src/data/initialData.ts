@@ -6,21 +6,21 @@ export const DEFAULT_CATEGORIES: Category[] = [
   // Receitas
   {
     id: 'cat_salario',
-    name: 'Salário & Proventos',
+    name: 'Salário',
     icon: 'Briefcase',
     color: '#f97316',
     type: 'income',
   },
   {
     id: 'cat_renda_extra',
-    name: 'Renda Extra & Bônus',
+    name: 'Renda extra',
     icon: 'Sparkles',
     color: '#fb923c',
     type: 'income',
   },
   {
     id: 'cat_rendimentos',
-    name: 'Rendimentos & Investimentos',
+    name: 'Rendimentos',
     icon: 'TrendingUp',
     color: '#fbbf24',
     type: 'income',
@@ -29,7 +29,7 @@ export const DEFAULT_CATEGORIES: Category[] = [
   // Despesas Fixas & Moradia
   {
     id: 'cat_moradia',
-    name: 'Moradia (Aluguel, Condomínio, Luz)',
+    name: 'Moradia',
     icon: 'Home',
     color: '#f97316',
     type: 'expense',
@@ -37,7 +37,7 @@ export const DEFAULT_CATEGORIES: Category[] = [
   },
   {
     id: 'cat_veiculo',
-    name: 'Veículo (Financiamento, Seguro, IPVA)',
+    name: 'Veículo',
     icon: 'Car',
     color: '#f59e0b',
     type: 'expense',
@@ -45,7 +45,7 @@ export const DEFAULT_CATEGORIES: Category[] = [
   },
   {
     id: 'cat_educacao',
-    name: 'Educação & Escola',
+    name: 'Educação',
     icon: 'GraduationCap',
     color: '#a1a1aa',
     type: 'expense',
@@ -53,7 +53,7 @@ export const DEFAULT_CATEGORIES: Category[] = [
   },
   {
     id: 'cat_assinaturas',
-    name: 'Assinaturas & Telecom (Internet, Streaming)',
+    name: 'Assinaturas',
     icon: 'Tv',
     color: '#f43f5e',
     type: 'expense',
@@ -63,7 +63,7 @@ export const DEFAULT_CATEGORIES: Category[] = [
   // Despesas Variáveis
   {
     id: 'cat_alimentacao',
-    name: 'Supermercado & Alimentação',
+    name: 'Alimentação',
     icon: 'Coffee',
     color: '#ec4899',
     type: 'expense',
@@ -71,7 +71,7 @@ export const DEFAULT_CATEGORIES: Category[] = [
   },
   {
     id: 'cat_combustivel',
-    name: 'Transporte & Combustível',
+    name: 'Transporte',
     icon: 'Zap',
     color: '#f97316',
     type: 'expense',
@@ -79,7 +79,7 @@ export const DEFAULT_CATEGORIES: Category[] = [
   },
   {
     id: 'cat_compras_cartao',
-    name: 'Compras & Vestuário',
+    name: 'Compras',
     icon: 'ShoppingBag',
     color: '#eab308',
     type: 'expense',
@@ -87,7 +87,7 @@ export const DEFAULT_CATEGORIES: Category[] = [
   },
   {
     id: 'cat_saude',
-    name: 'Saúde & Farmácia',
+    name: 'Saúde',
     icon: 'ShieldCheck',
     color: '#f59e0b',
     type: 'expense',
@@ -95,7 +95,7 @@ export const DEFAULT_CATEGORIES: Category[] = [
   },
   {
     id: 'cat_lazer',
-    name: 'Lazer & Restaurantes',
+    name: 'Lazer',
     icon: 'Utensils',
     color: '#f43f5e',
     type: 'expense',
@@ -103,7 +103,7 @@ export const DEFAULT_CATEGORIES: Category[] = [
   },
   {
     id: 'cat_investimentos_saida',
-    name: 'Aportes & Poupança',
+    name: 'Aportes',
     icon: 'PiggyBank',
     color: '#f97316',
     type: 'expense',
@@ -111,7 +111,7 @@ export const DEFAULT_CATEGORIES: Category[] = [
   },
   {
     id: 'cat_outros',
-    name: 'Outras Despesas',
+    name: 'Outros',
     icon: 'MoreHorizontal',
     color: '#64748b',
     type: 'expense',
@@ -129,7 +129,7 @@ export const DEFAULT_ACCOUNTS: Account[] = [
   },
   {
     id: 'acc_picpay',
-    name: 'Cartão PicPay',
+    name: 'Cartão principal',
     type: 'credit',
     initialBalance: 0,
     color: '#78716c',
@@ -138,7 +138,7 @@ export const DEFAULT_ACCOUNTS: Account[] = [
   },
   {
     id: 'acc_santander',
-    name: 'Cartão Santander',
+    name: 'Cartão secundário',
     type: 'credit',
     initialBalance: 0,
     color: '#ef4444',
@@ -147,7 +147,7 @@ export const DEFAULT_ACCOUNTS: Account[] = [
   },
   {
     id: 'acc_riachuelo',
-    name: 'Cartão Riachuelo',
+    name: 'Cartão de loja',
     type: 'credit',
     initialBalance: 0,
     color: '#ec4899',
@@ -156,14 +156,14 @@ export const DEFAULT_ACCOUNTS: Account[] = [
   },
   {
     id: 'acc_cdb',
-    name: 'Investimento / Reserva CDB',
+    name: 'Reserva e investimentos',
     type: 'investment',
     initialBalance: 0,
     color: '#f97316',
   },
   {
     id: 'acc_carteira',
-    name: 'Carteira / Dinheiro Físico',
+    name: 'Carteira',
     type: 'cash',
     initialBalance: 0,
     color: '#64748b',

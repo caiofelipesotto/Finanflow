@@ -88,54 +88,49 @@ export const BackupModal: React.FC<BackupModalProps> = ({
   };
 
   return (
-    <div className="ui-modal-overlay">
-      <div className="ui-modal max-w-md">
-        <div className="ui-modal-header justify-between">
-          <div className="flex items-center gap-2">
-            <ShieldCheck className="w-4 h-4 text-zinc-600" />
-            <h2 className="ui-section-title">Privacidade & Dados</h2>
+    <div className="ui-modal-overlay" onClick={onClose}>
+      <div className="ui-modal max-w-md" onClick={(e) => e.stopPropagation()}>
+        <div className="ui-modal-header">
+          <span className="ui-icon">
+            <ShieldCheck className="w-4 h-4" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <h2 className="ui-modal-title">Privacidade e dados</h2>
+            <p className="ui-modal-sub">Backup, importação e limpeza dos seus registros</p>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 rounded-lg transition-colors"
+            aria-label="Fechar"
+            className="p-1.5 -mt-1 -mr-1 rounded-[var(--r-control)] text-[var(--text-4)] hover:text-[var(--text-1)] hover:bg-[var(--surface-3)] transition-colors shrink-0"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
         <div className="ui-modal-body space-y-5">
-          <div className="ui-panel p-3 text-xs leading-relaxed text-zinc-400">
-            <strong className="text-neutral-800 block mb-0.5">Seus dados são 100% seus</strong>
-            Seus lançamentos ficam na sua conta na nuvem e também neste navegador, como cópia offline. Baixe um backup quando quiser.
+          <div className="ui-tile p-3 text-[11px] leading-relaxed text-[var(--text-3)]">
+            <strong className="text-[var(--text-1)] block mb-0.5">Seus dados são 100% seus</strong>
+            Seus lançamentos ficam na sua conta na nuvem e também neste navegador, como cópia offline.
+            Baixe um backup quando quiser.
           </div>
 
-          <div className="space-y-2.5">
-            <span className="ui-label">
-              Exportação e Backup
-            </span>
+          <div className="space-y-2">
+            <span className="ui-label">Exportação e backup</span>
 
-            <button
-              onClick={handleExportCsv}
-              className="ui-panel w-full flex items-center justify-between p-3 text-xs font-medium text-zinc-200 hover:border-zinc-700 transition-colors"
-            >
+            <button onClick={handleExportCsv} className="ui-tile ui-tile-hover w-full flex items-center justify-between p-3 text-xs font-medium text-[var(--text-2)]">
               <div className="flex items-center gap-2.5">
-                <FileSpreadsheet className="w-4 h-4 text-zinc-600" />
-                <span>Exportar Planilha (CSV / Excel)</span>
+                <FileSpreadsheet className="w-4 h-4 text-[var(--text-4)]" />
+                <span>Exportar planilha (CSV / Excel)</span>
               </div>
-              <Download className="w-3.5 h-3.5 text-neutral-400" />
+              <Download className="w-3.5 h-3.5 text-[var(--text-4)]" />
             </button>
 
-            <button
-              onClick={handleExportJson}
-              className="ui-panel w-full flex items-center justify-between p-3 text-xs font-medium text-zinc-200 hover:border-zinc-700 transition-colors"
-            >
+            <button onClick={handleExportJson} className="ui-tile ui-tile-hover w-full flex items-center justify-between p-3 text-xs font-medium text-[var(--text-2)]">
               <div className="flex items-center gap-2.5">
-                <Download className="w-4 h-4 text-neutral-600" />
-                <span>Baixar Backup Completo (JSON)</span>
+                <Download className="w-4 h-4 text-[var(--text-4)]" />
+                <span>Baixar backup completo (JSON)</span>
               </div>
-              <span className="text-[11px] text-neutral-400 font-mono">
-                {transactions.length} transações
-              </span>
+              <span className="ui-badge tabular-nums">{transactions.length} transações</span>
             </button>
 
             <input
@@ -151,30 +146,28 @@ export const BackupModal: React.FC<BackupModalProps> = ({
                 onClose();
                 onOpenImportSpreadsheet();
               }}
-              className="ui-panel w-full flex items-center justify-between p-3 text-xs font-medium text-zinc-200 hover:border-zinc-700 transition-colors"
+              className="ui-tile ui-tile-hover w-full flex items-center justify-between p-3 text-xs font-medium text-[var(--text-2)]"
             >
               <div className="flex items-center gap-2.5">
-                <FileSpreadsheet className="w-4 h-4 text-zinc-600" />
-                <span>Importar Planilha (Excel / Sheets / CSV)</span>
+                <FileSpreadsheet className="w-4 h-4 text-[var(--text-4)]" />
+                <span>Importar planilha (Excel / Sheets / CSV)</span>
               </div>
-              <span className="text-[11px] text-zinc-700 font-semibold">Novo</span>
+              <span className="ui-badge ui-badge-accent">Novo</span>
             </button>
 
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="ui-panel w-full flex items-center justify-between p-3 text-xs font-medium text-zinc-200 hover:border-zinc-700 transition-colors"
+              className="ui-tile ui-tile-hover w-full flex items-center justify-between p-3 text-xs font-medium text-[var(--text-2)]"
             >
               <div className="flex items-center gap-2.5">
-                <Upload className="w-4 h-4 text-neutral-600" />
-                <span>Restaurar / Importar Backup (JSON)</span>
+                <Upload className="w-4 h-4 text-[var(--text-4)]" />
+                <span>Restaurar backup (JSON)</span>
               </div>
             </button>
           </div>
 
-          <div className="pt-3 border-t border-zinc-800 space-y-2">
-            <span className="ui-label">
-              Gerenciar Estado
-            </span>
+          <div className="pt-3 border-t border-[var(--border-1)] space-y-2">
+            <span className="ui-label">Gerenciar estado</span>
 
             <div className="grid grid-cols-2 gap-2">
               <button
@@ -186,8 +179,8 @@ export const BackupModal: React.FC<BackupModalProps> = ({
                 }}
                 className="ui-btn ui-btn-secondary flex-1"
               >
-                <RefreshCw className="w-3.5 h-3.5 text-neutral-500" />
-                <span>Dados de Teste</span>
+                <RefreshCw className="w-3.5 h-3.5" />
+                <span>Dados de teste</span>
               </button>
 
               <button
@@ -200,7 +193,7 @@ export const BackupModal: React.FC<BackupModalProps> = ({
                 className="ui-btn ui-btn-danger flex-1"
               >
                 <Trash2 className="w-3.5 h-3.5" />
-                <span>Zerar Tudo</span>
+                <span>Zerar tudo</span>
               </button>
             </div>
           </div>

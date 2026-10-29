@@ -99,81 +99,68 @@ export const ProjectionChart: React.FC<ProjectionChartProps> = ({
   const availableHeight = chartHeight - paddingBottom - paddingTop;
 
   return (
-    <div className="ui-card p-5 relative overflow-hidden">
-      {/* Header */}
+    <div className="ui-card p-4 sm:p-5 relative overflow-hidden h-full flex flex-col">
+      {/* Cabeçalho */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <h3 className="text-sm font-bold text-white tracking-tight flex items-center gap-2">
-              <BarChart3 className="w-4 h-4 text-zinc-400" />
-              Projeção Mensal dos Próximos 12 Meses
-            </h3>
-            <span className="text-[10px] font-semibold text-zinc-400 bg-zinc-950/80 border border-zinc-800/60 px-2 py-0.5 rounded-md">
-              Tempo Real
-            </span>
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="ui-section-title">Projeção dos próximos 12 meses</h3>
+            <span className="ui-badge">Tempo real</span>
           </div>
-          <p className="text-xs text-zinc-400 mt-0.5">
+          <p className="ui-sub">
             Inclui compras parceladas e contas fixas projetadas no calendário
           </p>
         </div>
 
-        {/* View Mode Toggle */}
-        <div className="flex items-center gap-1 p-1 ui-panel rounded-xl border border-zinc-800 w-full sm:w-auto">
+        {/* Alternância de visão */}
+        <div className="ui-segmented w-full sm:w-auto shrink-0">
           <button
             type="button"
             onClick={() => setChartMode('cashflow')}
-            className={`flex flex-1 sm:flex-none items-center justify-center gap-1.5 px-2 sm:px-3 py-1.5 text-[11px] sm:text-xs font-semibold rounded-lg transition-all whitespace-nowrap ${
-              chartMode === 'cashflow'
-                ? 'bg-orange-600 text-white shadow-xs'
-                : 'text-zinc-400 hover:text-white'
-            }`}
+            className={`ui-seg-item flex-1 sm:flex-none ${chartMode === 'cashflow' ? 'ui-seg-item-active' : ''}`}
           >
             <BarChart3 className="w-3.5 h-3.5 shrink-0" />
-            <span>Entradas vs Saídas</span>
+            <span>Entradas vs saídas</span>
           </button>
           <button
             type="button"
             onClick={() => setChartMode('card')}
-            className={`flex flex-1 sm:flex-none items-center justify-center gap-1.5 px-2 sm:px-3 py-1.5 text-[11px] sm:text-xs font-semibold rounded-lg transition-all whitespace-nowrap ${
-              chartMode === 'card'
-                ? 'bg-orange-600 text-white shadow-xs'
-                : 'text-zinc-400 hover:text-white'
-            }`}
+            className={`ui-seg-item flex-1 sm:flex-none ${chartMode === 'card' ? 'ui-seg-item-active' : ''}`}
           >
             <CreditCard className="w-3.5 h-3.5 shrink-0" />
-            <span>Faturas do Cartão</span>
+            <span>Faturas do cartão</span>
           </button>
         </div>
       </div>
 
       {/* Floating Hover Card */}
       {hoveredMonth && (
-        <div className="ui-panel mb-3 p-3 text-xs flex flex-wrap items-center justify-between gap-4">
+        <div className="ui-tile mb-3 p-3 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <span
-              className="w-2.5 h-2.5 rounded-full"
+              className="w-2 h-2 rounded-full"
               style={{ backgroundColor: 'var(--chart-income)' }}
             />
-            <span className="font-bold text-white text-sm">{hoveredMonth.fullLabel}</span>
+            <span className="font-bold text-[var(--text-1)] text-xs">{hoveredMonth.fullLabel}</span>
           </div>
 
-          <div className="flex flex-wrap items-center gap-4 text-xs font-mono tabular-nums">
+          <div className="flex flex-wrap items-center gap-3 text-[11px] tabular-nums">
             {chartMode === 'cashflow' ? (
               <>
                 <div>
-                  <span className="text-orange-400 text-[11px] block">Entradas:</span>
+                  <span className="ui-stat-label">Entradas</span>
                   <strong className="font-bold" style={{ color: 'var(--chart-income)' }}>
                     {formatCurrency(hoveredMonth.income)}
                   </strong>
                 </div>
-                <div className="border-l border-neutral-700 pl-3">
-                  <span className="text-zinc-400 text-[11px] block">Saídas Totais:</span>
+                <div className="border-l border-[var(--border-1)] pl-3">
+                  <span className="ui-stat-label">Saídas</span>
                   <strong className="font-bold" style={{ color: 'var(--chart-expense)' }}>
                     {formatCurrency(hoveredMonth.expense)}
                   </strong>
                 </div>
-                <div className="border-l border-neutral-700 pl-3">
-                  <span className="text-orange-400 text-[11px] block">Sobrou:</span>
+                <div className="border-l border-[var(--border-1)] pl-3">
+                  <span className="ui-stat-label">Sobrou</span>
                   <strong
                     className="font-bold"
                     style={{
@@ -189,8 +176,8 @@ export const ProjectionChart: React.FC<ProjectionChartProps> = ({
               </>
             ) : (
               <div>
-                <span className="text-zinc-400 text-[11px] block">Fatura do cartão e parcelas:</span>
-                <strong className="text-zinc-300 font-bold">
+                <span className="ui-stat-label">Fatura e parcelas</span>
+                <strong className="font-bold" style={{ color: 'var(--chart-card)' }}>
                   {formatCurrency(hoveredMonth.cardTotal)}
                 </strong>
               </div>
@@ -201,19 +188,19 @@ export const ProjectionChart: React.FC<ProjectionChartProps> = ({
 
       {/* SVG Chart Container */}
       {!hasAnyData ? (
-        <div className="py-12 px-4 text-center border border-dashed border-zinc-800 rounded-xl">
-          <Calendar className="w-8 h-8 text-zinc-500 mx-auto mb-2 opacity-50" />
-          <h4 className="text-xs font-bold text-zinc-200">Nenhum lançamento no período</h4>
-          <p className="text-[11px] text-zinc-400 max-w-md mx-auto mt-1">
+        <div className="py-12 px-4 text-center border border-dashed border-[var(--border-2)] rounded-[var(--r-panel)]">
+          <Calendar className="w-8 h-8 text-[var(--text-4)] mx-auto mb-2" />
+          <h4 className="text-xs font-bold text-[var(--text-1)]">Nenhum lançamento no período</h4>
+          <p className="text-[11px] text-[var(--text-3)] max-w-md mx-auto mt-1">
             Cadastre seus ganhos, contas ou compras parceladas no cartão. O gráfico calculará a projeção do seu saldo mês a mês.
           </p>
         </div>
       ) : (
-        <div className="overflow-x-auto pb-2 scrollbar-thin">
+        <div className="overflow-x-auto py-2 flex-1 flex items-center scrollbar-thin">
           <div className="min-w-[620px]">
             <svg
               viewBox={`0 0 ${monthsData.length * colWidth + 20} ${chartHeight}`}
-              className="w-full h-44 overflow-visible select-none"
+              className="w-full h-52 sm:h-60 overflow-visible select-none"
             >
               {/* Horizontal Reference Lines */}
               {[0, 0.5, 1].map((pct, idx) => {
@@ -326,34 +313,34 @@ export const ProjectionChart: React.FC<ProjectionChartProps> = ({
       )}
 
       {/* Legend */}
-      <div className="flex flex-wrap items-center justify-between gap-3 mt-2 pt-3 border-t border-zinc-800 text-[11px] text-zinc-400">
-        <div className="flex items-center gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 mt-2 pt-3 border-t border-[var(--border-1)] text-[11px] text-[var(--text-3)]">
+        <div className="flex flex-wrap items-center gap-4">
           {chartMode === 'cashflow' ? (
             <>
               <div className="flex items-center gap-1.5">
                 <span
-                  className="w-2.5 h-2.5 rounded-xs"
+                  className="w-2 h-2 rounded-sm"
                   style={{ backgroundColor: 'var(--chart-income)' }}
                 />
-                <span>Entradas (Receitas)</span>
+                <span>Entradas</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <span
-                  className="w-2.5 h-2.5 rounded-xs"
+                  className="w-2 h-2 rounded-sm"
                   style={{ backgroundColor: 'var(--chart-expense)' }}
                 />
-                <span>Saídas (Despesas)</span>
+                <span>Saídas</span>
               </div>
             </>
           ) : (
             <div className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-xs" style={{ backgroundColor: 'var(--chart-card)' }} />
-              <span>Fatura do Cartão & Parcelas a Vencer</span>
+              <span className="w-2 h-2 rounded-sm" style={{ backgroundColor: 'var(--chart-card)' }} />
+              <span>Fatura do cartão e parcelas</span>
             </div>
           )}
         </div>
-        <span className="text-[10px] text-zinc-500">
-          Clique nas barras para carregar o mês correspondente
+        <span className="text-[10px] text-[var(--text-4)]">
+          Clique nas barras para carregar o mês
         </span>
       </div>
     </div>

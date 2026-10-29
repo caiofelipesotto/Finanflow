@@ -429,44 +429,41 @@ export function ScanInvoiceModal({
           automáticas alinham ao topo (cima acessível ao rolar); quando cabe,
           centraliza igual antes. items-center puro cortava o topo no celular. */}
       <div className="ui-modal max-w-3xl my-auto">
-        {/* Header */}
-        <div className="ui-modal-header justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-lg shadow-orange-500/20 text-white">
-              <Camera className="w-5 h-5" />
+        {/* Cabeçalho */}
+        <div className="ui-modal-header">
+          <span className="ui-icon ui-icon-accent !w-9 !h-9">
+            <Camera className="w-4 h-4" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="ui-modal-title">Escanear fatura e comprovantes</h2>
+              <span className="ui-badge">
+                <Cpu className="w-3 h-3" />
+                OCR local
+              </span>
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-base font-bold text-white tracking-tight">
-                  Escanear Fatura & Comprovantes
-                </h2>
-                <span className="inline-flex items-center gap-1 text-[10px] font-semibold tracking-wide uppercase px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-300 border border-orange-500/30">
-                  <Cpu className="w-3 h-3 text-zinc-400" />
-                  OCR Local
-                </span>
-              </div>
-              <p className="text-xs text-zinc-400 mt-0.5">
-                Envie uma foto ou print de fatura, cupom ou comprovante e as compras entram
-                já calculadas. A leitura acontece no seu aparelho — a imagem não sai do celular.
-              </p>
-            </div>
+            <p className="ui-modal-sub">
+              Envie uma foto ou print de fatura, cupom ou comprovante e as compras entram já
+              calculadas. A leitura acontece no seu aparelho — a imagem não sai do celular.
+            </p>
           </div>
           <button
             onClick={onClose}
-            className="p-2 text-zinc-400 hover:text-white rounded-lg hover:bg-zinc-800 transition-colors"
+            aria-label="Fechar"
+            className="p-1.5 -mt-1 -mr-1 rounded-[var(--r-control)] text-[var(--text-4)] hover:text-[var(--text-1)] hover:bg-[var(--surface-3)] transition-colors shrink-0"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
-        {/* Body content based on step */}
-        <div className="p-6">
+        {/* Conteúdo do passo atual */}
+        <div className="ui-modal-body">
           {scanStep === 'upload' && (
             <div className="space-y-6">
               {/* Drag & drop upload area */}
               <div
                 onClick={() => fileInputRef.current?.click()}
-                className="border-2 border-dashed border-zinc-700 hover:border-orange-500/70 bg-[#09090b]/70 hover:bg-zinc-950/10 transition-all duration-200 rounded-2xl p-8 text-center cursor-pointer flex flex-col items-center justify-center group relative overflow-hidden"
+                className="border border-dashed border-[var(--border-2)] hover:border-[var(--accent-text)] bg-[var(--surface-2)] transition-colors rounded-[var(--r-card)] p-8 text-center cursor-pointer flex flex-col items-center justify-center group relative overflow-hidden"
               >
                 <input
                   type="file"
@@ -477,20 +474,20 @@ export function ScanInvoiceModal({
                   className="hidden"
                 />
 
-                <div className="w-16 h-16 rounded-2xl bg-zinc-800/80 group-hover:bg-orange-600/20 text-zinc-400 flex items-center justify-center mb-4 transition-transform group-hover:scale-110 duration-200 border border-zinc-700/60 group-hover:border-orange-500/40">
-                  <Upload className="w-8 h-8" />
+                <div className="ui-icon !w-14 !h-14 !rounded-[var(--r-card)] group-hover:text-[var(--accent-text)] group-hover:border-[color-mix(in_srgb,var(--accent-text)_40%,transparent)] mb-4 transition-colors">
+                  <Upload className="w-6 h-6" />
                 </div>
 
-                <h3 className="text-sm font-semibold text-white mb-1">
-                  Clique para tirar foto ou selecionar imagem do print
+                <h3 className="ui-section-title mb-1">
+                  Clique para tirar foto ou escolher um print
                 </h3>
-                <p className="text-xs text-zinc-400 max-w-md">
-                  Funciona com prints de app do banco, fatura do cartão, cupom fiscal ou comprovante de compra.
+                <p className="ui-sub max-w-md">
+                  Funciona com prints do app do banco, fatura do cartão, cupom fiscal ou comprovante de compra.
                 </p>
 
-                <div className="mt-4 flex items-center gap-2 text-[11px] text-zinc-500 bg-zinc-800/50 px-3 py-1.5 rounded-full border border-zinc-700/50">
-                  <span>Dica: Você também pode colar com</span>
-                  <kbd className="px-1.5 py-0.5 bg-zinc-700 text-zinc-300 rounded font-mono text-[10px]">
+                <div className="mt-4 flex items-center gap-2 text-[11px] text-[var(--text-4)] bg-[var(--surface-3)] px-3 py-1.5 rounded-full border border-[var(--border-1)]">
+                  <span>Dica: você também pode colar com</span>
+                  <kbd className="px-1.5 py-0.5 bg-[var(--surface-4)] text-[var(--text-2)] rounded-[var(--r-control)] font-mono text-[10px]">
                     Ctrl + V
                   </kbd>
                 </div>
@@ -498,26 +495,26 @@ export function ScanInvoiceModal({
 
               {/* Scanning loading state */}
               {isScanning && (
-                <div className="bg-zinc-950/40 border border-orange-500/30 rounded-xl p-5 flex flex-col items-center justify-center text-center space-y-3">
+                <div className="ui-tile p-5 flex flex-col items-center justify-center text-center space-y-3">
                   <div className="relative">
                     <div className="w-12 h-12 rounded-full border-2 border-orange-500/20 border-t-orange-400 animate-spin" />
                     <Cpu className="w-5 h-5 text-zinc-400 absolute inset-0 m-auto" />
                   </div>
                   <div>
-                    <h4 className="text-sm font-semibold text-white">{ocrLabel}...</h4>
-                    <p className="text-xs text-zinc-400 mt-1">
+                    <h4 className="ui-section-title">{ocrLabel}...</h4>
+                    <p className="ui-sub">
                       Detectando loja, número de parcelas, valores mensais e vencimentos — tudo
                       localmente, sem enviar a imagem para lugar nenhum.
                     </p>
                   </div>
                   <div className="w-full max-w-sm">
-                    <div className="h-1.5 w-full rounded-full bg-zinc-800 overflow-hidden">
+                    <div className="ui-progress !h-1.5">
                       <div
-                        className="h-full rounded-full bg-zinc-500 transition-all duration-300"
+                        className="ui-progress-bar !bg-[var(--accent-text)]"
                         style={{ width: `${Math.max(6, Math.round(ocrProgress * 100))}%` }}
                       />
                     </div>
-                    <div className="mt-1 text-[10px] text-zinc-500">
+                    <div className="mt-1 text-[10px] text-[var(--text-4)]">
                       {ocrProgress > 0
                         ? `${Math.round(ocrProgress * 100)}%`
                         : 'Na 1ª vez baixa ~4 MB e fica salvo no navegador'}
@@ -528,7 +525,7 @@ export function ScanInvoiceModal({
 
               {/* Error feedback */}
               {scanError && (
-                <div className="bg-rose-950/40 border border-rose-500/40 rounded-xl p-4 flex items-start gap-3 text-rose-300 text-xs">
+                <div className="ui-alert !border-[color-mix(in_srgb,var(--danger-text)_32%,transparent)] !bg-[var(--danger-soft)] text-[var(--danger-text)] items-start">
                   <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
                   <div className="flex-1">
                     <strong className="block font-semibold">Falha ao escanear imagem</strong>
@@ -538,57 +535,51 @@ export function ScanInvoiceModal({
               )}
 
               {/* Demo test buttons */}
-              <div className="pt-2 border-t border-neutral-800/80">
+              <div className="pt-3 border-t border-[var(--border-1)]">
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs font-medium text-zinc-400 flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                    Quer testar sem imagem? Clique em um exemplo pré-configurado:
+                  <span className="text-xs font-medium text-[var(--text-3)] flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-[var(--warning-text)]" />
+                    Quer testar sem imagem? Use um exemplo pronto:
                   </span>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                   <button
                     type="button"
                     onClick={() => handleLoadDemo('riachuelo')}
-                    className="flex flex-col items-start p-3 rounded-xl bg-zinc-800/60 hover:bg-zinc-800 border border-zinc-700/60 hover:border-pink-500/50 text-left transition-all"
+                    className="ui-tile ui-tile-hover flex flex-col items-start p-3 text-left"
                   >
-                    <div className="flex items-center justify-between w-full mb-1">
-                      <span className="text-xs font-semibold text-pink-400">Print Riachuelo</span>
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-pink-500/20 text-pink-300 font-mono">
-                        5x parcelas
-                      </span>
+                    <div className="flex items-center justify-between w-full gap-2 mb-1">
+                      <span className="text-xs font-semibold text-[var(--text-1)]">Compra parcelada</span>
+                      <span className="ui-badge">5x</span>
                     </div>
-                    <span className="text-[11px] text-zinc-300 font-medium">R$ 449,50 (5x R$ 89,90)</span>
-                    <span className="text-[10px] text-zinc-500 mt-0.5">Calcula os próximos 5 meses</span>
+                    <span className="text-[11px] text-[var(--text-3)] font-medium tabular-nums">R$ 449,50 (5x R$ 89,90)</span>
+                    <span className="text-[10px] text-[var(--text-4)] mt-0.5">Calcula os próximos 5 meses</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => handleLoadDemo('santander')}
-                    className="flex flex-col items-start p-3 rounded-xl bg-zinc-800/60 hover:bg-zinc-800 border border-zinc-700/60 hover:border-red-500/50 text-left transition-all"
+                    className="ui-tile ui-tile-hover flex flex-col items-start p-3 text-left"
                   >
-                    <div className="flex items-center justify-between w-full mb-1">
-                      <span className="text-xs font-semibold text-red-400">Print Santander</span>
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-red-500/20 text-red-300 font-mono">
-                        10x parcelas
-                      </span>
+                    <div className="flex items-center justify-between w-full gap-2 mb-1">
+                      <span className="text-xs font-semibold text-[var(--text-1)]">Parcela longa</span>
+                      <span className="ui-badge">10x</span>
                     </div>
-                    <span className="text-[11px] text-zinc-300 font-medium">R$ 1.250,00 (10x R$ 125)</span>
-                    <span className="text-[10px] text-zinc-500 mt-0.5">Calcula os próximos 10 meses</span>
+                    <span className="text-[11px] text-[var(--text-3)] font-medium tabular-nums">R$ 1.250,00 (10x R$ 125)</span>
+                    <span className="text-[10px] text-[var(--text-4)] mt-0.5">Calcula os próximos 10 meses</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => handleLoadDemo('picpay')}
-                    className="flex flex-col items-start p-3 rounded-xl bg-zinc-800/60 hover:bg-zinc-800 border border-zinc-700/60 hover:border-orange-500/50 text-left transition-all"
+                    className="ui-tile ui-tile-hover flex flex-col items-start p-3 text-left"
                   >
-                    <div className="flex items-center justify-between w-full mb-1">
-                      <span className="text-xs font-semibold text-zinc-400">Print PicPay</span>
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-orange-500/20 text-orange-300 font-mono">
-                        Multi-itens
-                      </span>
+                    <div className="flex items-center justify-between w-full gap-2 mb-1">
+                      <span className="text-xs font-semibold text-[var(--text-1)]">Fatura com vários itens</span>
+                      <span className="ui-badge">Multi-itens</span>
                     </div>
-                    <span className="text-[11px] text-zinc-300 font-medium">Mercado + Compra 3x</span>
-                    <span className="text-[10px] text-zinc-500 mt-0.5">Lê faturas completas</span>
+                    <span className="text-[11px] text-[var(--text-3)] font-medium">Mercado + compra 3x</span>
+                    <span className="text-[10px] text-[var(--text-4)] mt-0.5">Lê faturas completas</span>
                   </button>
                 </div>
               </div>
@@ -647,12 +638,12 @@ export function ScanInvoiceModal({
                 {items.map((item, idx) => (
                   <div
                     key={item.id}
-                    className="bg-[#09090b] border border-neutral-800 rounded-xl p-4 space-y-4 relative"
+                    className="ui-tile p-4 space-y-4 relative"
                   >
                     {/* Header of the item card */}
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-2 flex-1">
-                        <span className="w-6 h-6 rounded-lg bg-zinc-800 text-xs font-mono font-bold flex items-center justify-center text-zinc-400">
+                        <span className="w-6 h-6 rounded-[var(--r-control)] bg-[var(--surface-3)] text-[11px] font-bold flex items-center justify-center text-[var(--text-3)] tabular-nums">
                           {idx + 1}
                         </span>
                         <input
@@ -662,7 +653,7 @@ export function ScanInvoiceModal({
                             handleUpdateItem(item.id, { description: e.target.value })
                           }
                           placeholder="Descrição da despesa"
-                          className="bg-zinc-800/60 border border-zinc-700/80 rounded-lg px-3 py-1.5 text-sm font-medium text-white focus:outline-none focus:border-orange-500 flex-1"
+                          className="ui-input flex-1 font-medium"
                         />
                       </div>
                       <button
@@ -679,7 +670,7 @@ export function ScanInvoiceModal({
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                       {/* Total Amount */}
                       <div>
-                        <label className="block text-[11px] font-medium text-zinc-400 mb-1">
+                        <label className="ui-label">
                           Valor Total da Compra
                         </label>
                         <div className="relative">
@@ -695,14 +686,14 @@ export function ScanInvoiceModal({
                                 totalAmount: parseFloat(e.target.value) || 0,
                               })
                             }
-                            className="w-full bg-zinc-800/60 border border-zinc-700/80 rounded-lg pl-9 pr-3 py-1.5 text-sm font-semibold text-white focus:outline-none focus:border-orange-500"
+                            className="ui-input !pl-9 font-semibold tabular-nums"
                           />
                         </div>
                       </div>
 
                       {/* Installments count */}
                       <div>
-                        <label className="block text-[11px] font-medium text-zinc-400 mb-1">
+                        <label className="ui-label">
                           Quantidade de Parcelas
                         </label>
                         <div className="relative">
@@ -713,7 +704,7 @@ export function ScanInvoiceModal({
                                 installmentsCount: parseInt(e.target.value, 10) || 1,
                               })
                             }
-                            className="w-full bg-zinc-800/60 border border-zinc-700/80 rounded-lg px-3 py-1.5 text-sm font-semibold text-white focus:outline-none focus:border-orange-500"
+                            className="ui-input font-semibold tabular-nums"
                           >
                             <option value={1}>1x (À vista)</option>
                             {[2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 18, 24, 36, 48].map((n) => (
@@ -727,7 +718,7 @@ export function ScanInvoiceModal({
 
                       {/* Per-installment amount */}
                       <div>
-                        <label className="block text-[11px] font-medium text-zinc-400 mb-1">
+                        <label className="ui-label">
                           Valor da Parcela Mensal
                         </label>
                         <div className="relative">
@@ -743,7 +734,7 @@ export function ScanInvoiceModal({
                                 installmentAmount: parseFloat(e.target.value) || 0,
                               })
                             }
-                            className="w-full bg-zinc-800/60 border border-zinc-700/80 rounded-lg pl-9 pr-3 py-1.5 text-sm font-semibold text-zinc-400 focus:outline-none focus:border-orange-500"
+                            className="ui-input !pl-9 font-semibold !text-[var(--text-4)] tabular-nums"
                           />
                         </div>
                       </div>
@@ -752,7 +743,7 @@ export function ScanInvoiceModal({
                     {/* Secondary row: Date, Account, Category */}
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
                       <div>
-                        <label className="block text-[11px] font-medium text-zinc-400 mb-1 flex items-center gap-1">
+                        <label className="ui-label flex items-center gap-1">
                           <Calendar className="w-3 h-3 text-zinc-500" />
                           Data 1ª Parcela / Compra
                         </label>
@@ -762,12 +753,12 @@ export function ScanInvoiceModal({
                           onChange={(e) =>
                             handleUpdateItem(item.id, { date: e.target.value })
                           }
-                          className="w-full bg-zinc-800/60 border border-zinc-700/80 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-orange-500"
+                          className="ui-input"
                         />
                       </div>
 
                       <div>
-                        <label className="block text-[11px] font-medium text-zinc-400 mb-1 flex items-center gap-1">
+                        <label className="ui-label flex items-center gap-1">
                           <CreditCard className="w-3 h-3 text-zinc-500" />
                           Cartão / Conta
                         </label>
@@ -776,7 +767,7 @@ export function ScanInvoiceModal({
                           onChange={(e) =>
                             handleUpdateItem(item.id, { selectedAccountId: e.target.value })
                           }
-                          className="w-full bg-zinc-800/60 border border-zinc-700/80 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-orange-500"
+                          className="ui-input"
                         >
                           {accounts.map((acc) => (
                             <option key={acc.id} value={acc.id}>
@@ -787,7 +778,7 @@ export function ScanInvoiceModal({
                       </div>
 
                       <div>
-                        <label className="block text-[11px] font-medium text-zinc-400 mb-1 flex items-center gap-1">
+                        <label className="ui-label flex items-center gap-1">
                           <Layers className="w-3 h-3 text-zinc-500" />
                           Categoria
                         </label>
@@ -796,7 +787,7 @@ export function ScanInvoiceModal({
                           onChange={(e) =>
                             handleUpdateItem(item.id, { selectedCategoryId: e.target.value })
                           }
-                          className="w-full bg-zinc-800/60 border border-zinc-700/80 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-orange-500"
+                          className="ui-input"
                         >
                           {categories
                             .filter(
@@ -816,10 +807,10 @@ export function ScanInvoiceModal({
 
                     {/* Visual Months Breakdown Preview for installments */}
                     {item.installmentsCount > 1 && (
-                      <div className="bg-[#1d1d20] rounded-lg p-3 border border-zinc-800/60">
-                        <div className="text-[11px] font-semibold text-zinc-300 mb-2 flex items-center gap-1.5">
+                      <div className="ui-tile !bg-[var(--surface-1)] p-3">
+                        <div className="ui-label !mb-2 flex items-center gap-1.5">
                           <Sparkles className="w-3.5 h-3.5" />
-                          Projeção dos Meses ({item.installmentsCount} parcelas de {formatCurrency(item.installmentAmount)}):
+                          Projeção dos meses ({item.installmentsCount} parcelas de {formatCurrency(item.installmentAmount)})
                         </div>
                         <div className="flex flex-wrap gap-1.5">
                           {Array.from({ length: Math.min(12, item.installmentsCount) }).map(
@@ -829,11 +820,11 @@ export function ScanInvoiceModal({
                               return (
                                 <span
                                   key={mIdx}
-                                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] bg-zinc-800/90 text-zinc-300 border border-zinc-700/60 font-mono"
+                                  className="ui-badge tabular-nums"
                                 >
-                                  <span className="text-zinc-400 font-bold">{mIdx + 1}ª</span>
-                                  <span>{pMonthStr}:</span>
-                                  <span className="text-zinc-400">
+                                  <span className="text-[var(--text-4)]">{mIdx + 1}ª</span>
+                                  <span>{pMonthStr}</span>
+                                  <span className="text-[var(--text-3)]">
                                     {formatCurrency(item.installmentAmount)}
                                   </span>
                                 </span>
@@ -841,7 +832,7 @@ export function ScanInvoiceModal({
                             }
                           )}
                           {item.installmentsCount > 12 && (
-                            <span className="text-[10px] text-zinc-500 self-center">
+                            <span className="text-[10px] text-[var(--text-4)] self-center">
                               + {item.installmentsCount - 12} meses subsequentes
                             </span>
                           )}
@@ -856,12 +847,12 @@ export function ScanInvoiceModal({
 
           {scanStep === 'success' && (
             <div className="py-12 flex flex-col items-center justify-center text-center space-y-4">
-              <div className="w-16 h-16 rounded-full bg-orange-500/20 text-orange-400 flex items-center justify-center border border-orange-500/40 animate-bounce">
-                <CheckCircle2 className="w-10 h-10" />
+              <div className="ui-icon ui-icon-success !w-14 !h-14 !rounded-full">
+                <CheckCircle2 className="w-7 h-7" />
               </div>
-              <h3 className="text-lg font-bold text-white">Lançamentos Adicionados!</h3>
-              <p className="text-xs text-zinc-400 max-w-sm">
-                Todas as parcelas e meses foram calculados e adicionados com sucesso ao seu painel.
+              <h3 className="ui-h1 !text-base">Lançamentos adicionados</h3>
+              <p className="ui-sub max-w-sm">
+                Todas as parcelas e meses foram calculados e adicionados ao seu painel.
               </p>
             </div>
           )}
@@ -878,8 +869,8 @@ export function ScanInvoiceModal({
               >
                 Cancelar
               </button>
-              <div className="text-[11px] text-zinc-500 flex items-center gap-1">
-                <ShieldCheck className="w-3.5 h-3.5 text-zinc-500" />
+              <div className="text-[11px] text-[var(--text-4)] flex items-center gap-1">
+                <ShieldCheck className="w-3.5 h-3.5" />
                 Imagem lida no seu aparelho — nada é enviado
               </div>
             </>
@@ -891,7 +882,7 @@ export function ScanInvoiceModal({
                 className="ui-btn ui-btn-ghost flex items-center gap-1.5"
               >
                 <RefreshCw className="w-3.5 h-3.5" />
-                Escanear Outro
+                Escanear outro
               </button>
 
               <div className="flex items-center gap-3">
@@ -909,7 +900,7 @@ export function ScanInvoiceModal({
                   className="ui-btn ui-btn-primary"
                 >
                   <CheckCircle2 className="w-4 h-4" />
-                  Confirmar e Criar {items.reduce((acc, it) => acc + it.installmentsCount, 0)} Lançamentos
+                  Criar {items.reduce((acc, it) => acc + it.installmentsCount, 0)} lançamentos
                 </button>
               </div>
             </>

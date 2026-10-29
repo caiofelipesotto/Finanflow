@@ -841,9 +841,9 @@ export default function App() {
 
   if (authChecking) {
     return (
-      <div className="min-h-screen bg-[#0a0a0c] flex flex-col items-center justify-center gap-4 text-zinc-400">
-        <LogoMark className="w-14 h-14 shadow-xl shadow-orange-500/25 animate-pulse" />
-        <div className="text-sm font-semibold tracking-wide text-zinc-400 flex items-center gap-2">
+      <div className="min-h-screen bg-[var(--app-bg)] flex flex-col items-center justify-center gap-4 text-[var(--text-3)]">
+        <LogoMark className="w-14 h-14 animate-pulse" />
+        <div className="text-sm font-semibold tracking-wide text-[var(--text-3)] flex items-center gap-2">
           <span>Carregando FinanFlow...</span>
         </div>
       </div>
@@ -852,15 +852,15 @@ export default function App() {
 
   if (currentUser && !currentHousehold && !isGuestMode) {
     return (
-      <div className="min-h-screen bg-[#0a0a0c] flex flex-col items-center justify-center gap-4 text-zinc-400">
-        <LogoMark className="w-12 h-12 shadow-xl shadow-orange-500/25 animate-pulse" />
-        <div className="text-sm font-semibold tracking-wide text-zinc-400 flex items-center gap-2">
+      <div className="min-h-screen bg-[var(--app-bg)] flex flex-col items-center justify-center gap-4 text-[var(--text-3)]">
+        <LogoMark className="w-12 h-12 animate-pulse" />
+        <div className="text-sm font-semibold tracking-wide text-[var(--text-3)] flex items-center gap-2">
           {cloudTimeout ? (
             <>
               <span>Nuvem indisponível — modo offline</span>
               <button
                 onClick={() => setIsGuestMode(true)}
-                className="mt-2 text-xs text-orange-400 underline hover:text-orange-300 cursor-pointer"
+                className="mt-2 text-xs text-[var(--accent-text)] underline hover:no-underline cursor-pointer"
               >
                 Continuar assim mesmo
               </button>
@@ -886,7 +886,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0c] text-zinc-100 flex flex-col font-sans selection:bg-orange-500 selection:text-white">
+    <div className="min-h-screen bg-[var(--app-bg)] text-[var(--text-1)] flex flex-col font-sans selection:bg-[var(--accent-soft)]">
       {/* 3-Zone Top Bar Navigation */}
       <Navbar
         currentTab={currentTab}
@@ -908,17 +908,18 @@ export default function App() {
       />
 
       {/* Main Content Area */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {/* Celebration / Alert notification banner */}
+      <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-5">
+        {/* Aviso de confirmação */}
         {notificationBanner && (
-          <div className="mb-4 ui-card p-4 flex items-center justify-between gap-3 text-sm text-zinc-300">
-            <div className="flex items-center gap-3">
-              <CheckCircle2 className="w-5 h-5 text-orange-400 shrink-0" />
-              <span className="font-semibold">{notificationBanner}</span>
+          <div className="mb-3 ui-alert !items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <CheckCircle2 className="w-4 h-4 text-[var(--success-text)] shrink-0" />
+              <span className="font-semibold text-[var(--text-2)]">{notificationBanner}</span>
             </div>
             <button
               onClick={() => setNotificationBanner(null)}
-              className="p-1 hover:bg-zinc-800 rounded-lg text-zinc-500 hover:text-white transition-colors cursor-pointer"
+              aria-label="Fechar aviso"
+              className="p-1 rounded-[var(--r-control)] text-[var(--text-4)] hover:text-[var(--text-1)] hover:bg-[var(--surface-3)] transition-colors cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
@@ -927,29 +928,23 @@ export default function App() {
 
         {/* Lançamentos feitos sem conta: só entram no espaço compartilhado se o usuário mandar */}
         {currentUser && guestTxCount > 0 && (
-          <div className="mb-4 ui-card p-4 flex flex-col md:flex-row md:items-center justify-between gap-3 text-sm text-zinc-300">
-            <div className="flex items-center gap-3">
-              <WalletCards className="w-5 h-5 text-orange-400 shrink-0" />
+          <div className="mb-3 ui-alert flex-col md:flex-row md:items-center justify-between">
+            <div className="flex items-start gap-2.5">
+              <WalletCards className="w-4 h-4 text-[var(--accent-text)] shrink-0 mt-0.5" />
               <div>
-                <p className="font-semibold text-white">
+                <p className="font-semibold text-[var(--text-1)]">
                   {guestTxCount} lançamento(s) do modo sem conta neste aparelho
                 </p>
-                <p className="text-[11px] text-zinc-500 mt-0.5">
+                <p className="text-[11px] text-[var(--text-4)] mt-0.5 leading-relaxed">
                   Eles ficaram só aqui e não entram no espaço compartilhado sozinhos. Enviar para a nuvem?
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-2 self-start md:self-auto md:shrink-0">
-              <button
-                onClick={() => persistGuestTxs([])}
-                className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-400 border border-zinc-700 font-semibold rounded-xl text-xs transition-colors cursor-pointer"
-              >
+              <button onClick={() => persistGuestTxs([])} className="ui-btn ui-btn-ghost">
                 Descartar
               </button>
-              <button
-                onClick={handleSendGuestTxs}
-                className="px-3.5 py-1.5 bg-orange-500 hover:bg-orange-400 text-zinc-950 font-bold rounded-xl text-xs transition-colors cursor-pointer shadow-sm shadow-orange-500/20"
-              >
+              <button onClick={handleSendGuestTxs} className="ui-btn ui-btn-primary">
                 Enviar para o compartilhado
               </button>
             </div>
@@ -958,42 +953,28 @@ export default function App() {
 
         {/* Guest mode bar with fast actions */}
         {!currentUser && (
-          <div className="mb-4 ui-card p-4 flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs text-zinc-400">
-            <div className="flex items-center gap-3">
-              <span className="w-2.5 h-2.5 rounded-full bg-orange-400 shrink-0 animate-pulse" />
+          <div className="mb-3 ui-alert flex-col md:flex-row md:items-center justify-between">
+            <div className="flex items-start gap-2.5">
+              <span className="w-2 h-2 rounded-full bg-[var(--accent-text)] shrink-0 mt-1.5" />
               <div>
-                <p className="font-semibold text-white">
-                  Você está navegando no <strong className="text-zinc-400">Modo Visitante (Offline)</strong>
+                <p className="font-semibold text-[var(--text-1)]">
+                  Você está no modo visitante (offline)
                 </p>
-                <p className="text-[11px] text-zinc-500 mt-0.5">
-                  Seus dados ficam salvos apenas neste navegador. Para salvar na Nuvem e sincronizar entre aparelhos, faça login com sua Conta Google.
+                <p className="text-[11px] text-[var(--text-4)] mt-0.5 leading-relaxed">
+                  Seus dados ficam salvos apenas neste navegador. Para salvar na nuvem e sincronizar entre aparelhos, entre com sua conta Google.
                 </p>
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-2 self-start md:self-auto md:shrink-0 max-w-full">
               <button
-                onClick={() => setCurrentTab('dashboard')}
-                className={`px-3 py-1.5 rounded-xl font-semibold text-xs transition-colors cursor-pointer ${
-                  currentTab === 'dashboard'
-                    ? 'bg-orange-500/20 text-orange-300 border border-orange-500/30 font-bold'
-                    : 'bg-zinc-800 hover:bg-zinc-700 text-zinc-400 border border-zinc-700'
-                }`}
-              >
-                Aba Principal
-              </button>
-              <button
                 onClick={() => setIsConfirmClearModalOpen(true)}
-                className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-zinc-400 border border-zinc-700 font-semibold rounded-xl text-xs transition-colors cursor-pointer"
+                className="ui-btn ui-btn-ghost"
               >
-                Limpar Tudo
+                Limpar tudo
               </button>
-              <button
-                onClick={() => setIsGuestMode(false)}
-                className="px-3.5 py-1.5 bg-orange-500 hover:bg-orange-400 text-zinc-950 font-bold rounded-xl text-xs transition-colors cursor-pointer shadow-sm shadow-orange-500/20 flex items-center gap-1.5"
-              >
+              <button onClick={() => setIsGuestMode(false)} className="ui-btn ui-btn-primary">
                 <GoogleIcon className="w-3.5 h-3.5" />
                 <span>Entrar com Google</span>
-                <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>
           </div>
@@ -1058,51 +1039,52 @@ export default function App() {
         )}
       </main>
 
-      {/* Footer in Dark Zinc Theme */}
-      <footer className="border-t border-zinc-800/50 bg-[#1d1d20] py-6 mt-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-zinc-600">
+      {/* Rodapé */}
+      <footer className="border-t border-[var(--border-1)] bg-[var(--surface-1)] py-5 mt-10">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] text-[var(--text-4)]">
           <div className="flex items-center gap-2">
-            <span className="font-bold text-zinc-400">FinanFlow</span>
-            <span aria-hidden="true" className="text-zinc-700">·</span>
-            <span>Planejamento e Controle Financeiro Inteligente</span>
+            <span className="font-bold text-[var(--text-2)]">FinanFlow</span>
+            <span aria-hidden="true" className="text-[var(--border-2)]">·</span>
+            <span>Planejamento e controle financeiro</span>
           </div>
-          <div className="flex items-center gap-4 text-zinc-500">
+
+          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
             <button
               onClick={() => setIsShareHouseholdOpen(true)}
-              className="text-zinc-400 hover:text-zinc-300 transition-colors flex items-center gap-1.5 cursor-pointer font-medium"
+              className="hover:text-[var(--text-2)] transition-colors flex items-center gap-1.5 cursor-pointer font-medium"
             >
-              <span className="w-1.5 h-1.5 rounded-full bg-orange-400" />
-              <span>{currentUser ? 'Nuvem Conectada' : 'Conectar na Nuvem Google'}</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-text)]" />
+              <span>{currentUser ? 'Nuvem conectada' : 'Conectar na nuvem'}</span>
             </button>
-            <span aria-hidden="true" className="text-zinc-700">·</span>
-            <button
-              onClick={() => setIsConfirmClearModalOpen(true)}
-              className="text-zinc-500 hover:text-zinc-400 transition-colors cursor-pointer font-medium"
-            >
-              Zerar Dados
-            </button>
-            <span aria-hidden="true" className="text-zinc-700">·</span>
+            <span aria-hidden="true" className="text-[var(--border-2)]">·</span>
             <button
               onClick={() => setIsBackupModalOpen(true)}
-              className="hover:text-zinc-200 transition-colors cursor-pointer"
+              className="hover:text-[var(--text-2)] transition-colors cursor-pointer font-medium"
             >
-              Exportar / Backup
+              Exportar / backup
             </button>
+            <span aria-hidden="true" className="text-[var(--border-2)]">·</span>
+            <button
+              onClick={() => setIsConfirmClearModalOpen(true)}
+              className="hover:text-[var(--danger-text)] transition-colors cursor-pointer font-medium"
+            >
+              Zerar dados
+            </button>
+
             {currentUser && (
               <>
-                <span aria-hidden="true" className="text-zinc-700">·</span>
-                {cloudSaveStatus === 'error' && (
-                  <span className="text-xs text-rose-400 font-medium">Erro na nuvem</span>
-                )}
-                {cloudSaveStatus === 'ok' && (
-                  <span className="text-xs text-orange-400 font-medium">Salvo na nuvem</span>
-                )}
-                {cloudSaveStatus && <span aria-hidden="true" className="text-zinc-700">·</span>}
+                <span aria-hidden="true" className="text-[var(--border-2)]">·</span>
+                {cloudSaveStatus === 'error' ? (
+                  <span className="text-[var(--danger-text)] font-semibold">Erro na nuvem</span>
+                ) : cloudSaveStatus === 'ok' ? (
+                  <span className="text-[var(--success-text)] font-semibold">Salvo na nuvem</span>
+                ) : null}
+                <span aria-hidden="true" className="text-[var(--border-2)]">·</span>
                 <button
                   onClick={() => setIsLogoutConfirmOpen(true)}
-                  className="text-zinc-500 hover:text-zinc-400 transition-colors cursor-pointer"
+                  className="hover:text-[var(--text-2)] transition-colors cursor-pointer font-medium"
                 >
-                  Sair da Conta
+                  Sair da conta
                 </button>
               </>
             )}
@@ -1169,29 +1151,25 @@ export default function App() {
 
       {/* Confirmação de saída da conta (disponível também no topo, não só no rodapé) */}
       {isLogoutConfirmOpen && (
-        <div className="ui-modal-overlay">
-          <div className="ui-modal max-w-md p-6 space-y-4">
-            <div className="w-12 h-12 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 flex items-center justify-center mx-auto">
-              <LogOut className="w-6 h-6" />
+        <div className="ui-modal-overlay" onClick={() => setIsLogoutConfirmOpen(false)}>
+          <div className="ui-modal max-w-md" onClick={(e) => e.stopPropagation()}>
+            <div className="ui-modal-body text-center space-y-3">
+              <div className="ui-icon ui-icon-danger !w-11 !h-11 mx-auto">
+                <LogOut className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="ui-modal-title">Sair da conta?</h3>
+                <p className="ui-modal-sub !mt-1.5 leading-relaxed">
+                  Seus lançamentos continuam salvos na nuvem e voltam quando você entrar de novo.
+                  O que foi criado no modo sem conta fica neste aparelho.
+                </p>
+              </div>
             </div>
-            <div className="text-center">
-              <h3 className="text-lg font-bold text-white">Sair da conta?</h3>
-              <p className="text-xs text-zinc-500 mt-2 leading-relaxed">
-                Seus lançamentos continuam salvos na nuvem e voltam quando você entrar de novo.
-                O que foi criado no modo sem conta fica neste aparelho.
-              </p>
-            </div>
-            <div className="flex items-center gap-3 pt-2">
-              <button
-                onClick={() => setIsLogoutConfirmOpen(false)}
-                className="ui-btn ui-btn-secondary flex-1"
-              >
+            <div className="ui-modal-footer">
+              <button onClick={() => setIsLogoutConfirmOpen(false)} className="ui-btn ui-btn-secondary flex-1">
                 Cancelar
               </button>
-              <button
-                onClick={handleLogout}
-                className="ui-btn ui-btn-primary flex-1 bg-red-600 hover:bg-red-500 text-white"
-              >
+              <button onClick={handleLogout} className="ui-btn ui-btn-danger flex-1">
                 Sim, sair
               </button>
             </div>
@@ -1201,33 +1179,29 @@ export default function App() {
 
       {/* In-App Confirmation Modal for Zerar Dados */}
       {isConfirmClearModalOpen && (
-        <div className="ui-modal-overlay">
-          <div className="ui-modal max-w-md p-6 space-y-4">
-            <div className="w-12 h-12 rounded-xl bg-orange-500/10 border border-orange-500/20 text-orange-400 flex items-center justify-center mx-auto">
-              <Trash2 className="w-6 h-6" />
+        <div className="ui-modal-overlay" onClick={() => setIsConfirmClearModalOpen(false)}>
+          <div className="ui-modal max-w-md" onClick={(e) => e.stopPropagation()}>
+            <div className="ui-modal-body text-center space-y-3">
+              <div className="ui-icon ui-icon-danger !w-11 !h-11 mx-auto">
+                <Trash2 className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="ui-modal-title">Zerar todos os dados?</h3>
+                <p className="ui-modal-sub !mt-1.5 leading-relaxed">
+                  Esta ação apagará todas as transações, despesas, receitas, metas e limites cadastrados,
+                  deixando o aplicativo zerado.
+                  {currentUser
+                    ? ' Como você está conectado na nuvem, as transações salvas na nuvem também serão limpas.'
+                    : ' Todos os registros locais deste navegador serão removidos.'}
+                </p>
+              </div>
             </div>
-            <div className="text-center">
-              <h3 className="text-lg font-bold text-white">Zerar Todos os Dados?</h3>
-              <p className="text-xs text-zinc-500 mt-2 leading-relaxed">
-                Esta ação apagará todas as transações, despesas, receitas, metas e orçamentos cadastrados, deixando o aplicativo 100% zerado e novo.
-                {currentUser
-                  ? ' Como você está conectado na Nuvem, as transações salvas na nuvem também serão limpas.'
-                  : ' Todos os registros locais deste navegador serão removidos.'}
-              </p>
-            </div>
-            <div className="flex items-center gap-3 pt-2">
-              <button
-                onClick={() => setIsConfirmClearModalOpen(false)}
-                className="ui-btn ui-btn-secondary flex-1"
-              >
+            <div className="ui-modal-footer">
+              <button onClick={() => setIsConfirmClearModalOpen(false)} className="ui-btn ui-btn-secondary flex-1">
                 Cancelar
               </button>
-              <button
-                onClick={handleExecuteClearAll}
-                disabled={clearLoading}
-                className="ui-btn ui-btn-primary flex-1"
-              >
-                {clearLoading ? 'Limpando...' : 'Sim, Zerar Tudo'}
+              <button onClick={handleExecuteClearAll} disabled={clearLoading} className="ui-btn ui-btn-danger flex-1">
+                {clearLoading ? 'Limpando...' : 'Sim, zerar tudo'}
               </button>
             </div>
           </div>
