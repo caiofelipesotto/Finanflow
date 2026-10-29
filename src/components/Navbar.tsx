@@ -38,26 +38,26 @@ export const Navbar: React.FC<NavbarProps> = ({
   theme,
   onToggleTheme,
 }) => {
-  const navItems: { id: ViewTab; label: string }[] = [
-    { id: 'dashboard', label: 'Visão Geral' },
-    { id: 'transactions', label: 'Transações' },
-    { id: 'budgets', label: 'Orçamentos' },
-    { id: 'goals', label: 'Metas & CDB' },
+  const navItems: { id: ViewTab; label: string; short: string }[] = [
+    { id: 'dashboard', label: 'Visão Geral', short: 'Geral' },
+    { id: 'transactions', label: 'Transações', short: 'Lançamentos' },
+    { id: 'budgets', label: 'Limites', short: 'Limites' },
+    { id: 'goals', label: 'Metas', short: 'Metas' },
   ];
 
   return (
     <header className="sticky top-0 z-30 bg-[#0a0a0c]/95 backdrop-blur-md border-b border-zinc-800">
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between gap-2 sm:gap-4">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between gap-2 sm:gap-4 min-w-0">
         {/* Zone 1: Wordmark & Home trigger */}
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           <button
             onClick={() => onSelectTab('dashboard')}
             className="flex items-center gap-2.5 text-left group cursor-pointer focus:outline-none"
             title="Voltar para a Aba Principal (Visão Geral)"
           >
             <LogoMark className="w-8 h-8 shadow-md shadow-orange-500/20 group-hover:scale-105 transition-transform" />
-            <div className="flex items-center gap-2">
-              <span className="text-base sm:text-lg font-black tracking-tight text-white group-hover:text-zinc-400 transition-colors">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="text-base sm:text-lg font-black tracking-tight text-white group-hover:text-zinc-400 transition-colors truncate">
                 FinanFlow
               </span>
               <span className="hidden sm:inline text-[10px] font-mono font-bold text-zinc-400 bg-zinc-950/70 border border-zinc-800/60 px-1.5 py-0.5 rounded">
@@ -68,7 +68,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
 
         {/* Zone 2: Navigation links */}
-        <nav className="hidden xl:flex items-center gap-6 lg:gap-8 text-sm font-medium">
+        <nav className="hidden xl:flex items-center gap-5 2xl:gap-8 text-sm font-medium min-w-0 overflow-hidden">
           {navItems.map((item) => {
             const isActive = currentTab === item.id;
             return (
@@ -90,8 +90,8 @@ export const Navbar: React.FC<NavbarProps> = ({
           })}
         </nav>
 
-        {/* Zone 3: Actions */}
-        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+        {/* Zone 3: Actions — no celular só o essencial fica na barra */}
+        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
           {/* Cloud & Sync status button */}
           {user ? (
             <div className="flex items-center gap-1.5">
@@ -109,7 +109,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               <button
                 onClick={onOpenShareHousehold}
                 title={`Espaço conectado: ${household?.name || 'Compartilhado'}`}
-                className="flex items-center gap-2 px-2.5 py-1.5 text-xs font-semibold rounded-xl transition-all border shrink-0 bg-zinc-800/90 hover:bg-zinc-700 text-zinc-200 border-zinc-700 shadow-xs cursor-pointer"
+                className="flex items-center gap-1.5 sm:gap-2 p-1.5 sm:px-2.5 sm:py-1.5 text-xs font-semibold rounded-xl transition-all border shrink-0 bg-zinc-800/90 hover:bg-zinc-700 text-zinc-200 border-zinc-700 shadow-xs cursor-pointer"
               >
                 {user.picture ? (
                   <img
@@ -133,9 +133,8 @@ export const Navbar: React.FC<NavbarProps> = ({
               {onReturnToLogin && (
                 <button
                   onClick={onReturnToLogin}
-                  title="Voltar para a tela inicial de login"
-                  className="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-zinc-400 hover:text-white bg-zinc-800/60 hover:bg-zinc-800 border border-zinc-700 rounded-xl transition-colors cursor-pointer"
-                >
+                  title="Voltar para a tela inicial de login"                className="hidden xl:flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-zinc-400 hover:text-white bg-zinc-800/60 hover:bg-zinc-800 border border-zinc-700 rounded-xl transition-colors cursor-pointer"
+              >
                   <ArrowLeft className="w-3.5 h-3.5" />
                   <span>Tela Inicial</span>
                 </button>
@@ -144,7 +143,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 onClick={onOpenShareHousehold}
                 title="Entrar com Conta Google e sincronizar na Nuvem"
                 aria-label="Entrar com Google"
-                className="flex items-center gap-2 px-2.5 sm:px-3 py-1.5 text-xs font-bold rounded-xl transition-all border shrink-0 bg-white hover:bg-zinc-100 text-zinc-950 border-white shadow-md cursor-pointer"
+                className="btn-google flex items-center gap-2 p-2 sm:px-3 sm:py-1.5 text-xs font-bold rounded-xl transition-all border shrink-0 shadow-md cursor-pointer"
               >
                 <GoogleIcon className="w-3.5 h-3.5 shrink-0" />
                 <span className="hidden sm:inline">Entrar com Google</span>
@@ -155,17 +154,17 @@ export const Navbar: React.FC<NavbarProps> = ({
           <button
             onClick={onOpenScanInvoice}
             title="Escanear Fatura ou Print com IA"
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-zinc-300 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded-xl transition-all shadow-xs whitespace-nowrap cursor-pointer"
+            className="hidden md:flex items-center gap-1.5 px-2.5 2xl:px-3 py-1.5 text-xs font-semibold text-zinc-300 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded-xl transition-all shadow-xs whitespace-nowrap cursor-pointer"
           >
             <Camera className="w-3.5 h-3.5 text-zinc-400" />
-            <span className="hidden xl:inline">Escanear Print</span>
-            <span className="hidden sm:inline xl:hidden">Print</span>
+            <span className="hidden 2xl:inline">Escanear Print</span>
+            <span className="hidden md:inline 2xl:hidden">Print</span>
           </button>
 
           <button
             onClick={onOpenImportSpreadsheet}
             title="Importar Planilha Google Sheets / Excel"
-            className="hidden xl:flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-zinc-300 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded-xl transition-colors shadow-2xs whitespace-nowrap cursor-pointer"
+            className="hidden 2xl:flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-zinc-300 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded-xl transition-colors shadow-2xs whitespace-nowrap cursor-pointer"
           >
             <FileSpreadsheet className="w-3.5 h-3.5 text-zinc-400" />
             <span>Planilha</span>
@@ -176,7 +175,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           <button
             onClick={onOpenBackupModal}
             title="Dados e Backup"
-            className="p-2 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-xl transition-colors cursor-pointer"
+            className="hidden sm:flex p-2 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-xl transition-colors cursor-pointer"
           >
             <Download className="w-4 h-4" />
           </button>
@@ -191,21 +190,23 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
       </div>
 
-      {/* Mobile nav strip */}
-      <div className="xl:hidden flex items-center justify-around border-t border-zinc-800 bg-[#1d1d20] px-1 py-1.5">
+      {/* Mobile nav strip: 4 colunas iguais, texto que cabe na largura */}
+      <div className="xl:hidden grid grid-cols-4 gap-1 border-t border-zinc-800 bg-[#1d1d20] px-1.5 py-1.5">
         {navItems.map((item) => {
           const isActive = currentTab === item.id;
           return (
             <button
               key={item.id}
               onClick={() => onSelectTab(item.id)}
-              className={`flex-1 min-w-0 px-1 py-1.5 text-[11px] sm:text-xs text-center rounded-lg whitespace-nowrap transition-colors cursor-pointer ${
+              aria-label={item.label}
+              className={`min-w-0 px-1 py-1.5 text-[10px] sm:text-xs text-center rounded-lg truncate transition-colors cursor-pointer ${
                 isActive
                   ? 'bg-orange-500/15 text-orange-400 font-bold border border-orange-500/30'
                   : 'text-zinc-400 hover:text-zinc-200'
               }`}
             >
-              {item.label}
+              <span className="sm:hidden">{item.short}</span>
+              <span className="hidden sm:inline">{item.label}</span>
             </button>
           );
         })}

@@ -35,7 +35,7 @@ export const RecentTransactionsList: React.FC<RecentTransactionsListProps> = ({
 
   if (transactions.length === 0) {
     return (
-      <div className="bg-white border border-neutral-200 rounded-xl p-5 shadow-2xs">
+      <div className="bg-surface border border-neutral-200 rounded-xl p-5 shadow-2xs">
         <h3 className="text-sm font-bold text-neutral-900 mb-1">Últimas Transações</h3>
         <p className="text-xs text-neutral-500 mb-6">Suas movimentações mais recentes</p>
         <div className="py-10 text-center text-xs text-neutral-400">
@@ -46,7 +46,7 @@ export const RecentTransactionsList: React.FC<RecentTransactionsListProps> = ({
   }
 
   return (
-    <div className="bg-white border border-neutral-200 rounded-xl p-5 shadow-2xs">
+    <div className="bg-surface border border-neutral-200 rounded-xl p-5 shadow-2xs">
       <div className="flex items-center justify-between mb-4">
         <div>
           <h3 className="text-sm font-bold text-neutral-900">Últimas Transações</h3>

@@ -92,9 +92,9 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold text-white tracking-tight">Metas & Patrimônio</h1>
+          <h1 className="text-xl font-bold text-white tracking-tight">Metas</h1>
           <p className="text-xs text-zinc-400 mt-0.5">
-            Acompanhe a evolução do CDB (120% CDI), investimentos em terreno e reservas familiares
+            Acompanhe o progresso dos seus objetivos: reserva de emergência, viagens, investimentos e projetos
           </p>
         </div>
 
@@ -264,7 +264,7 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
       {/* Adjust Amount Modal (Deposit / Withdraw) */}
       {adjustingGoal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl shadow-xl border border-neutral-200 w-full max-w-sm overflow-hidden p-6 animate-in fade-in duration-150">
+          <div className="bg-surface rounded-2xl shadow-xl border border-neutral-200 w-full max-w-sm overflow-hidden p-6 animate-in fade-in duration-150">
             <h2 className="text-base font-bold text-neutral-900 mb-1">
               {adjustingGoal.mode === 'deposit' ? 'Guardar Dinheiro' : 'Resgatar Dinheiro'}
             </h2>
@@ -317,7 +317,7 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
       {/* Add New Goal Modal */}
       {isAddModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl shadow-xl border border-neutral-200 w-full max-w-md overflow-hidden p-6 animate-in fade-in duration-150">
+          <div className="bg-surface rounded-2xl shadow-xl border border-neutral-200 w-full max-w-md overflow-hidden p-6 animate-in fade-in duration-150">
             <h2 className="text-base font-bold text-neutral-900 mb-1">Criar Nova Meta</h2>
             <p className="text-xs text-neutral-500 mb-4">
               Defina o objetivo e acompanhe sua evolução mês a mês

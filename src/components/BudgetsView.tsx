@@ -73,10 +73,10 @@ export const BudgetsView: React.FC<BudgetsViewProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl font-bold text-white tracking-tight">
-            Orçamentos Mensais
+            Limites de gasto
           </h1>
           <p className="text-xs text-zinc-400 mt-0.5">
-            Defina limites de gastos por categoria para manter suas finanças sob controle
+            Defina quanto pretende gastar em cada categoria e acompanhe o quanto já usou
           </p>
         </div>
       </div>
@@ -86,7 +86,7 @@ export const BudgetsView: React.FC<BudgetsViewProps> = ({
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
           <div>
             <span className="text-xs font-medium text-zinc-400 block mb-1">
-              Teto Total Planejado
+              Total planejado no mês
             </span>
             <div className="text-2xl font-bold text-white font-mono tabular-nums">
               {formatCurrency(totalBudgeted)}
@@ -105,8 +105,8 @@ export const BudgetsView: React.FC<BudgetsViewProps> = ({
             </div>
             <span className="text-xs text-zinc-500 mt-1 block font-mono tabular-nums">
               {totalBudgeted > 0
-                ? `${((totalSpentInBudgeted / totalBudgeted) * 100).toFixed(1)}% do teto consumido`
-                : 'Nenhum teto configurado'}
+                ? `${((totalSpentInBudgeted / totalBudgeted) * 100).toFixed(1)}% do limite já usado`
+                : 'Nenhum limite definido'}
             </span>
           </div>
 
@@ -124,7 +124,7 @@ export const BudgetsView: React.FC<BudgetsViewProps> = ({
             <span className="text-xs text-orange-500 mt-1 block">
               {totalRemaining >= 0
                 ? 'Disponível dentro da sua meta'
-                : 'Orçamento estourado neste mês'}
+                : 'Limite estourado neste mês'}
             </span>
           </div>
         </div>
@@ -182,7 +182,7 @@ export const BudgetsView: React.FC<BudgetsViewProps> = ({
                           </span>
                         </>
                       ) : (
-                        <span className="text-zinc-500">Sem teto configurado</span>
+                        <span className="text-zinc-500">Sem limite definido</span>
                       )}
                     </div>
                   </div>
@@ -245,7 +245,7 @@ export const BudgetsView: React.FC<BudgetsViewProps> = ({
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs">
           <div className="bg-[#141416] rounded-2xl shadow-2xl border border-neutral-800 w-full max-w-sm overflow-hidden p-6 animate-in fade-in duration-150">
             <h2 className="text-base font-bold text-white mb-1">
-              Definir Orçamento Mensal
+              Definir limite mensal
             </h2>
             <p className="text-xs text-zinc-400 mb-4">
               Categoria: <strong className="text-zinc-200">{editingCategory.name}</strong>

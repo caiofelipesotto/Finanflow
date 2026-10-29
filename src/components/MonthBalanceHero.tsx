@@ -44,15 +44,15 @@ export const MonthBalanceHero: React.FC<MonthBalanceHeroProps> = ({
       {/* Top row: Month Navigator and Status */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-5 border-b border-zinc-800">
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <span className="text-xs uppercase tracking-wider font-bold text-zinc-400">
               Controle Financeiro Mensal
             </span>
-            <span aria-hidden="true" className="text-zinc-700">·</span>
-            <span className="text-xs text-zinc-400">Visão Geral</span>
+            <span aria-hidden="true" className="hidden sm:inline text-zinc-700">·</span>
+            <span className="hidden sm:inline text-xs text-zinc-400">Visão Geral</span>
           </div>
 
-          <div className="flex items-center gap-3 mt-1.5">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 mt-1.5">
             <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
               {monthLabel}
             </h2>
@@ -111,7 +111,7 @@ export const MonthBalanceHero: React.FC<MonthBalanceHeroProps> = ({
         {/* 1. Total Entradas */}
         <div className="bg-zinc-900/90 border border-zinc-800 rounded-xl p-4.5 hover:border-zinc-700 transition-colors">
           <div className="flex items-center justify-between text-xs text-zinc-400 mb-2">
-            <span>Total que Entrou</span>
+            <span>Receitas do mês</span>
             <div className="w-6 h-6 rounded-md bg-zinc-950/80 border border-zinc-800/60 flex items-center justify-center text-zinc-400">
               <ArrowUpRight className="w-3.5 h-3.5" />
             </div>
@@ -127,7 +127,7 @@ export const MonthBalanceHero: React.FC<MonthBalanceHeroProps> = ({
         {/* 2. Total Saídas */}
         <div className="bg-zinc-900/90 border border-zinc-800 rounded-xl p-4.5 hover:border-zinc-700 transition-colors">
           <div className="flex items-center justify-between text-xs text-zinc-400 mb-2">
-            <span>Total Saídas & Contas</span>
+            <span>Despesas e contas</span>
             <div className="w-6 h-6 rounded-md bg-rose-950/80 border border-rose-800/60 flex items-center justify-center text-rose-400">
               <ArrowDownRight className="w-3.5 h-3.5" />
             </div>
@@ -152,7 +152,7 @@ export const MonthBalanceHero: React.FC<MonthBalanceHeroProps> = ({
         >
           <div className="flex items-center justify-between text-xs font-bold mb-2">
             <span className={!hasData ? 'text-zinc-300' : isPositive ? 'text-orange-400' : 'text-rose-300'}>
-              SOBROU NO BOLSO (Livre)
+              DISPONÍVEL PARA POUPAR
             </span>
             <div className="w-6 h-6 rounded-md bg-orange-500/20 text-orange-400 flex items-center justify-center">
               <Wallet className="w-3.5 h-3.5" />
@@ -169,7 +169,7 @@ export const MonthBalanceHero: React.FC<MonthBalanceHeroProps> = ({
             ) : isPositive ? (
               <span className="text-orange-300/90 flex items-center gap-1">
                 <CheckCircle2 className="w-3 h-3 inline text-orange-400" />
-                Caixa livre para poupar ou investir
+                Valor livre depois das contas do mês
               </span>
             ) : (
               <span className="text-rose-400">
@@ -182,7 +182,7 @@ export const MonthBalanceHero: React.FC<MonthBalanceHeroProps> = ({
         {/* 4. Cartão de Crédito e Parcelas */}
         <div className="bg-zinc-900/90 border border-zinc-800 rounded-xl p-4.5 hover:border-zinc-700 transition-colors">
           <div className="flex items-center justify-between text-xs text-zinc-400 mb-2">
-            <span>Fatura Cartão & Parcelas</span>
+            <span>Fatura do cartão e parcelas</span>
             <div className="w-6 h-6 rounded-md bg-zinc-800 border border-zinc-700 flex items-center justify-center text-zinc-400">
               <CreditCard className="w-3.5 h-3.5" />
             </div>

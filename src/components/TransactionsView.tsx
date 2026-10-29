@@ -231,12 +231,12 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
 
         {/* Secondary Dropdown Filters */}
         <div className="flex flex-wrap items-center gap-2.5 pt-2 border-t border-zinc-800 text-xs text-zinc-300">
-          <div className="flex items-center gap-1.5">
-            <span className="text-[11px] font-medium text-zinc-400">Categoria:</span>
+          <div className="flex items-center gap-1.5 min-w-0 max-w-full">
+            <span className="text-[11px] font-medium text-zinc-400 shrink-0">Categoria:</span>
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="px-2.5 py-1 text-xs border border-neutral-700 rounded-lg bg-[#1d1d20] text-white outline-hidden focus:border-orange-500"
+              className="min-w-0 max-w-full px-2.5 py-1 text-xs border border-neutral-700 rounded-lg bg-[#1d1d20] text-white outline-hidden focus:border-orange-500"
             >
               <option value="all">Todas as categorias</option>
               {categories.map((c) => (
@@ -247,12 +247,12 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
             </select>
           </div>
 
-          <div className="flex items-center gap-1.5">
-            <span className="text-[11px] font-medium text-zinc-400">Conta:</span>
+          <div className="flex items-center gap-1.5 min-w-0 max-w-full">
+            <span className="text-[11px] font-medium text-zinc-400 shrink-0">Conta:</span>
             <select
               value={selectedAccount}
               onChange={(e) => setSelectedAccount(e.target.value)}
-              className="px-2.5 py-1 text-xs border border-neutral-700 rounded-lg bg-[#1d1d20] text-white outline-hidden focus:border-orange-500"
+              className="min-w-0 max-w-full px-2.5 py-1 text-xs border border-neutral-700 rounded-lg bg-[#1d1d20] text-white outline-hidden focus:border-orange-500"
             >
               <option value="all">Todas as contas</option>
               {accounts.map((a) => (

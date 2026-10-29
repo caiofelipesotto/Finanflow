@@ -53,7 +53,7 @@ export const FlowChart: React.FC<FlowChartProps> = ({ transactions, year, month 
   const paddingY = 20;
 
   return (
-    <div className="bg-white border border-neutral-200 rounded-xl p-5 shadow-2xs relative">
+    <div className="bg-surface border border-neutral-200 rounded-xl p-5 shadow-2xs relative">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
         <div>
           <h3 className="text-sm font-bold text-neutral-900">Fluxo Diário do Mês</h3>

@@ -89,7 +89,7 @@ export const BackupModal: React.FC<BackupModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
-      <div className="bg-white rounded-2xl shadow-xl border border-neutral-200 w-full max-w-md overflow-hidden animate-in fade-in duration-150">
+      <div className="bg-surface rounded-2xl shadow-xl border border-neutral-200 w-full max-w-md overflow-hidden animate-in fade-in duration-150">
         <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-100">
           <div className="flex items-center gap-2">
             <ShieldCheck className="w-4 h-4 text-zinc-600" />
@@ -151,7 +151,7 @@ export const BackupModal: React.FC<BackupModalProps> = ({
                 onClose();
                 onOpenImportSpreadsheet();
               }}
-              className="w-full flex items-center justify-between p-3 border border-zinc-200 bg-zinc-50/50 hover:bg-zinc-50 rounded-xl text-xs font-medium text-zinc-900 transition-colors"
+              className="w-full flex items-center justify-between p-3 border border-zinc-200 bg-zinc-50/50 hover:bg-zinc-50 rounded-xl text-xs font-medium text-zinc-100 transition-colors"
             >
               <div className="flex items-center gap-2.5">
                 <FileSpreadsheet className="w-4 h-4 text-zinc-600" />

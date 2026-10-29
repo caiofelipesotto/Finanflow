@@ -180,7 +180,7 @@ export const ProjectionChart: React.FC<ProjectionChartProps> = ({
               </>
             ) : (
               <div>
-                <span className="text-zinc-400 text-[11px] block">Fatura Cartão & Parcelas:</span>
+                <span className="text-zinc-400 text-[11px] block">Fatura do cartão e parcelas:</span>
                 <strong className="text-zinc-300 font-bold">
                   {formatCurrency(hoveredMonth.cardTotal)}
                 </strong>

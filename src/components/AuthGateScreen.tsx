@@ -109,7 +109,7 @@ export const AuthGateScreen: React.FC<AuthGateScreenProps> = ({
             <div className="space-y-3">
               <a
               href={signInUrl(inviteCode ? '/household/join' : '/')}
-                className="w-full flex items-center justify-center gap-3.5 py-3.5 px-5 rounded-2xl font-semibold text-zinc-900 bg-white hover:bg-zinc-100 active:scale-[0.99] transition-all duration-150 shadow-lg shadow-white/10 border border-white group cursor-pointer"
+                className="btn-google w-full flex items-center justify-center gap-3.5 py-3.5 px-5 rounded-2xl font-semibold active:scale-[0.99] transition-all duration-150 shadow-lg border group cursor-pointer"
               >
                 <GoogleIcon className="w-5 h-5 shrink-0" />
                 <span className="text-sm font-bold text-zinc-900">

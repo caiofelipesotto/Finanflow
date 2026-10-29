@@ -159,7 +159,7 @@ export const ShareHouseholdModal: React.FC<ShareHouseholdModalProps> = ({
 
               <a
                 href={signInUrl('/')}
-                className="w-full flex items-center justify-center gap-2.5 py-3 px-4 bg-white hover:bg-zinc-100 text-zinc-900 font-bold rounded-xl transition-all shadow-md text-sm cursor-pointer"
+                className="btn-google w-full flex items-center justify-center gap-2.5 py-3 px-4 font-bold rounded-xl transition-all shadow-md text-sm cursor-pointer"
               >
                 <GoogleIcon className="w-4 h-4" />
                 <span>Entrar com Google</span>
