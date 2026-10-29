@@ -23,24 +23,48 @@ import { ScanInvoiceModal } from './components/ScanInvoiceModal';
 import { ShareHouseholdModal } from './components/ShareHouseholdModal';
 import { AuthGateScreen } from './components/AuthGateScreen';
 import { WalletCards, CheckCircle2, X, Trash2, ArrowRight, ArrowLeft } from 'lucide-react';
-import { auth, onAuthStateChanged, signOut, User } from './firebase';
 import {
+  User,
   HouseholdDoc,
-  getOrCreateUserProfile,
+  CloudSyncPayload,
+  CloudAuthError,
+  fetchMe,
+  fetchSync,
   joinHouseholdWithCode,
-  syncHouseholdMemberUids,
-  subscribeHousehold,
-  subscribeTransactions,
-  subscribeCategories,
-  subscribeAccounts,
-  subscribeGoals,
   saveTransactionToCloud,
   deleteTransactionFromCloud,
   deleteAllTransactionsFromCloud,
   saveCategoryToCloud,
   saveAccountToCloud,
   saveGoalToCloud,
-} from './services/firebaseSyncService';
+  signOutFromCloud,
+} from './services/cloudSyncService';
+
+const PENDING_TX_KEY = 'finanflow_pending_txs';
+
+/**
+ * Ids de lançamentos ainda não confirmados na nuvem.
+ *
+ * O snapshot do Firestore é a fonte de verdade: o que já está lá substitui o
+ * estado local (edições e exclusões feitas pelo outro membro propagam). Estes
+ * ids ficam na tela por cima do snapshot até a escrita ser confirmada — sem
+ * isso, um lançamento novo sumiria do aparelho até a nuvem respondê-lo.
+ */
+function loadPendingTxIds(): Set<string> {
+  try {
+    const raw = localStorage.getItem(PENDING_TX_KEY);
+    if (raw !== null) return new Set<string>(JSON.parse(raw));
+    // Migração: em versões antigas nada chegava à nuvem. Marca tudo o que já
+    // existe localmente como pendente para o AutoSync reenviar sem perder histórico.
+    const local = localStorage.getItem('finanflow_transactions');
+    const ids: string[] = local ? (JSON.parse(local) as Transaction[]).map((t) => t.id) : [];
+    localStorage.setItem(PENDING_TX_KEY, JSON.stringify(ids));
+    return new Set(ids);
+  } catch (e) {
+    console.error(e);
+    return new Set();
+  }
+}
 
 export default function App() {
   const now = new Date();
@@ -52,11 +76,23 @@ export default function App() {
   const [authChecking, setAuthChecking] = useState(true);
   const [isGuestMode, setIsGuestMode] = useState(false);
   const [inviteCodeParam, setInviteCodeParam] = useState<string | null>(() => {
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
-      return params.get('convite') || params.get('invite') || null;
+    // Tenta verificar se já existe um token de autenticação no cookie.
+    const token = typeof document !== 'undefined' ? document.cookie.match(/ff_token=([^;]+)/)?.[1] : null;
+    const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+    const inviteCodeFromUrl = params?.get('convite') || params?.get('invite') || null;
+
+    // Se houver um token, o usuário já está logado. Vamos obter o inviteCode da URL
+    // para uso posterior (caso precise aceitar convite), mas não devemos iniciar
+    // a tela de login com base nele se já estiver logado.
+    if (token) {
+      // Se o token existe, pode ser que já estejamos logados, então não precisamos
+      // necessariamente forçar a tela de login. O inviteCode da URL será usado
+      // quando necessário (e.g., ao tentar acessar uma rota protegida).
+      return inviteCodeFromUrl; // Retorna o código da URL para ser usado no useEffect
+    } else {
+      // Se não há token, então inicializa com o inviteCode da URL, se houver.
+      return inviteCodeFromUrl;
     }
-    return null;
   });
   const [notificationBanner, setNotificationBanner] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -70,13 +106,6 @@ export default function App() {
   // Persistence with localStorage as offline fallback / initial state
   const [transactions, setTransactions] = useState<Transaction[]>(() => {
     try {
-      // Purge legacy caio-specific keys once and for all
-      localStorage.removeItem('finanflow_caio_transactions');
-      localStorage.removeItem('finanflow_caio_goals');
-      localStorage.removeItem('finanflow_caio_categories');
-      localStorage.removeItem('finanflow_caio_accounts');
-      localStorage.removeItem('finanflow_v2_blank_state');
-
       const saved = localStorage.getItem('finanflow_transactions');
       if (saved) return JSON.parse(saved);
     } catch (e) {
@@ -129,94 +158,185 @@ export default function App() {
   });
   syncContextRef.current = { user: currentUser, household: currentHousehold };
 
-  // Listen to Firebase Auth state
-  useEffect(() => {
-    const unsubscribeAuth = onAuthStateChanged(auth, async (user) => {
-      setCurrentUser(user);
-      setAuthChecking(false);
-      if (user) {
-        try {
-          // Check URL query parameters for household invite code
-          const urlParams = new URLSearchParams(window.location.search);
-          const inviteCode = urlParams.get('convite') || urlParams.get('invite') || inviteCodeParam;
+  // Rastreio de lançamentos pendentes de confirmação na nuvem (ver loadPendingTxIds)
+  const pendingTxRef = useRef<Set<string> | null>(null);
+  if (pendingTxRef.current === null) pendingTxRef.current = loadPendingTxIds();
+  const persistPendingTx = () => {
+    try {
+      localStorage.setItem(PENDING_TX_KEY, JSON.stringify([...pendingTxRef.current!]));
+    } catch (e) {
+      console.error(e);
+    }
+  };
+  const markTxPending = (id: string) => {
+    pendingTxRef.current!.add(id);
+    persistPendingTx();
+  };
+  const markTxSynced = (id: string) => {
+    if (pendingTxRef.current!.delete(id)) persistPendingTx();
+  };
 
-          if (inviteCode) {
-            const joined = await joinHouseholdWithCode(user, inviteCode);
-            if (joined) {
-              setCurrentHousehold(joined);
-              setNotificationBanner(`🎉 Conectado com sucesso ao espaço "${joined.name}"!`);
-              // Clean up invite query parameter from URL cleanly
+  // Sessão: consulta /api/me ao montar. O backend cria o espaço compartilhado
+  // no primeiro acesso; convite na URL entra antes de qualquer outra coisa.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const me = await fetchMe();
+        if (cancelled) return;
+        if (me) {
+          const urlParams = new URLSearchParams(window.location.search);
+          const invite = urlParams.get('convite') || urlParams.get('invite') || inviteCodeParam;
+          let household = me.household;
+          if (invite) {
+            try {
+              const joined = await joinHouseholdWithCode(invite);
+              household = joined.household;
+              setNotificationBanner(`🎉 Conectado com sucesso ao espaço "${household.name}"!`);
               window.history.replaceState({}, document.title, window.location.pathname);
               setInviteCodeParam(null);
               setTimeout(() => setNotificationBanner(null), 6000);
-              return;
+            } catch (err: any) {
+              console.error('Erro ao conectar via convite:', err);
             }
           }
-
-          // Otherwise get or create user profile and household
-          const { household } = await getOrCreateUserProfile(user);
+          setCurrentUser(me.user);
           setCurrentHousehold(household);
-        } catch (err) {
-          console.error('Erro ao inicializar perfil de usuário no Firebase:', err);
+        } else {
+          setCurrentUser(null);
+          setCurrentHousehold(null);
         }
-      } else {
+      } catch (err) {
+        console.error('Erro ao verificar sessão:', err);
+        setCurrentUser(null);
         setCurrentHousehold(null);
+      } finally {
+        if (!cancelled) setAuthChecking(false);
       }
-    });
-
-    return () => unsubscribeAuth();
-  }, [inviteCodeParam]);
-
-  // Garante que documentos criados antes da entrada de um novo membro passem a
-  // ser visíveis para ele (as regras do Firestore leem o memberUids gravado).
-  const memberSyncKeyRef = useRef<string>('');
-  useEffect(() => {
-    if (!currentUser || !currentHousehold) return;
-    const key = `${currentHousehold.id}:${[...currentHousehold.memberUids].sort().join(',')}`;
-    if (memberSyncKeyRef.current === key) return;
-    memberSyncKeyRef.current = key;
-
-    syncHouseholdMemberUids(currentHousehold, currentUser.uid).catch((err) =>
-      console.warn('Não foi possível sincronizar os membros dos documentos:', err)
-    );
-  }, [currentUser, currentHousehold]);
-
-  // Set up real-time Firestore synchronization when authenticated
-  useEffect(() => {
-    if (!currentUser || !currentHousehold) return;
-
-    // 1. Subscribe to household
-    const unsubHousehold = subscribeHousehold(currentHousehold.id, (updated) => {
-      setCurrentHousehold(updated);
-    });
-
-    // 2. Subscribe to transactions
-    const unsubTx = subscribeTransactions(currentUser.uid, (cloudTxs) => {
-      setTransactions(cloudTxs);
-    });
-
-    // 3. Subscribe to categories
-    const unsubCat = subscribeCategories(currentUser.uid, (cloudCats) => {
-      if (cloudCats.length > 0) setCategories(cloudCats);
-    });
-
-    // 4. Subscribe to accounts
-    const unsubAcc = subscribeAccounts(currentUser.uid, (cloudAccs) => {
-      if (cloudAccs.length > 0) setAccounts(cloudAccs);
-    });
-
-    // 5. Subscribe to goals
-    const unsubGoals = subscribeGoals(currentUser.uid, (cloudGoals) => {
-      if (cloudGoals.length > 0) setGoals(cloudGoals);
-    });
-
+    })();
     return () => {
-      unsubHousehold();
-      unsubTx();
-      unsubCat();
-      unsubAcc();
-      unsubGoals();
+      cancelled = true;
     };
+  }, []);
+
+  // Polling de sincronização: a nuvem é a fonte de verdade. Sessões expiradas
+  // (401) voltam o usuário para a tela de login.
+  useEffect(() => {
+    if (!currentUser || isGuestMode) return;
+    let stopped = false;
+    const poll = async () => {
+      if (document.hidden) return;
+      try {
+        const data = await fetchSync();
+        if (!stopped) applySyncPayload(data);
+      } catch (err) {
+        if (err instanceof CloudAuthError && !stopped) {
+          setCurrentUser(null);
+          setCurrentHousehold(null);
+          setIsGuestMode(false);
+        } else if (!stopped) {
+          console.warn('[Sync] Falha no polling:', err);
+        }
+      }
+    };
+    poll();
+    const interval = setInterval(poll, 5000);
+    const onVisible = () => {
+      if (!document.hidden) poll();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      stopped = true;
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUser, isGuestMode]);
+
+  // Sincronização por polling: a nuvem é a fonte de verdade para o que já foi
+  // confirmado nela; só os pendentes ficam por conta local por cima.
+  const applySyncPayload = (data: CloudSyncPayload) => {
+    const cloudTxs = data.transactions;
+    const pending = pendingTxRef.current!;
+    const cloudIds = new Set(cloudTxs.map((t) => t.id));
+    let pendingChanged = false;
+    cloudTxs.forEach((t) => {
+      if (pending.delete(t.id)) pendingChanged = true;
+    });
+    if (pendingChanged) persistPendingTx();
+
+    setTransactions((prev) => {
+      const merged = [...cloudTxs];
+      prev.forEach((t) => {
+        if (pending.has(t.id) && !cloudIds.has(t.id)) merged.push(t);
+      });
+      merged.sort((a, b) => (b.date > a.date ? 1 : -1));
+      return merged;
+    });
+
+    if (data.categories.length > 0) {
+      setCategories((prev) => {
+        const merged = [...prev];
+        data.categories.forEach((c) => {
+          const i = merged.findIndex((x) => x.id === c.id);
+          if (i >= 0) merged[i] = c;
+          else merged.push(c);
+        });
+        return merged;
+      });
+    }
+
+    if (data.accounts.length > 0) {
+      setAccounts((prev) => {
+        const merged = [...prev];
+        data.accounts.forEach((a) => {
+          const i = merged.findIndex((x) => x.id === a.id);
+          if (i >= 0) merged[i] = a;
+          else merged.push(a);
+        });
+        return merged;
+      });
+    }
+
+    if (data.goals.length > 0) {
+      setGoals((prev) => {
+        const merged = [...prev];
+        data.goals.forEach((g) => {
+          const i = merged.findIndex((x) => x.id === g.id);
+          if (i >= 0) merged[i] = g;
+          else merged.push(g);
+        });
+        return merged;
+      });
+    }
+
+    setCurrentHousehold(data.household);
+  };
+
+  // Auto-sync: reenvia para a nuvem apenas os lançamentos ainda pendentes
+  // (novo, edição que falhou ou histórico de antes desta versão) assim que as
+  // assinaturas conectam.
+  useEffect(() => {
+    if (!currentUser || !currentHousehold) return;
+
+    const syncTimer = setTimeout(() => {
+      let localTxs: Transaction[] = [];
+      try {
+        localTxs = JSON.parse(localStorage.getItem('finanflow_transactions') || '[]');
+      } catch (e) {
+        console.error('[AutoSync] Failed to parse local transactions:', e);
+        return;
+      }
+
+      const pending = pendingTxRef.current!;
+      const toPush = localTxs.filter((tx) => pending.has(tx.id));
+      if (toPush.length === 0) return;
+
+      console.log('[AutoSync] Pushing', toPush.length, 'pending transactions to cloud');
+      toPush.forEach((tx) => pushTxToCloud(tx));
+    }, 3000);
+
+    return () => clearTimeout(syncTimer);
   }, [currentUser, currentHousehold?.id]);
 
   // Sync to local fallback storage
@@ -252,66 +372,86 @@ export default function App() {
     }
   }, [goals]);
 
+  const notifyCloudSave = (ok: boolean) => {
+    setCloudSaveStatus(ok ? 'ok' : 'error');
+    setTimeout(() => setCloudSaveStatus(null), 4000);
+  };
+
+  /**
+   * Envia um lançamento para a nuvem marcando-o como pendente até a escrita
+   * ser confirmada. Mesmo sem login ele fica pendente — o AutoSync envia assim
+   * que a conta conectar — então nada local some por causa do snapshot.
+   */
+  const pushTxToCloud = (tx: Transaction) => {
+    markTxPending(tx.id);
+    const { user, household } = syncContextRef.current;
+    if (!user || !household) {
+      console.warn('[Sync] Cloud save SKIPPED - missing context:', { hasUser: !!user, hasHousehold: !!household });
+      return;
+    }
+    console.log('[Sync] Saving transaction to cloud:', tx.id, 'household:', household.id);
+    saveTransactionToCloud(tx)
+      .then(() => {
+        console.log('[Sync] Cloud save success:', tx.id);
+        markTxSynced(tx.id);
+        notifyCloudSave(true);
+      })
+      .catch((err) => {
+        console.error('[Sync] Cloud save FAILED:', tx.id, err);
+        markTxPending(tx.id);
+        notifyCloudSave(false);
+      });
+  };
+
   // Transaction Handlers - Supporting single transactions and arrays of installments/recurrences
   const handleSaveTransaction = (
     txDataOrArray: Omit<Transaction, 'id'> | Omit<Transaction, 'id'>[],
     existingId?: string
   ) => {
-    const { user, household } = syncContextRef.current;
-
     if (Array.isArray(txDataOrArray)) {
       const newItems: Transaction[] = txDataOrArray.map((txData, idx) => ({
         ...txData,
         id: `tx_${Date.now()}_${idx}_${Math.random().toString(36).substring(2, 6)}`,
       }));
-      setTransactions((prev) => [...newItems, ...prev]);
+      setTransactions((prev) => {
+        const updated = [...newItems, ...prev];
+        // Write to localStorage synchronously
+        try {
+          localStorage.setItem('finanflow_transactions', JSON.stringify(updated));
+        } catch (e) {
+          console.error('Failed to save to localStorage:', e);
+        }
+        return updated;
+      });
 
-      if (user && household) {
-        newItems.forEach((item) => {
-          saveTransactionToCloud(item, household, user)
-            .then(() => notifyCloudSave(true))
-            .catch((err) => {
-              console.error('Erro ao sincronizar transação na nuvem:', err);
-              notifyCloudSave(false);
-            });
-        });
-      }
+      newItems.forEach((item) => pushTxToCloud(item));
     } else if (existingId) {
       const updatedTx: Transaction = { ...txDataOrArray, id: existingId };
       setTransactions((prev) =>
         prev.map((t) => (t.id === existingId ? updatedTx : t))
       );
 
-      if (user && household) {
-        saveTransactionToCloud(updatedTx, household, user)
-          .then(() => notifyCloudSave(true))
-          .catch((err) => {
-            console.error('Erro ao atualizar transação na nuvem:', err);
-            notifyCloudSave(false);
-          });
-      }
+      pushTxToCloud(updatedTx);
     } else {
       const newTx: Transaction = {
         ...txDataOrArray,
         id: `tx_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
       };
-      setTransactions((prev) => [newTx, ...prev]);
+      // Add to state first
+      setTransactions((prev) => {
+        const updated = [newTx, ...prev];
+        // Write to localStorage synchronously to prevent data loss on reload
+        try {
+          localStorage.setItem('finanflow_transactions', JSON.stringify(updated));
+        } catch (e) {
+          console.error('Failed to save to localStorage:', e);
+        }
+        return updated;
+      });
 
-      if (user && household) {
-        saveTransactionToCloud(newTx, household, user)
-          .then(() => notifyCloudSave(true))
-          .catch((err) => {
-            console.error('Erro ao salvar transação na nuvem:', err);
-            notifyCloudSave(false);
-          });
-      }
+      pushTxToCloud(newTx);
     }
     setEditingTx(null);
-  };
-
-  const notifyCloudSave = (ok: boolean) => {
-    setCloudSaveStatus(ok ? 'ok' : 'error');
-    setTimeout(() => setCloudSaveStatus(null), 4000);
   };
 
   const handleEditTransaction = (tx: Transaction) => {
@@ -379,14 +519,11 @@ export default function App() {
   };
 
   const handleTogglePaid = (id: string) => {
-    const { user, household } = syncContextRef.current;
     setTransactions((prev) =>
       prev.map((t) => {
         if (t.id === id) {
           const updated = { ...t, isPaid: !t.isPaid };
-          if (user && household) {
-            saveTransactionToCloud(updated, household, user).catch(console.error);
-          }
+          pushTxToCloud(updated);
           return updated;
         }
         return t;
@@ -402,7 +539,7 @@ export default function App() {
         if (c.id === categoryId) {
           const updated = { ...c, budget: newBudget };
           if (user && household) {
-            saveCategoryToCloud(updated, household, user).catch(console.error);
+            saveCategoryToCloud(updated).catch(console.error);
           }
           return updated;
         }
@@ -421,7 +558,7 @@ export default function App() {
     setGoals((prev) => [...prev, newGoal]);
 
     if (user && household) {
-      saveGoalToCloud(newGoal, household, user).catch(console.error);
+      saveGoalToCloud(newGoal).catch(console.error);
     }
   };
 
@@ -435,7 +572,7 @@ export default function App() {
           currentAmount: Math.max(0, g.currentAmount + deltaAmount),
         };
         if (user && household) {
-          saveGoalToCloud(updated, household, user).catch(console.error);
+          saveGoalToCloud(updated).catch(console.error);
         }
         return updated;
       })
@@ -455,6 +592,7 @@ export default function App() {
     accounts: Account[];
     goals: Goal[];
   }) => {
+    imported.transactions.forEach((t) => markTxPending(t.id));
     setTransactions(imported.transactions);
     if (imported.categories) setCategories(imported.categories);
     if (imported.accounts) setAccounts(imported.accounts);
@@ -465,19 +603,18 @@ export default function App() {
     newTxs: Transaction[],
     mode: 'append' | 'replace'
   ) => {
-    const { user, household } = syncContextRef.current;
     if (mode === 'replace') {
       setTransactions(newTxs);
     } else {
       setTransactions((prev) => [...newTxs, ...prev]);
     }
-    if (user && household) {
-      newTxs.forEach((tx) => saveTransactionToCloud(tx, household, user).catch(console.error));
-    }
+    newTxs.forEach((tx) => pushTxToCloud(tx));
   };
 
   const handleResetToDemo = () => {
-    setTransactions(getSampleTransactions());
+    const sample = getSampleTransactions();
+    sample.forEach((tx) => markTxPending(tx.id));
+    setTransactions(sample);
     setCategories(DEFAULT_CATEGORIES);
     setAccounts(DEFAULT_ACCOUNTS);
     setGoals(DEFAULT_GOALS);
@@ -505,10 +642,12 @@ export default function App() {
       localStorage.removeItem('finanflow_caio_categories');
       localStorage.removeItem('finanflow_caio_accounts');
       localStorage.removeItem('finanflow_v2_blank_state');
+      pendingTxRef.current!.clear();
+      localStorage.removeItem(PENDING_TX_KEY);
 
       // 3. If authenticated in Cloud, wipe cloud transactions for this user
       if (currentUser) {
-        await deleteAllTransactionsFromCloud(currentUser.uid);
+        await deleteAllTransactionsFromCloud();
       }
 
       setNotificationBanner('✓ Todos os dados e lançamentos foram zerados com sucesso!');
@@ -526,40 +665,48 @@ export default function App() {
     if (!currentUser || !currentHousehold) return;
     try {
       for (const tx of transactions) {
-        await saveTransactionToCloud(tx, currentHousehold, currentUser);
+        markTxPending(tx.id);
+        await saveTransactionToCloud(tx);
+        markTxSynced(tx.id);
       }
       for (const cat of categories) {
-        await saveCategoryToCloud(cat, currentHousehold, currentUser);
+        await saveCategoryToCloud(cat);
       }
       for (const acc of accounts) {
-        await saveAccountToCloud(acc, currentHousehold, currentUser);
+        await saveAccountToCloud(acc);
       }
       for (const g of goals) {
-        await saveGoalToCloud(g, currentHousehold, currentUser);
+        await saveGoalToCloud(g);
       }
     } catch (e) {
       console.error('Erro na sincronização de dados locais para a nuvem:', e);
     }
-  };    const handleLogout = async () => {
-    if (confirm('Deseja realmente sair da sua conta Google?')) {
-      await signOut(auth);
-      // Limpa o cache local para não deixar dados órfãos entre sessões
-      localStorage.removeItem('finanflow_transactions');
-      localStorage.removeItem('finanflow_goals');
-      localStorage.removeItem('finanflow_categories');
-      localStorage.removeItem('finanflow_accounts');
-      localStorage.removeItem('finanflow_caio_transactions');
-      localStorage.removeItem('finanflow_caio_goals');
-      localStorage.removeItem('finanflow_caio_categories');
-      localStorage.removeItem('finanflow_caio_accounts');
-      localStorage.removeItem('finanflow_v2_blank_state');
-      setCurrentUser(null);
-      setCurrentHousehold(null);
-      setCloudSaveStatus(null);
-      setIsGuestMode(false);
+  };
+
+  const handleLogout = async () => {
+    if (confirm('Deseja realmente sair da sua conta?')) {
+      try {
+        await signOutFromCloud();
+      } catch (err) {
+        console.error('Erro ao sair:', err);
+      } finally {
+        // Recarrega: zera todo o estado e volta para a tela de login.
+        window.location.reload();
+      }
     }
   };
 
+  // Authenticated but household still loading from Firestore:
+  // block UI to avoid writes that skip Firestore (race condition on first login).
+  // Timeout: if cloud doesn't respond within 10s, let user proceed offline.
+  // ATENÇÃO: hook precisa ficar ANTES de qualquer return antecipado — depois de
+  // um return o React falha com "Rendered fewer hooks than expected" (#310) e a
+  // tela fica toda preta.
+  useEffect(() => {
+    if (!currentUser || currentHousehold || isGuestMode || cloudTimeout) return;
+    const t = setTimeout(() => setCloudTimeout(true), 10000);
+    return () => clearTimeout(t);
+  }, [currentUser, currentHousehold, isGuestMode, cloudTimeout]);
 
   if (authChecking) {
     return (
@@ -573,15 +720,6 @@ export default function App() {
       </div>
     );
   }
-
-  // Authenticated but household still loading from Firestore:
-  // block UI to avoid writes that skip Firestore (race condition on first login).
-  // Timeout: if cloud doesn't respond within 10s, let user proceed offline.
-  useEffect(() => {
-    if (!currentUser || currentHousehold || isGuestMode || cloudTimeout) return;
-    const t = setTimeout(() => setCloudTimeout(true), 10000);
-    return () => clearTimeout(t);
-  }, [currentUser, currentHousehold, isGuestMode, cloudTimeout]);
 
   if (currentUser && !currentHousehold && !isGuestMode) {
     return (
@@ -608,31 +746,10 @@ export default function App() {
     );
   }
 
-  // If user is not authenticated and hasn't explicitly chosen guest mode, show the Google Auth Gate screen
+  // If user is not authenticated and hasn't explicitly chosen guest mode, show the sign-in gate screen
   if (!currentUser && !isGuestMode) {
     return (
       <AuthGateScreen
-        onLoginSuccess={async (usr) => {
-          setCurrentUser(usr);
-          const invite = inviteCodeParam;
-          if (invite) {
-            try {
-              const joined = await joinHouseholdWithCode(usr, invite);
-              if (joined) {
-                setCurrentHousehold(joined);
-                setNotificationBanner(`🎉 Conectado com sucesso ao espaço "${joined.name}"!`);
-                window.history.replaceState({}, document.title, window.location.pathname);
-                setInviteCodeParam(null);
-                setTimeout(() => setNotificationBanner(null), 6000);
-                return;
-              }
-            } catch (err) {
-              console.error('Erro ao conectar via convite:', err);
-            }
-          }
-          const { household } = await getOrCreateUserProfile(usr);
-          setCurrentHousehold(household);
-        }}
         onContinueAsGuest={() => setIsGuestMode(true)}
         inviteCode={inviteCodeParam}
       />
@@ -848,10 +965,6 @@ export default function App() {
         onClose={() => setIsShareHouseholdOpen(false)}
         user={currentUser}
         household={currentHousehold}
-        onLoginSuccess={async (usr) => {
-          const { household } = await getOrCreateUserProfile(usr);
-          setCurrentHousehold(household);
-        }}
         onJoinHouseholdSuccess={(h) => setCurrentHousehold(h)}
         onSyncLocalToCloud={handleSyncLocalToCloud}
         localTransactionsCount={transactions.length}

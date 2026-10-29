@@ -12,3 +12,9 @@ coverage/
 .tools/
 artifacts/
 *.traineddata
+.secrets/
+wrangler.local*.jsonc
+deploy-worker.mjs
+
+# wrangler local state
+.wrangler/

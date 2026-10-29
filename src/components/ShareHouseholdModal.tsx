@@ -12,15 +12,19 @@ import {
   ShieldCheck,
   UploadCloud,
 } from 'lucide-react';
-import { User, signInWithPopup, auth, googleProvider, signOut } from '../firebase';
-import { HouseholdDoc, joinHouseholdWithCode } from '../services/firebaseSyncService';
+import {
+  User,
+  HouseholdDoc,
+  joinHouseholdWithCode,
+  signOutFromCloud,
+  signInUrl,
+} from '../services/cloudSyncService';
 
 interface ShareHouseholdModalProps {
   isOpen: boolean;
   onClose: () => void;
   user: User | null;
   household: HouseholdDoc | null;
-  onLoginSuccess: (user: User) => void;
   onJoinHouseholdSuccess: (household: HouseholdDoc) => void;
   onSyncLocalToCloud: () => void;
   localTransactionsCount: number;
@@ -31,7 +35,6 @@ export const ShareHouseholdModal: React.FC<ShareHouseholdModalProps> = ({
   onClose,
   user,
   household,
-  onLoginSuccess,
   onJoinHouseholdSuccess,
   onSyncLocalToCloud,
   localTransactionsCount,
@@ -42,30 +45,18 @@ export const ShareHouseholdModal: React.FC<ShareHouseholdModalProps> = ({
   const [joinLoading, setJoinLoading] = useState(false);
   const [joinError, setJoinError] = useState<string | null>(null);
   const [joinSuccess, setJoinSuccess] = useState<string | null>(null);
-  const [loginLoading, setLoginLoading] = useState(false);
   const [syncDone, setSyncDone] = useState(false);
 
   if (!isOpen) return null;
 
-  const handleGoogleLogin = async () => {
-    try {
-      setLoginLoading(true);
-      const res = await signInWithPopup(auth, googleProvider);
-      if (res.user) {
-        onLoginSuccess(res.user);
-      }
-    } catch (err: any) {
-      console.error(err);
-      alert('Não foi possível entrar com Google: ' + (err.message || ''));
-    } finally {
-      setLoginLoading(false);
-    }
-  };
-
   const handleLogout = async () => {
-    if (confirm('Deseja realmente sair da sua conta Google?')) {
-      await signOut(auth);
-      onClose();
+    if (confirm('Deseja realmente sair da sua conta?')) {
+      try {
+        await signOutFromCloud();
+      } finally {
+        // Recarrega: zera todo o estado e volta para a tela de login.
+        window.location.reload();
+      }
     }
   };
 
@@ -97,14 +88,10 @@ export const ShareHouseholdModal: React.FC<ShareHouseholdModalProps> = ({
     try {
       setJoinLoading(true);
       setJoinError(null);
-      const joined = await joinHouseholdWithCode(user, inviteInput.trim());
-      if (joined) {
-        setJoinSuccess(`Conectado com sucesso ao espaço "${joined.name}"!`);
-        onJoinHouseholdSuccess(joined);
-        setInviteInput('');
-      } else {
-        setJoinError('Código de convite não encontrado. Verifique os dígitos e tente novamente.');
-      }
+      const joined = await joinHouseholdWithCode(inviteInput.trim());
+      setJoinSuccess(`Conectado com sucesso ao espaço "${joined.household.name}"!`);
+      onJoinHouseholdSuccess(joined.household);
+      setInviteInput('');
     } catch (err: any) {
       setJoinError('Erro ao entrar no espaço: ' + (err.message || 'Tente novamente'));
     } finally {
@@ -154,39 +141,38 @@ export const ShareHouseholdModal: React.FC<ShareHouseholdModalProps> = ({
               </div>
               <div>
                 <h3 className="text-base font-semibold text-white">
-                  Entrar com Conta Google
+                  Entrar com Freebuff
                 </h3>
                 <p className="text-xs text-zinc-300 mt-1 max-w-xs mx-auto">
                   Acesse em qualquer celular ou computador sem perder dados e compartilhe em tempo real com outra pessoa.
                 </p>
               </div>
 
-              <button
-                onClick={handleGoogleLogin}
-                disabled={loginLoading}
-                className="w-full flex items-center justify-center gap-2.5 py-3 px-4 bg-white hover:bg-zinc-100 text-zinc-900 font-bold rounded-xl transition-all shadow-md text-sm cursor-pointer disabled:opacity-50"
+              <a
+                href={signInUrl('/')}
+                className="w-full flex items-center justify-center gap-2.5 py-3 px-4 bg-white hover:bg-zinc-100 text-zinc-900 font-bold rounded-xl transition-all shadow-md text-sm cursor-pointer"
               >
                 <LogIn className="w-4 h-4 text-zinc-600" />
-                <span>{loginLoading ? 'Conectando...' : 'Entrar com Conta Google'}</span>
-              </button>
+                <span>Entrar com Freebuff</span>
+              </a>
             </div>
           ) : (
             <div className="p-4 rounded-xl bg-zinc-900/90 border border-zinc-800 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                {user.photoURL ? (
+                {user.picture ? (
                   <img
-                    src={user.photoURL}
-                    alt={user.displayName || 'Avatar'}
+                    src={user.picture}
+                    alt={user.name || 'Avatar'}
                     className="w-10 h-10 rounded-full border border-orange-500/50 object-cover"
                   />
                 ) : (
                   <div className="w-10 h-10 rounded-full bg-orange-600/30 border border-orange-500/40 flex items-center justify-center text-zinc-400 font-bold">
-                    {(user.displayName || user.email || 'U')[0].toUpperCase()}
+                    {(user.name || user.email || 'U')[0].toUpperCase()}
                   </div>
                 )}
                 <div>
                   <div className="text-sm font-semibold text-white flex items-center gap-1.5">
-                    <span>{user.displayName || 'Usuário'}</span>
+                    <span>{user.name || 'Usuário'}</span>
                     <ShieldCheck className="w-4 h-4 text-zinc-400" />
                   </div>
                   <div className="text-xs text-zinc-400 truncate max-w-[200px]">
@@ -213,9 +199,6 @@ export const ShareHouseholdModal: React.FC<ShareHouseholdModalProps> = ({
                   <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
                     <Sparkles className="w-3.5 h-3.5" />
                     Espaço Compartilhado Ativo
-                  </span>
-                  <span className="text-xs px-2.5 py-0.5 rounded-full bg-orange-500/20 text-orange-300 font-semibold">
-                    {household.memberUids.length} membro(s)
                   </span>
                 </div>
 

@@ -1,11 +1,11 @@
 {
-  "entrypoint": "worker.mjs",
+  "entrypoint": "deploy-worker.mjs",
   "compatibilityDate": "2026-10-01",
   "modules": [
     {
-      "name": "worker.mjs",
+      "name": "deploy-worker.mjs",
       "type": "esm",
-      "path": "./worker.mjs"
+      "path": "./deploy-worker.mjs"
     }
   ],
   "assetsDirectory": "./dist",

@@ -1,8 +1,7 @@
 import React from 'react';
 import { Plus, Download, WalletCards, FileSpreadsheet, Camera, Users, ArrowLeft, LogIn } from 'lucide-react';
 import { ViewTab } from '../types/finance';
-import { User } from '../firebase';
-import { HouseholdDoc } from '../services/firebaseSyncService';
+import { User, HouseholdDoc } from '../services/cloudSyncService';
 
 interface NavbarProps {
   currentTab: ViewTab;
@@ -93,19 +92,19 @@ export const Navbar: React.FC<NavbarProps> = ({
                 title={`Espaço conectado: ${household?.name || 'Compartilhado'}`}
                 className="flex items-center gap-2 px-2.5 py-1.5 text-xs font-semibold rounded-xl transition-all border shrink-0 bg-zinc-800/90 hover:bg-zinc-700 text-zinc-200 border-zinc-700 shadow-xs cursor-pointer"
               >
-                {user.photoURL ? (
+                {user.picture ? (
                   <img
-                    src={user.photoURL}
-                    alt={user.displayName || 'Avatar'}
+                    src={user.picture}
+                    alt={user.name || 'Avatar'}
                     className="w-5 h-5 rounded-full object-cover border border-orange-500/50"
                   />
                 ) : (
                   <div className="w-5 h-5 rounded-full bg-orange-600 text-zinc-950 flex items-center justify-center text-[10px] font-bold">
-                    {(user.displayName || user.email || 'U')[0].toUpperCase()}
+                    {(user.name || user.email || 'U')[0].toUpperCase()}
                   </div>
                 )}
                 <span className="hidden sm:inline font-bold">
-                  {user.displayName ? user.displayName.split(' ')[0] : 'Conectado'}
+                  {user.name ? user.name.split(' ')[0] : 'Conectado'}
                 </span>
                 <span className="w-2 h-2 rounded-full bg-orange-400 animate-pulse" />
               </button>
