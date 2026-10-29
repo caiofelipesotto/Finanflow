@@ -50,6 +50,20 @@ const PENDING_TX_KEY = 'finanflow_pending_txs';
  * ids ficam na tela por cima do snapshot até a escrita ser confirmada — sem
  * isso, um lançamento novo sumiria do aparelho até a nuvem respondê-lo.
  */
+/**
+ * Compara dois valores por conteúdo. O polling da nuvem roda a cada 5s e
+ * devolve sempre objetos/arrays novos; sem isso, todo componente que recebe
+ * essas listas era re-renderizado (e reformulava formulários abertos) mesmo
+ * quando nada tinha mudado no banco.
+ */
+function sameContent(a: unknown, b: unknown): boolean {
+  try {
+    return JSON.stringify(a) === JSON.stringify(b);
+  } catch {
+    return false;
+  }
+}
+
 function loadPendingTxIds(): Set<string> {
   try {
     const raw = localStorage.getItem(PENDING_TX_KEY);
@@ -271,7 +285,7 @@ export default function App() {
         if (pending.has(t.id) && !cloudIds.has(t.id)) merged.push(t);
       });
       merged.sort((a, b) => (b.date > a.date ? 1 : -1));
-      return merged;
+      return sameContent(merged, prev) ? prev : merged;
     });
 
     if (data.categories.length > 0) {
@@ -282,7 +296,7 @@ export default function App() {
           if (i >= 0) merged[i] = c;
           else merged.push(c);
         });
-        return merged;
+        return sameContent(merged, prev) ? prev : merged;
       });
     }
 
@@ -294,7 +308,7 @@ export default function App() {
           if (i >= 0) merged[i] = a;
           else merged.push(a);
         });
-        return merged;
+        return sameContent(merged, prev) ? prev : merged;
       });
     }
 
@@ -306,11 +320,11 @@ export default function App() {
           if (i >= 0) merged[i] = g;
           else merged.push(g);
         });
-        return merged;
+        return sameContent(merged, prev) ? prev : merged;
       });
     }
 
-    setCurrentHousehold(data.household);
+    setCurrentHousehold((prev) => (sameContent(prev, data.household) ? prev : data.household));
   };
 
   // Auto-sync: reenvia para a nuvem apenas os lançamentos ainda pendentes

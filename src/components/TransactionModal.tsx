@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { X, Check, CreditCard, Repeat, Calendar, DollarSign, Calculator, Layers, HelpCircle } from 'lucide-react';
 import { Transaction, Category, Account, TransactionType, PaymentMethod } from '../types/finance';
 import { getTodayString, formatCurrency, addMonthsToDate, formatMonthShort } from '../utils/formatters';
@@ -44,8 +44,20 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
   const [notes, setNotes] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // O polling da nuvem recria as listas de categorias/contas a cada ciclo. Se o
+  // efeito de reset dependesse delas, o formulário seria limpo enquanto o
+  // usuário digita. Lemos sempre a versão mais recente por ref e só resetamos
+  // quando o modal abre (ou muda o lançamento em edição).
+  const categoriesRef = useRef(categories);
+  categoriesRef.current = categories;
+  const accountsRef = useRef(accounts);
+  accountsRef.current = accounts;
+
   // Reset or fill form when modal opens
   useEffect(() => {
+    if (!isOpen) return;
+    const categories = categoriesRef.current;
+    const accounts = accountsRef.current;
     if (initialData) {
       setType(initialData.type);
       setDescription(initialData.description);
@@ -87,7 +99,8 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
       setNotes('');
     }
     setErrors({});
-  }, [initialData, isOpen, categories, accounts]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, initialData]);
 
   // If user switches entry mode to 'installment', auto switch account to credit card if possible
   const handleEntryModeChange = (mode: EntryMode) => {
