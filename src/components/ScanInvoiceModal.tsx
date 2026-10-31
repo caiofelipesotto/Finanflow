@@ -23,6 +23,7 @@ import {
   getTodayString,
   addMonthsToDate,
   formatDateShort,
+  formatMonthYear,
 } from '../utils/formatters';
 import { scanInvoiceLocally } from '../services/localOcrService';
 
@@ -42,6 +43,7 @@ interface DetectedItem {
   installmentAmount: number;
   currentInstallment: number;
   date: string;
+  dueDate?: string;
   type: 'expense' | 'income';
   suggestedCategoryId?: string;
   paymentMethod: 'credit' | 'debit' | 'pix' | 'transfer';
@@ -66,6 +68,9 @@ export function ScanInvoiceModal({
   const [ocrLabel, setOcrLabel] = useState<string>('Lendo a imagem');
   const [ocrProgress, setOcrProgress] = useState<number>(0);
   const [scanLowConfidence, setScanLowConfidence] = useState(false);
+  const [detectedDueDate, setDetectedDueDate] = useState<string | null>(null);
+  const [detectedBillingMonth, setDetectedBillingMonth] = useState<number | null>(null);
+  const [detectedBillingYear, setDetectedBillingYear] = useState<number | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -199,6 +204,9 @@ export function ScanInvoiceModal({
       setDetectedSummary(result.summary || 'Dados extraídos com sucesso.');
       setDetectedInstitution(result.detectedInstitution);
       setScanLowConfidence(result.lowConfidence);
+      setDetectedDueDate(result.dueDate ?? null);
+      setDetectedBillingMonth(result.billingMonth ?? null);
+      setDetectedBillingYear(result.billingYear ?? null);
 
       const parsedItems: DetectedItem[] = (result.items || []).map((item: any, idx: number) => {
         const total = Number(item.totalAmount) || 0;
@@ -206,6 +214,7 @@ export function ScanInvoiceModal({
         const instAmount = Number(item.installmentAmount) || (count > 0 ? total / count : total);
         const currInst = Number(item.currentInstallment) || 1;
         const dateStr = item.date && item.date.length === 10 ? item.date : getTodayString();
+        const itemDueDate = item.dueDate || result.dueDate || null;
 
         const accountId = findBestAccountMatch(result.detectedInstitution || item.description);
         const categoryId = findBestCategoryMatch(item.suggestedCategoryId, item.description);
@@ -218,6 +227,7 @@ export function ScanInvoiceModal({
           installmentAmount: instAmount,
           currentInstallment: currInst,
           date: dateStr,
+          dueDate: itemDueDate,
           type: item.type === 'income' ? 'income' : 'expense',
           suggestedCategoryId: item.suggestedCategoryId,
           paymentMethod: (item.paymentMethod as any) || (count > 1 ? 'credit' : 'debit'),
@@ -298,6 +308,10 @@ export function ScanInvoiceModal({
         demoInst = 'PicPay';
         demoSummary =
           'Detectada fatura PicPay com 2 lançamentos: Supermercado e Compra parcelada em 3x de R$ 75,00.';
+        // Simula vencimento 11/10 e lançamentos dia 10/10 (mês vigente)
+        const today = new Date();
+        const dueDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-11`;
+        const txDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-10`;
         demoItems = [
           {
             id: `demo_${Date.now()}_3`,
@@ -306,7 +320,8 @@ export function ScanInvoiceModal({
             installmentsCount: 1,
             installmentAmount: 312.4,
             currentInstallment: 1,
-            date: getTodayString(),
+            date: txDate,
+            dueDate,
             type: 'expense',
             paymentMethod: 'credit',
             selectedAccountId: findBestAccountMatch('PicPay'),
@@ -319,7 +334,8 @@ export function ScanInvoiceModal({
             installmentsCount: 3,
             installmentAmount: 75.0,
             currentInstallment: 1,
-            date: getTodayString(),
+            date: txDate,
+            dueDate,
             type: 'expense',
             paymentMethod: 'credit',
             selectedAccountId: findBestAccountMatch('PicPay'),
@@ -610,6 +626,39 @@ export function ScanInvoiceModal({
                 </div>
               )}
 
+              {/* Vencimento da fatura e mês de competência */}
+              {detectedDueDate && (
+                <div className="bg-zinc-950/30 border border-blue-500/30 rounded-xl p-4 flex items-start gap-3">
+                  <Calendar className="w-5 h-5 text-blue-400 shrink-0 mt-0.5" />
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-400">
+                        Vencimento da Fatura
+                      </h4>
+                    </div>
+                    <p className="text-xs text-zinc-300 mt-1 leading-relaxed">
+                      Vence em{' '}
+                      <span className="font-semibold text-blue-300">
+                        {formatDateShort(detectedDueDate)}
+                      </span>
+                      {detectedBillingMonth && detectedBillingYear && (
+                        <span className="ml-2 text-[10px] text-zinc-500">
+                          ({formatMonthYear(detectedBillingYear, detectedBillingMonth)})
+                        </span>
+                      )}
+                    </p>
+                    {detectedBillingMonth && detectedBillingYear && (
+                      <p className="text-[10px] text-zinc-500 mt-1">
+                        Mês de competência:{' '}
+                        <span className="font-semibold text-zinc-300">
+                          {formatMonthYear(detectedBillingYear, detectedBillingMonth)}
+                        </span>
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {scanLowConfidence && (
                 <div className="bg-amber-950/40 border border-amber-500/40 rounded-xl p-4 flex items-start gap-3 text-amber-200 text-xs">
                   <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-amber-400" />
@@ -755,6 +804,11 @@ export function ScanInvoiceModal({
                           }
                           className="ui-input"
                         />
+                        {item.dueDate && (
+                          <p className="text-[10px] text-zinc-500 mt-1">
+                            Venc. fatura: {formatDateShort(item.dueDate)}
+                          </p>
+                        )}
                       </div>
 
                       <div>

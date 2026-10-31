@@ -19,6 +19,8 @@ export interface InvoiceItemDraft {
   type: 'expense' | 'income';
   suggestedCategoryId: string;
   paymentMethod: 'credit' | 'debit' | 'pix' | 'transfer';
+  /** Vencimento da fatura detectado no documento (YYYY-MM-DD), quando houver. */
+  dueDate?: string;
 }
 
 export interface InvoiceParseOptions {
@@ -33,6 +35,12 @@ export interface InvoiceParseResult {
   lowConfidence: boolean;
   /** Texto bruto lido pelo OCR (para diagnóstico). */
   rawText: string;
+  /** Data de vencimento da fatura detectada no documento (YYYY-MM-DD). */
+  dueDate: string | null;
+  /** Mês de competência da fatura detectado (1-12), quando identificável. */
+  billingMonth: number | null;
+  /** Ano de competência da fatura detectado, quando identificável. */
+  billingYear: number | null;
 }
 
 /* ------------------------------------------------------------------ */
@@ -209,8 +217,30 @@ function pad(n: number): string {
   return String(n).padStart(2, '0');
 }
 
-/** Extrai "10/11", "10/11/2026", "10-11-26" de uma linha. */
-function extractDate(line: string): { iso: string } | null {
+/** Retorna a string ISO (YYYY-MM-DD) de hoje. */
+function todayISO(): string {
+  const now = new Date();
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+}
+
+/**
+ * Extrai "10/11", "10/11/2026", "10-11-26" de uma linha.
+ *
+ * Regras de ano quando não há ano explícito:
+ * - Ano atual por padrão.
+ * - Se a data candidate for "muito no futuro" (> 90 dias a partir de hoje),
+ *   pertence ao ano anterior.
+ * - Se a data já passou este ano (mês anterior ou dia anterior no mês vigente),
+ *   mantém o ano atual para não criar lançamentos retroativos fora do mês vigente.
+ *
+ * `isDueDate` indica se é uma linha de vencimento de fatura — nessas linhas
+ * aceitamos vencimento no mês seguinte (fatura de cartão costuma vencer no mês
+ * seguinte às compras).
+ */
+function extractDate(
+  line: string,
+  opts: { isDueDate?: boolean; referenceDate?: string } = {},
+): { iso: string } | null {
   const m = line.match(/\b(\d{1,2})\s*[/\-.]\s*(\d{1,2})(?:\s*[/\-.]\s*(\d{2,4}))?\b/);
   if (!m) return null;
 
@@ -228,15 +258,94 @@ function extractDate(line: string): { iso: string } | null {
     year = m[3].length === 2 ? 2000 + raw : raw;
     if (year < 2000 || year > 2100) return null;
   } else {
-    const now = new Date();
-    year = now.getFullYear();
-    // Sem ano: data "longe no futuro" pertence ao ano anterior
+    const ref = opts.referenceDate ? new Date(opts.referenceDate) : new Date();
+    year = ref.getFullYear();
+
     const candidate = new Date(year, month - 1, day);
-    const limit = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000);
-    if (candidate > limit) year -= 1;
+    const limit = new Date(ref.getTime() + 90 * 24 * 60 * 60 * 1000);
+    if (candidate > limit) {
+      // Muito no futuro: pertence ao ano anterior (ex.: hoje 10/10, lido 10/11)
+      year -= 1;
+    } else if (
+      month < ref.getMonth() + 1 ||
+      (month === ref.getMonth() + 1 && day < ref.getDate())
+    ) {
+      // Já passou este ano: manter ano atual (não retrocede para meses anteriores).
+      // Vencimento de fatura pode ser do mês seguinte, mas ainda ano atual.
+    }
   }
 
   return { iso: `${year}-${pad(month)}-${pad(day)}` };
+}
+
+/**
+ * Extrai todas as datas de uma linha, classificando se é vencimento ou transação.
+ * Retorna arrays separados para vencimento da fatura e datas de lançamento.
+ */
+function extractInvoiceDates(
+  line: string,
+  opts: { referenceDate?: string } = {},
+): { dueDates: string[]; transactionDates: string[] } {
+  const lineNorm = stripAccents(line.toLowerCase());
+  const isDueLine = /(venc|vence|vencimento|emiss|pagam|data)/.test(lineNorm);
+
+  const dueDates: string[] = [];
+  const transactionDates: string[] = [];
+
+  // Busca todas as datas na linha (pode haver múltiplas: vencimento + lançamento)
+  let m: RegExpExecArray | null;
+  const dateRe = /\b(\d{1,2})\s*[/\-.]\s*(\d{1,2})(?:\s*[/\-.]\s*(\d{2,4}))?\b/g;
+  while ((m = dateRe.exec(lineNorm)) !== null) {
+    const before = lineNorm.slice(0, m.index);
+    if (/parcel\w*\s*$/i.test(before)) continue;
+
+    const day = Number(m[1]);
+    const month = Number(m[2]);
+    if (day < 1 || day > 31 || month < 1 || month > 12) continue;
+
+    let year: number;
+    if (m[3]) {
+      const raw = Number(m[3]);
+      year = m[3].length === 2 ? 2000 + raw : raw;
+      if (year < 2000 || year > 2100) continue;
+    } else {
+      const ref = opts.referenceDate ? new Date(opts.referenceDate) : new Date();
+      year = ref.getFullYear();
+      const candidate = new Date(year, month - 1, day);
+      const limit = new Date(ref.getTime() + 90 * 24 * 60 * 60 * 1000);
+      if (candidate > limit) {
+        year -= 1;
+      } else if (
+        month < ref.getMonth() + 1 ||
+        (month === ref.getMonth() + 1 && day < ref.getDate())
+      ) {
+        // Já passou este ano — manter ano atual (não retrocede para meses anteriores)
+      }
+    }
+
+    const iso = `${year}-${pad(month)}-${pad(day)}`;
+    if (isDueLine) {
+      dueDates.push(iso);
+    } else {
+      transactionDates.push(iso);
+    }
+  }
+
+  return { dueDates, transactionDates };
+}
+
+/** Verifica se uma data ISO está no mês vigente (mesmo ano e mês que hoje). */
+function isCurrentMonth(iso: string): boolean {
+  const today = todayISO();
+  const [y, m] = iso.split('-').map(Number);
+  const [ty, tm] = today.split('-').map(Number);
+  return y === ty && m === tm;
+}
+
+/** Retorna o primeiro dia do mês de uma data ISO (YYYY-MM-01). */
+function monthStart(iso: string): string {
+  const [y, m] = iso.split('-');
+  return `${y}-${m}-01`;
 }
 
 /* ------------------------------------------------------------------ */
@@ -534,6 +643,7 @@ export function parseInvoiceText(
 
   const detectedInstitution = detectInstitution(text);
   const confidence = options.confidence;
+  const refDate = todayISO();
 
   const strong: Candidate[] = [];
   const weak: Candidate[] = [];
@@ -544,12 +654,29 @@ export function parseInvoiceText(
   const nonLastValues = new Set<number>();
   let lastLabel: string | null = null;
   let firstDate: string | null = null;
+  let detectedDueDate: string | null = null;
+  let detectedBillingMonth: number | null = null;
+  let detectedBillingYear: number | null = null;
 
   for (const line of lines) {
     const lineNorm = stripAccents(line.toLowerCase());
-    const date = extractDate(lineNorm);
-    if (date && !firstDate) firstDate = date.iso;
-    if (date && /(venc|vence|emiss|pagam|data)/.test(lineNorm)) documentDates.push(date.iso);
+    const { dueDates, transactionDates } = extractInvoiceDates(lineNorm, {
+      referenceDate: refDate,
+    });
+
+    // Vencimento da fatura: prioriza a primeira data encontrada em linha de vencimento
+    if (dueDates.length > 0 && !detectedDueDate) {
+      detectedDueDate = dueDates[0];
+      const [dy, dm] = detectedDueDate.split('-').map(Number);
+      detectedBillingMonth = dm;
+      detectedBillingYear = dy;
+    }
+
+    // Data de transação: usa a primeira data encontrada que NÃO seja vencimento
+    const txDate = transactionDates.length > 0 ? transactionDates[0] : null;
+    if (txDate && !firstDate) firstDate = txDate;
+    if (txDate && /(venc|vence|emiss|pagam|data)/.test(lineNorm))
+      documentDates.push(txDate);
 
     if (NOISE_LINE.test(lineNorm)) continue;
 
@@ -565,7 +692,7 @@ export function parseInvoiceText(
     // Valor que aparece repetido no FIM de linhas sem data é provável total do
     // documento (cupons imprimem subtotal/total/pago com o mesmo número);
     // valores no meio da linha são preço unitário ou códigos.
-    if (amounts.length > 0 && !date) {
+    if (amounts.length > 0 && !txDate) {
       const lastVal = round2(amounts[amounts.length - 1].value);
       lastNoDateCounts.set(lastVal, (lastNoDateCounts.get(lastVal) ?? 0) + 1);
       for (let i = 0; i < amounts.length - 1; i++) {
@@ -619,7 +746,7 @@ export function parseInvoiceText(
         installmentsCount: info.count,
         installmentAmount: round2(installmentAmount),
         currentInstallment: info.current ?? 1,
-        date: date?.iso ?? null,
+        date: txDate ?? null,
         source: 'installment',
         type: hasIncome ? 'income' : 'expense',
         suggestedCategoryId: suggestCategory(line),
@@ -636,7 +763,7 @@ export function parseInvoiceText(
         installmentsCount: info.count,
         installmentAmount: 0,
         currentInstallment: info.current ?? 1,
-        date: date?.iso ?? null,
+        date: txDate ?? null,
         source: 'installment',
         type: 'expense',
         suggestedCategoryId: suggestCategory(line),
@@ -664,7 +791,7 @@ export function parseInvoiceText(
           installmentsCount: 1,
           installmentAmount: best.value,
           currentInstallment: 1,
-          date: date?.iso ?? null,
+          date: txDate ?? null,
           source: 'single',
           type: isIncome ? 'income' : 'expense',
           suggestedCategoryId: isIncome
@@ -768,7 +895,7 @@ export function parseInvoiceText(
   }
 
   const defaultDate =
-    documentDates[0] || firstDate || new Date().toISOString().slice(0, 10);
+    documentDates[0] || detectedDueDate || firstDate || new Date().toISOString().slice(0, 10);
 
   const items: InvoiceItemDraft[] = chosen.map((c) => ({
     description: c.description.slice(0, 80),
@@ -780,6 +907,7 @@ export function parseInvoiceText(
     type: c.type,
     suggestedCategoryId: c.suggestedCategoryId,
     paymentMethod: c.paymentMethod,
+    dueDate: detectedDueDate ?? undefined,
   }));
 
   /* Resumo ---------------------------------------------------------- */
@@ -830,6 +958,9 @@ export function parseInvoiceText(
     items,
     lowConfidence: lowConfidence && items.length > 0,
     rawText: text,
+    dueDate: detectedDueDate,
+    billingMonth: detectedBillingMonth,
+    billingYear: detectedBillingYear,
   };
 }
 
