@@ -964,6 +964,187 @@ export function parseInvoiceText(
   };
 }
 
+/* ------------------------------------------------------------------ */
+/* Parser genérico para listas de texto (colado/copiado)              */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Parse de texto bruto em formato lista, ex.:
+ *
+ *   vence em 10/11/2026
+ *   24/10/2026
+ *   * Google Youtube Member — R$ 2,99
+ *   * Paypal *Microsoft — R$ 59,90
+ *
+ * Regras:
+ *  - Linha só com data (DD/MM[/YYYY]) → define data dos itens abaixo
+ *  - Linha com "vence em DD/MM[/YYYY]" → vencimento da fatura
+ *  - Linha começando com *, -, • ou → → item de lançamento
+ *  - "R$ XX,XX" ou "XX,XX" → valor
+ *  - "(parcela X de Y)" → parcela atual e total
+ */
+export interface TextListItem {
+  description: string;
+  totalAmount: number;
+  installmentsCount: number;
+  installmentAmount: number;
+  currentInstallment: number;
+  date: string | null;
+  type: 'expense' | 'income';
+  paymentMethod: 'credit' | 'debit' | 'pix' | 'transfer';
+}
+
+export interface TextListResult {
+  items: TextListItem[];
+  dueDate: string | null;
+  billingMonth: number | null;
+  billingYear: number | null;
+  summary: string;
+}
+
+import { formatDateShort } from './formatters';
+
+const DATE_LINE = /^\s*(\d{1,2})\s*[/\-.]\s*(\d{1,2})(?:\s*[/\-.]\s*(\d{2,4}))?\s*$/;
+const VENCE_LINE = /vence[m]?\s*(?:em|do|de)?\s*(\d{1,2})\s*[/\-.]\s*(\d{1,2})(?:\s*[/\-.]\s*(\d{2,4}))?/i;
+const ITEM_LINE = /^[\*\-\•\→\s]*(.+?)\s*[—\-]\s*R?\$?\s*(\d[\d.,]*\d|\d)(?:\s*\(parcela\s*(\d{1,2})\s*(?:de|de\s*)\s*(\d{1,2})\))?\s*$/i;
+const INSTALLMENT_ONLY = /\(parcela\s*(\d{1,2})\s*(?:de|de\s*)\s*(\d{1,2})\)/i;
+
+function parseDateFuzzy(s: string, refYear: number): string | null {
+  const m = s.match(/(\d{1,2})\s*[/\-.]\s*(\d{1,2})(?:\s*[/\-.]\s*(\d{2,4}))?/);
+  if (!m) return null;
+  const day = Number(m[1]);
+  const month = Number(m[2]);
+  if (day < 1 || day > 31 || month < 1 || month > 12) return null;
+  let year = refYear;
+  if (m[3]) {
+    const raw = Number(m[3]);
+    year = m[3].length === 2 ? 2000 + raw : raw;
+  }
+  return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+}
+
+function parseAmount(raw: string): number | null {
+  const token = raw.replace(/\s+/g, '');
+  if (!/\d/.test(token)) return null;
+  const lastComma = token.lastIndexOf(',');
+  const lastDot = token.lastIndexOf('.');
+  const lastSep = Math.max(lastComma, lastDot);
+  if (lastSep === -1) {
+    const n = Number(token);
+    return Number.isFinite(n) && n > 0 ? n : null;
+  }
+  const sep = token[lastSep];
+  const decimals = token.slice(lastSep + 1);
+  const integerDigits = token.slice(0, lastSep).replace(/[.,]/g, '');
+  if (decimals.length >= 1 && decimals.length <= 2) {
+    const n = Number(`${integerDigits}.${decimals}`);
+    return Number.isFinite(n) && n > 0 ? n : null;
+  }
+  if (decimals.length === 3) {
+    const n = Number(`${integerDigits}${decimals}`);
+    return Number.isFinite(n) && n > 0 ? n : null;
+  }
+  return null;
+}
+
+function stripItemNoise(desc: string): string {
+  return desc
+    .replace(INSTALLMENT_ONLY, '')
+    .replace(/[—\-]\s*R?\$?\s*\d[\d.,]*\d|\d\s*$/, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+export function parseTextList(
+  rawText: string,
+  refDate?: string,
+): TextListResult {
+  const ref = refDate ? new Date(refDate) : new Date();
+  const refYear = ref.getFullYear();
+
+  const lines = rawText.split('\n').map((l) => l.trim()).filter((l) => l.length > 0);
+
+  let currentDate: string | null = null;
+  let dueDate: string | null = null;
+  let billingMonth: number | null = null;
+  let billingYear: number | null = null;
+
+  const items: TextListItem[] = [];
+
+  for (const line of lines) {
+    const lineNorm = stripAccents(line.toLowerCase());
+
+    // Vencimento da fatura
+    const vence = line.match(VENCE_LINE);
+    if (vence && !dueDate) {
+      const d = parseDateFuzzy(vence[0], refYear);
+      if (d) {
+        dueDate = d;
+        const [y, m] = d.split('-').map(Number);
+        billingYear = y;
+        billingMonth = m;
+      }
+    }
+
+    // Linha só de data → define data corrente
+    const dateOnly = line.match(DATE_LINE);
+    if (dateOnly && !/vence/i.test(lineNorm)) {
+      const d = parseDateFuzzy(dateOnly[0], refYear);
+      if (d) {
+        currentDate = d;
+        continue;
+      }
+    }
+
+    // Linha de item
+    const itemMatch = line.match(ITEM_LINE);
+    if (itemMatch) {
+      const rawDesc = itemMatch[1];
+      const rawAmount = itemMatch[2];
+      const current = itemMatch[3] ? Number(itemMatch[3]) : 1;
+      const total = itemMatch[4] ? Number(itemMatch[4]) : 1;
+
+      const amount = parseAmount(rawAmount);
+      if (!amount) continue;
+
+      const description = stripItemNoise(rawDesc) || rawDesc;
+      const installmentsCount = total >= 2 ? total : 1;
+      const currentInstallment = current >= 1 && current <= total ? current : 1;
+
+      // Se parcela única (total===1), desconsidera current
+      const finalCount = total >= 2 ? total : 1;
+      const finalCurrent = total >= 2 ? currentInstallment : 1;
+
+      items.push({
+        description,
+        totalAmount: amount,
+        installmentsCount: finalCount,
+        installmentAmount: finalCount > 1 ? round2(amount / finalCount) : amount,
+        currentInstallment: finalCurrent,
+        date: currentDate ?? null,
+        type: 'expense',
+        paymentMethod: 'credit',
+      });
+    }
+  }
+
+  // Se não encontrou vencimento por "vence em", sem fallback — vencimento deve vir do texto
+
+  const sum = items.reduce((acc, it) => acc + it.totalAmount, 0);
+  const instLabel = dueDate ? ` (vence ${formatDateShort(dueDate)})` : '';
+  const summary = items.length > 0
+    ? `Foram identificados ${items.length} lançamento${items.length > 1 ? 's' : ''}${instLabel}, somando ${formatBRL(sum)}.`
+    : 'Não consegui identificar lançamentos neste texto. Use o formato: data, depois * item — R$ valor.';
+
+  return {
+    items,
+    dueDate,
+    billingMonth,
+    billingYear,
+    summary,
+  };
+}
+
 function formatBRL(value: number): string {
   return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }

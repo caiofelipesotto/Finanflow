@@ -26,6 +26,7 @@ import {
   formatMonthYear,
 } from '../utils/formatters';
 import { scanInvoiceLocally } from '../services/localOcrService';
+import { parseTextList } from '../utils/invoiceParser';
 
 interface ScanInvoiceModalProps {
   isOpen: boolean;
@@ -71,6 +72,8 @@ export function ScanInvoiceModal({
   const [detectedDueDate, setDetectedDueDate] = useState<string | null>(null);
   const [detectedBillingMonth, setDetectedBillingMonth] = useState<number | null>(null);
   const [detectedBillingYear, setDetectedBillingYear] = useState<number | null>(null);
+  const [inputMode, setInputMode] = useState<'image' | 'text'>('image');
+  const [textInput, setTextInput] = useState('');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -87,6 +90,8 @@ export function ScanInvoiceModal({
       setOcrLabel('Lendo a imagem');
       setOcrProgress(0);
       setScanLowConfidence(false);
+      setInputMode('image');
+      setTextInput('');
     }
   }, [isOpen]);
 
@@ -253,6 +258,65 @@ export function ScanInvoiceModal({
       setIsScanning(false);
       setOcrProgress(0);
       setOcrLabel('Lendo a imagem');
+    }
+  };
+
+  const processTextInput = async () => {
+    if (!textInput.trim()) {
+      setScanError('Cole uma lista de lançamentos para processar.');
+      return;
+    }
+
+    setIsScanning(true);
+    setScanError(null);
+    setOcrLabel('Processando texto');
+    setOcrProgress(0.5);
+
+    try {
+      const resultado = parseTextList(textInput);
+
+      setOcrProgress(1);
+
+      if (resultado.items.length === 0) {
+        setScanError(resultado.summary);
+        return;
+      }
+
+      setDetectedSummary(resultado.summary);
+      setDetectedInstitution(null);
+      setScanLowConfidence(false);
+      setDetectedDueDate(resultado.dueDate ?? null);
+      setDetectedBillingMonth(resultado.billingMonth ?? null);
+      setDetectedBillingYear(resultado.billingYear ?? null);
+
+      const parsedItems: DetectedItem[] = resultado.items.map((item, idx) => {
+        const dateStr = item.date && item.date.length === 10 ? item.date : getTodayString();
+
+        return {
+          id: `text_${Date.now()}_${idx}`,
+          description: item.description || 'Lançamento importado',
+          totalAmount: item.totalAmount,
+          installmentsCount: item.installmentsCount,
+          installmentAmount: item.installmentAmount,
+          currentInstallment: item.currentInstallment,
+          date: dateStr,
+          type: item.type,
+          suggestedCategoryId: undefined,
+          paymentMethod: item.paymentMethod,
+          selectedAccountId: findBestAccountMatch(undefined),
+          selectedCategoryId: findBestCategoryMatch(undefined, item.description),
+        };
+      });
+
+      setItems(parsedItems);
+      setScanStep('review');
+    } catch (err: any) {
+      console.error('Erro ao processar texto:', err);
+      setScanError(
+        err?.message || 'Não foi possível processar o texto. Verifique o formato e tente novamente.'
+      );
+    } finally {
+      setIsScanning(false);
     }
   };
 
@@ -476,40 +540,107 @@ export function ScanInvoiceModal({
         <div className="ui-modal-body">
           {scanStep === 'upload' && (
             <div className="space-y-6">
-              {/* Drag & drop upload area */}
-              <div
-                onClick={() => fileInputRef.current?.click()}
-                className="border border-dashed border-[var(--border-2)] hover:border-[var(--accent-text)] bg-[var(--surface-2)] transition-colors rounded-[var(--r-card)] p-8 text-center cursor-pointer flex flex-col items-center justify-center group relative overflow-hidden"
-              >
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleFileInputChange}
-                  accept="image/*"
-                  capture="environment"
-                  className="hidden"
-                />
-
-                <div className="ui-icon !w-14 !h-14 !rounded-[var(--r-card)] group-hover:text-[var(--accent-text)] group-hover:border-[color-mix(in_srgb,var(--accent-text)_40%,transparent)] mb-4 transition-colors">
-                  <Upload className="w-6 h-6" />
-                </div>
-
-                <h3 className="ui-section-title mb-1">
-                  Clique para tirar foto ou escolher um print
-                </h3>
-                <p className="ui-sub max-w-md">
-                  Funciona com prints do app do banco, fatura do cartão, cupom fiscal ou comprovante de compra.
-                </p>
-
-                <div className="mt-4 flex items-center gap-2 text-[11px] text-[var(--text-4)] bg-[var(--surface-3)] px-3 py-1.5 rounded-full border border-[var(--border-1)]">
-                  <span>Dica: você também pode colar com</span>
-                  <kbd className="px-1.5 py-0.5 bg-[var(--surface-4)] text-[var(--text-2)] rounded-[var(--r-control)] font-mono text-[10px]">
-                    Ctrl + V
-                  </kbd>
-                </div>
+              {/* Toggle: imagem ou texto */}
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setInputMode('image')}
+                  className={`flex-1 py-2 rounded-[var(--r-control)] text-xs font-semibold transition-colors ${
+                    inputMode === 'image'
+                      ? 'bg-[var(--accent-text)] text-[var(--accent-bg)]'
+                      : 'bg-[var(--surface-2)] text-[var(--text-2)] border border-[var(--border-1)]'
+                  }`}
+                >
+                  📷 Enviar imagem
+                </button>
+                <button
+                  onClick={() => setInputMode('text')}
+                  className={`flex-1 py-2 rounded-[var(--r-control)] text-xs font-semibold transition-colors ${
+                    inputMode === 'text'
+                      ? 'bg-[var(--accent-text)] text-[var(--accent-bg)]'
+                      : 'bg-[var(--surface-2)] text-[var(--text-2)] border border-[var(--border-1)]'
+                  }`}
+                >
+                  📝 Colar texto
+                </button>
               </div>
 
-              {/* Scanning loading state */}
+              {/* Modo imagem */}
+              {inputMode === 'image' && (
+                <>
+                  {/* Drag & drop upload area */}
+                  <div
+                    onClick={() => fileInputRef.current?.click()}
+                    className="border border-dashed border-[var(--border-2)] hover:border-[var(--accent-text)] bg-[var(--surface-2)] transition-colors rounded-[var(--r-card)] p-8 text-center cursor-pointer flex flex-col items-center justify-center group relative overflow-hidden"
+                  >
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handleFileInputChange}
+                      accept="image/*"
+                      capture="environment"
+                      className="hidden"
+                    />
+
+                    <div className="ui-icon !w-14 !h-14 !rounded-[var(--r-card)] group-hover:text-[var(--accent-text)] group-hover:border-[color-mix(in_srgb,var(--accent-text)_40%,transparent)] mb-4 transition-colors">
+                      <Upload className="w-6 h-6" />
+                    </div>
+
+                    <h3 className="ui-section-title mb-1">
+                      Clique para tirar foto ou escolher um print
+                    </h3>
+                    <p className="ui-sub max-w-md">
+                      Funciona com prints do app do banco, fatura do cartão, cupom fiscal ou comprovante de compra.
+                    </p>
+
+                    <div className="mt-4 flex items-center gap-2 text-[11px] text-[var(--text-4)] bg-[var(--surface-3)] px-3 py-1.5 rounded-full border border-[var(--border-1)]">
+                      <span>Dica: você também pode colar com</span>
+                      <kbd className="px-1.5 py-0.5 bg-[var(--surface-4)] text-[var(--text-2)] rounded-[var(--r-control)] font-mono text-[10px]">
+                        Ctrl + V
+                      </kbd>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* Modo texto */}
+              {inputMode === 'text' && (
+                <div className="border border-[var(--border-2)] bg-[var(--surface-2)] rounded-[var(--r-card)] p-5">
+                  <div className="flex items-center gap-2 mb-3">
+                    <FileText className="w-4 h-4 text-[var(--text-2)]" />
+                    <span className="text-xs font-semibold text-[var(--text-1)] uppercase tracking-wider">
+                      Colar lista de lançamentos
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-[var(--text-4)] mb-3">
+                    Cole aqui a lista de compras da fatura. Exemplo:
+                  </p>
+                  <div className="bg-[var(--surface-3)] border border-[var(--border-1)] rounded-[var(--r-control)] p-3 mb-3 text-[11px] text-[var(--text-3)] font-mono overflow-x-auto">
+                    {'vence em 10/11/2026\n24/10/2026\n* Google Youtube Member — R$ 2,99\n* Paypal *Microsoft — R$ 59,90'}
+                  </div>
+                  <textarea
+                    value={textInput}
+                    onChange={(e) => setTextInput(e.target.value)}
+                    placeholder="Cole a lista de lançamentos aqui..."
+                    className="w-full ui-input h-48 text-xs font-mono resize-y"
+                    rows={10}
+                  />
+                  <div className="mt-3 flex gap-2">
+                    <button
+                      onClick={() => setInputMode('image')}
+                      className="flex-1 py-2 rounded-[var(--r-control)] text-xs font-semibold bg-[var(--surface-2)] text-[var(--text-2)] border border-[var(--border-1)]"
+                    >
+                      ← Voltar para imagem
+                    </button>
+                    <button
+                      onClick={processTextInput}
+                      disabled={isScanning || !textInput.trim()}
+                      className="flex-1 py-2 rounded-[var(--r-control)] text-xs font-semibold bg-[var(--accent-text)] text-[var(--accent-bg)]"
+                    >
+                      Processar lista
+                    </button>
+                  </div>
+                </div>
+              )}
               {isScanning && (
                 <div className="ui-tile p-5 flex flex-col items-center justify-center text-center space-y-3">
                   <div className="relative">
@@ -534,6 +665,39 @@ export function ScanInvoiceModal({
                       {ocrProgress > 0
                         ? `${Math.round(ocrProgress * 100)}%`
                         : 'Na 1ª vez baixa ~4 MB e fica salvo no navegador'}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Scanning/processing loading state */}
+              {isScanning && (
+                <div className="ui-tile p-5 flex flex-col items-center justify-center text-center space-y-3">
+                  <div className="relative">
+                    <div className="w-12 h-12 rounded-full border-2 border-orange-500/20 border-t-orange-400 animate-spin" />
+                    <Cpu className="w-5 h-5 text-zinc-400 absolute inset-0 m-auto" />
+                  </div>
+                  <div>
+                    <h4 className="ui-section-title">{ocrLabel}...</h4>
+                    <p className="ui-sub">
+                      {inputMode === 'text'
+                        ? 'Processando lista de lançamentos...'
+                        : 'Detectando loja, número de parcelas, valores mensais e vencimentos — tudo localmente, sem enviar a imagem para lugar nenhum.'}
+                    </p>
+                  </div>
+                  <div className="w-full max-w-sm">
+                    <div className="ui-progress !h-1.5">
+                      <div
+                        className="ui-progress-bar !bg-[var(--accent-text)]"
+                        style={{ width: `${Math.max(6, Math.round(ocrProgress * 100))}%` }}
+                      />
+                    </div>
+                    <div className="mt-1 text-[10px] text-[var(--text-4)]">
+                      {ocrProgress > 0
+                        ? `${Math.round(ocrProgress * 100)}%`
+                        : inputMode === 'text'
+                          ? 'Lendo texto...'
+                          : 'Na 1ª vez baixa ~4 MB e fica salvo no navegador'}
                     </div>
                   </div>
                 </div>
