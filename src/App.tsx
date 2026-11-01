@@ -1040,16 +1040,33 @@ export default function App() {
           />
         )}
 
-        {currentTab === 'recurrence' && (
+        {currentTab === 'recurrence' && currentHousehold?.id ? (
           <div className="space-y-6">
             <RecurrenceRulesView
-              householdId={currentHousehold?.id || ''}
+              householdId={currentHousehold.id}
             />
             <RecurrenceSimulatorView
-              householdId={currentHousehold?.id || ''}
+              householdId={currentHousehold.id}
             />
           </div>
-        )}
+        ) : currentTab === 'recurrence' ? (
+          <div className="space-y-6">
+            <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 flex flex-col items-center justify-center text-center">
+              <h3 className="text-lg font-semibold text-zinc-100 mb-2">Conecte seu espaço compartilhado</h3>
+              <p className="text-zinc-400 text-sm mb-4">
+                Para criar regras de recorrência, você precisa estar conectado a um espaço (household) na nuvem.
+              </p>
+              {currentUser && (
+                <button
+                  onClick={() => setIsShareHouseholdOpen(true)}
+                  className="ui-btn ui-btn-primary"
+                >
+                  Conectar espaço
+                </button>
+              )}
+            </div>
+          </div>
+        ) : null}
       </main>
 
       {/* Rodapé */}
