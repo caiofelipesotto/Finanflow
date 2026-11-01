@@ -5,10 +5,11 @@ import { formatCurrency } from '../utils/formatters';
 
 interface RecurrenceRulesViewProps {
   householdId: string;
+  userId: string;
   onRuleCreated?: () => void;
 }
 
-export function RecurrenceRulesView({ householdId, onRuleCreated }: RecurrenceRulesViewProps) {
+export function RecurrenceRulesView({ householdId, userId, onRuleCreated }: RecurrenceRulesViewProps) {
   const [rules, setRules] = useState<RecurrenceRule[]>([]);
   const [loading, setLoading] = useState(true);
   const [newRule, setNewRule] = useState({
@@ -44,7 +45,7 @@ export function RecurrenceRulesView({ householdId, onRuleCreated }: RecurrenceRu
     setCreating(true);
     try {
       await recurrenceService.createRule({
-        user_id: '', // será preenchido pelo auth do Supabase
+        user_id: userId,
         household_id: householdId,
         description: newRule.description,
         amount: parseFloat(newRule.amount.replace(',', '.')),

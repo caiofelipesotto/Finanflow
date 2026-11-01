@@ -1096,6 +1096,7 @@ export default function App() {
           <div className="space-y-6">
             <RecurrenceRulesView
               householdId={currentHousehold.id}
+              userId={currentUser?.sub || ''}
             />
             <RecurrenceSimulatorView
               householdId={currentHousehold.id}
