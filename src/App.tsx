@@ -4,7 +4,15 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
-import { ViewTab, Transaction, Category, Account, Goal } from './types/finance';
+import {
+  ViewTab,
+  Transaction,
+  Category,
+  Account,
+  Goal,
+  RecurrenceRule,
+  RecurringTransactionDraft,
+} from './types/finance';
 import {
   DEFAULT_CATEGORIES,
   DEFAULT_ACCOUNTS,
@@ -45,6 +53,7 @@ import {
   saveGoalToCloud,
   signOutFromCloud,
 } from './services/cloudSyncService';
+import { recurrenceService } from './services/recurrenceService';
 
 const PENDING_TX_KEY = 'finanflow_pending_txs';
 const GUEST_TXS_KEY = 'finanflow_guest_txs';
@@ -201,6 +210,10 @@ export default function App() {
     return DEFAULT_GOALS;
   });
 
+  // Regras de recorrência e lançamentos gerados para o mês selecionado
+  const [recurrenceRules, setRecurrenceRules] = useState<RecurrenceRule[]>([]);
+  const [recurringTransactions, setRecurringTransactions] = useState<RecurringTransactionDraft[]>([]);
+
   // Modal states
   const [isTxModalOpen, setIsTxModalOpen] = useState(false);
   const [editingTx, setEditingTx] = useState<Transaction | null>(null);
@@ -324,6 +337,44 @@ export default function App() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser, isGuestMode]);
+
+  // Carregar regras de recorrência quando o household muda
+  useEffect(() => {
+    if (!currentUser || !currentHousehold?.id) return;
+
+    let stopped = false;
+    const load = async () => {
+      try {
+        const rules = await recurrenceService.listRules(currentHousehold.id);
+        if (!stopped) setRecurrenceRules(rules);
+      } catch (err) {
+        console.error('Erro ao carregar regras de recorrência:', err);
+      }
+    };
+    load();
+    return () => { stopped = true; };
+  }, [currentUser, currentHousehold?.id]);
+
+  // Gerar lançamentos recorrentes para o mês selecionado
+  useEffect(() => {
+    if (!currentUser || !currentHousehold?.id) return;
+
+    let stopped = false;
+    const generate = async () => {
+      try {
+        const drafts = await recurrenceService.generateMonthLaunchments(
+          currentHousehold.id,
+          selectedYear,
+          selectedMonth + 1,
+        );
+        if (!stopped) setRecurringTransactions(drafts);
+      } catch (err) {
+        console.error('Erro ao gerar lançamentos recorrentes:', err);
+      }
+    };
+    generate();
+    return () => { stopped = true; };
+  }, [currentUser, currentHousehold?.id, selectedYear, selectedMonth]);
 
   // Sincronização por polling: a nuvem é a fonte de verdade para o que já foi
   // confirmado nela; só os pendentes ficam por conta local por cima.
@@ -1001,6 +1052,7 @@ export default function App() {
             onTogglePaid={handleTogglePaid}
             onEditTransaction={handleEditTransaction}
             onDeleteTransaction={handleDeleteTransaction}
+            recurringTransactions={recurringTransactions}
           />
         )}
 

@@ -81,3 +81,28 @@ export interface RecurrenceSimulation {
   date: string; // YYYY-MM-DD
   month: string; // YYYY-MM
 }
+
+export interface RecurrenceException {
+  id: string;
+  rule_id: string;
+  year: number;
+  month: number;
+  amount: number;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Lançamento gerado a partir de uma regra de recorrência (para exibição no mês selecionado) */
+export interface RecurringTransactionDraft {
+  id: string; // regra_id + ano + mes
+  description: string;
+  amount: number;
+  dayOfMonth: number;
+  date: string; // YYYY-MM-DD
+  month: string; // YYYY-MM
+  type: TransactionType;
+  categoryId?: string;
+  accountId?: string;
+  paymentMethod?: PaymentMethod;
+  isException: boolean;
+}

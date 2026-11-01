@@ -1,4 +1,8 @@
-import { RecurrenceRule, RecurrenceSimulation } from '../types/finance';
+import {
+  RecurrenceRule,
+  RecurrenceSimulation,
+  RecurrenceException,
+} from '../types/finance';
 
 /**
  * Gera uma lista de datas para uma regra de recorrência entre startDate e endDate.
@@ -43,26 +47,49 @@ export function generateRecurringDates(
 }
 
 /**
+ * Busca o valor efetivo de uma regra para um mês específico,
+ * considerando exceções se existirem.
+ */
+export function getEffectiveAmount(
+  rule: RecurrenceRule,
+  exceptions: RecurrenceException[],
+  year: number,
+  month: number,
+): number {
+  const exception = exceptions.find(
+    (e) => e.rule_id === rule.id && e.year === year && e.month === month,
+  );
+  return exception ? exception.amount : rule.amount;
+}
+
+/**
  * Simula lançamentos futuros para uma ou mais regras de recorrência.
  * Retorna um array agrupado por mês, útil para visualizar o longo prazo.
+ * `exceptions` é um mapa opcional de exceções por regra.
  */
 export function simulateRecurrences(
   rules: RecurrenceRule[],
   from: string, // YYYY-MM
   to: string, // YYYY-MM
+  exceptionsByRule?: Map<string, RecurrenceException[]>,
 ): RecurrenceSimulation[] {
   const simulations: RecurrenceSimulation[] = [];
 
   for (const rule of rules) {
     if (!rule.is_active) continue;
 
+    const exceptions = exceptionsByRule?.get(rule.id) || [];
+
     const dates = generateRecurringDates(rule, from, to);
 
     for (const date of dates) {
+      const [year, month] = date.split('-').map(Number);
+      const amount = getEffectiveAmount(rule, exceptions, year, month);
+
       simulations.push({
         ruleId: rule.id,
         description: rule.description,
-        amount: rule.amount,
+        amount,
         dayOfMonth: rule.day_of_month,
         date,
         month: date.slice(0, 7), // YYYY-MM

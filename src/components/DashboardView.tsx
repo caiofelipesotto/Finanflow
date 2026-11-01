@@ -1,5 +1,12 @@
 import React, { useMemo } from 'react';
-import { Transaction, Category, Account, Goal, ViewTab } from '../types/finance';
+import {
+  Transaction,
+  Category,
+  Account,
+  Goal,
+  ViewTab,
+  RecurringTransactionDraft,
+} from '../types/finance';
 import { MonthBalanceHero } from './MonthBalanceHero';
 import { ProjectionChart } from './ProjectionChart';
 import { DonutCategoryChart } from './DonutCategoryChart';
@@ -23,6 +30,7 @@ interface DashboardViewProps {
   onTogglePaid: (id: string) => void;
   onEditTransaction: (tx: Transaction) => void;
   onDeleteTransaction: (id: string) => void;
+  recurringTransactions?: RecurringTransactionDraft[];
 }
 
 export const DashboardView: React.FC<DashboardViewProps> = ({
@@ -40,6 +48,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   onTogglePaid,
   onEditTransaction,
   onDeleteTransaction,
+  recurringTransactions,
 }) => {
   const now = new Date();
   const isCurrentMonth = selectedYear === now.getFullYear() && selectedMonth === now.getMonth();
@@ -48,10 +57,32 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const monthLabel = `${getMonthName(selectedMonth)} de ${selectedYear}`;
   const shortLabel = formatMonthShort(selectedYear, selectedMonth);
 
-  // Month transactions
+  // Month transactions (recorrentes + normais)
   const monthTransactions = useMemo(() => {
-    return transactions.filter((t) => t.date.startsWith(monthPrefix));
-  }, [transactions, monthPrefix]);
+    const normal = transactions.filter((t) => t.date.startsWith(monthPrefix));
+
+    // Converter lançamentos recorrentes para formato compatível com Transaction
+    const recurringAsTx = (recurringTransactions || [])
+      .filter((r) => r.date.startsWith(monthPrefix))
+      .map((r) => ({
+        id: r.id,
+        amount: r.amount,
+        type: r.type,
+        category: r.categoryId || '',
+        date: r.date,
+        account: r.accountId || '',
+        paymentMethod: r.paymentMethod || 'credit',
+        isPaid: false,
+        notes: r.isException
+          ? `Recorrência (exceção): ${r.description}`
+          : `Recorrência: ${r.description}`,
+        recurrence: 'monthly',
+        installment: undefined,
+        recurrenceGroupId: undefined,
+      } as Transaction));
+
+    return [...normal, ...recurringAsTx].sort((a, b) => a.date.localeCompare(b.date));
+  }, [transactions, recurringTransactions, monthPrefix]);
 
   // Aggregate sums
   const totalIncome = useMemo(() => {
