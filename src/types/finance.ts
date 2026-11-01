@@ -53,4 +53,31 @@ export interface Goal {
   notes?: string;
 }
 
-export type ViewTab = 'dashboard' | 'transactions' | 'budgets' | 'goals';
+export type ViewTab = 'dashboard' | 'transactions' | 'budgets' | 'goals' | 'recurrence';
+
+export interface RecurrenceRule {
+  id: string;
+  user_id: string;
+  household_id: string;
+  description: string;
+  amount: number;
+  day_of_month: number;
+  category_id?: string;
+  account_id?: string;
+  payment_method?: PaymentMethod;
+  type: TransactionType;
+  start_date: string; // YYYY-MM-DD
+  end_date?: string; // YYYY-MM-DD
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface RecurrenceSimulation {
+  ruleId: string;
+  description: string;
+  amount: number;
+  dayOfMonth: number;
+  date: string; // YYYY-MM-DD
+  month: string; // YYYY-MM
+}

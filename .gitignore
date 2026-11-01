@@ -18,3 +18,7 @@ deploy-worker.mjs
 
 # wrangler local state
 .wrangler/
+
+# MCP config com chaves sensíveis
+config/mcp/mcp.config.json
+.secrets/

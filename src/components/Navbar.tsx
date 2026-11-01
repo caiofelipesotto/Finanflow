@@ -43,6 +43,7 @@ export const Navbar: React.FC<NavbarProps> = ({
     { id: 'transactions', label: 'Transações', short: 'Lançamentos' },
     { id: 'budgets', label: 'Limites', short: 'Limites' },
     { id: 'goals', label: 'Metas', short: 'Metas' },
+    { id: 'recurrence', label: 'Recorrência', short: 'Recorr.' },
   ];
 
   return (
