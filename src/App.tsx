@@ -1092,7 +1092,7 @@ export default function App() {
           />
         )}
 
-        {currentTab === 'recurrence' && currentHousehold?.id ? (
+        {currentTab === 'simulation' && currentHousehold?.id ? (
           <div className="space-y-6">
             <RecurrenceRulesView
               householdId={currentHousehold.id}
@@ -1102,7 +1102,7 @@ export default function App() {
               householdId={currentHousehold.id}
             />
           </div>
-        ) : currentTab === 'recurrence' ? (
+        ) : currentTab === 'simulation' ? (
           <div className="space-y-6">
             <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 flex flex-col items-center justify-center text-center">
               <h3 className="text-lg font-semibold text-zinc-100 mb-2">Conecte seu espaço compartilhado</h3>

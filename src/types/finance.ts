@@ -53,7 +53,7 @@ export interface Goal {
   notes?: string;
 }
 
-export type ViewTab = 'dashboard' | 'transactions' | 'budgets' | 'goals' | 'recurrence';
+export type ViewTab = 'dashboard' | 'transactions' | 'budgets' | 'goals' | 'simulation';
 
 export interface RecurrenceRule {
   id: string;

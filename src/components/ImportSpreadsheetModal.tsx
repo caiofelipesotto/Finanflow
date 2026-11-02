@@ -534,7 +534,62 @@ export const ImportSpreadsheetModal: React.FC<ImportSpreadsheetModalProps> = ({
                       value={pastedText}
                       onChange={(e) => setPastedText(e.target.value)}
                       className="ui-input !p-3 font-mono"
+                      touch-action="manipulation"
                     />
+                  </div>
+
+                  <div className="flex items-center gap-2 mt-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPastedText(`Data	Descrição	Categoria	Valor	Tipo
+15/10/2026	Supermercado	Alimentação	250,50	Despesa
+16/10/2026	Salário Mensal	Salário	5000,00	Receita
+18/10/2026	Posto Combustível	Transporte	120,00	Despesa
+20/10/2026	Netflix	Assinaturas	35,90	Despesa
+22/10/2026	Uber	Transporte	28,50	Despesa
+25/10/2026	Ifood	Alimentação	42,00	Despesa`);
+                      }}
+                      className="ui-btn ui-btn-secondary text-[11px] px-2 py-1.5"
+                    >
+                      Usar exemplo
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPastedText('')}
+                      className="ui-btn ui-btn-ghost text-[11px] px-2 py-1.5"
+                    >
+                      Limpar
+                    </button>
+                  </div>
+
+                  <div className="ui-tile p-2.5 mt-2">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Table className="w-4 h-4 text-[var(--text-4)]" />
+                      <span className="text-xs font-semibold text-[var(--text-1)]">Formato esperado</span>
+                    </div>
+                    <div className="space-y-1 text-[11px] text-[var(--text-3)]">
+                      <div className="flex items-center gap-2">
+                        <span className="w-8 font-mono text-[var(--text-2)]">Data</span>
+                        <span>DD/MM/YYYY (ex: 15/10/2026)</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="w-8 font-mono text-[var(--text-2)]">Descrição</span>
+                        <span>Nome da transação</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="w-8 font-mono text-[var(--text-2)]">Categoria</span>
+                        <span>Nome da categoria (ou deixe vazio)</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="w-8 font-mono text-[var(--text-2)]">Valor</span>
+                        <span>R$ com vírgula (ex: 250,50)</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="w-8 font-mono text-[var(--text-2)]">Tipo</span>
+                        <span>Despesa ou Receita</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}

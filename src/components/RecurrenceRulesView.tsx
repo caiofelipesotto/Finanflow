@@ -87,16 +87,24 @@ export function RecurrenceRulesView({ householdId, userId, onRuleCreated }: Recu
 
   return (
     <div className="space-y-6">
+      {/* Cabeçalho da tela de Simulação */}
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">Regras de Recorrência</h2>
-        <p className="text-sm text-zinc-500">
-          Contas que se repetem todo mês (ex: seguro, fibra, assinaturas)
-        </p>
+        <div>
+          <h2 className="text-lg font-semibold">Simulação de Longo Prazo</h2>
+          <p className="text-sm text-zinc-500">
+            Projeção de lançamentos recorrentes para qualquer mês no futuro. Crie regras abaixo e veja como elas impactam seus próximos meses.
+          </p>
+        </div>
       </div>
 
-      {/* Formulário de nova regra */}
+      {/* Formulário de nova regra (integrado na mesma tela da simulação) */}
       <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 space-y-4">
-        <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400">Nova regra</h3>
+        <div className="flex items-center justify-between">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400">Nova regra de recorrência</h3>
+          <span className="text-[11px] text-[var(--text-3)]">
+            Regras aqui criadas aparecem automaticamente na projeção de cada mês.
+          </span>
+        </div>
         <form onSubmit={handleCreate} className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="flex flex-col gap-1">
             <label className="text-xs text-zinc-400">Descrição</label>
@@ -104,7 +112,7 @@ export function RecurrenceRulesView({ householdId, userId, onRuleCreated }: Recu
               type="text"
               value={newRule.description}
               onChange={(e) => setNewRule({ ...newRule, description: e.target.value })}
-              placeholder="Ex: Nio Fibra"
+              placeholder="Ex: Seguro do carro, Academia, Fibra ótica"
               className="ui-input"
             />
           </div>
@@ -199,6 +207,10 @@ export function RecurrenceRulesView({ householdId, userId, onRuleCreated }: Recu
 
       {/* Lista de regras existentes */}
       <div className="border border-zinc-800 rounded-xl overflow-hidden">
+        <div className="flex items-center justify-between p-3 bg-zinc-900/50 border-b border-zinc-800">
+          <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Suas regras ativas</h3>
+          <span className="text-xs font-bold text-zinc-200">{rules.length} regra{rules.length !== 1 ? 's' : ''}</span>
+        </div>
         <table className="w-full text-sm">
           <thead className="bg-zinc-900/50">
             <tr>
@@ -246,8 +258,11 @@ export function RecurrenceRulesView({ householdId, userId, onRuleCreated }: Recu
             ))}
             {rules.length === 0 && (
               <tr>
-                <td colSpan={8} className="p-4 text-center text-zinc-500">
-                  Nenhuma regra de recorrência ainda.
+                <td colSpan={8} className="p-6 text-center text-zinc-500">
+                  <span className="text-xs font-semibold">Nenhuma regra de recorrência ainda.</span>
+                  <p className="text-[11px] text-[var(--text-4)] mt-1">
+                    Crie uma regra acima para gerar lançamentos automáticos nos próximos meses.
+                  </p>
                 </td>
               </tr>
             )}
