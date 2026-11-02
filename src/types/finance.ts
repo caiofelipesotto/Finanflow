@@ -62,6 +62,7 @@ export interface RecurrenceRule {
   description: string;
   amount: number;
   day_of_month: number;
+  interval_months: number; // a cada quantos meses se repete (1 = mensal, 2 = bimestral, etc.)
   category_id?: string;
   account_id?: string;
   payment_method?: PaymentMethod;
@@ -105,4 +106,5 @@ export interface RecurringTransactionDraft {
   accountId?: string;
   paymentMethod?: PaymentMethod;
   isException: boolean;
+  intervalMonths?: number; // a cada quantos meses se repete
 }

@@ -7,9 +7,10 @@ import {
 /**
  * Gera uma lista de datas para uma regra de recorrência entre startDate e endDate.
  * Por exemplo: dia 5 de cada mês, de 01/2026 até 12/2027.
+ * Considera interval_months para regras não mensais (ex: a cada 2 meses).
  */
 export function generateRecurringDates(
-  rule: Pick<RecurrenceRule, 'day_of_month' | 'start_date' | 'end_date'>,
+  rule: Pick<RecurrenceRule, 'day_of_month' | 'start_date' | 'end_date' | 'interval_months'>,
   from: string, // YYYY-MM
   to: string, // YYYY-MM
 ): string[] {
@@ -17,6 +18,7 @@ export function generateRecurringDates(
   const [toYear, toMonth] = to.split('-').map(Number);
   const startDate = new Date(rule.start_date);
   const endDate = rule.end_date ? new Date(rule.end_date) : null;
+  const interval = rule.interval_months || 1;
 
   const dates: string[] = [];
 
@@ -29,8 +31,11 @@ export function generateRecurringDates(
 
     // Não gera antes da data de início
     if (date < startDate) {
-      month++;
-      if (month > 12) { month = 1; year++; }
+      month += interval;
+      if (month > 12) {
+        year += Math.floor((month - 1) / 12);
+        month = ((month - 1) % 12) + 1;
+      }
       continue;
     }
 
@@ -39,8 +44,11 @@ export function generateRecurringDates(
 
     dates.push(`${year}-${String(month).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`);
 
-    month++;
-    if (month > 12) { month = 1; year++; }
+    month += interval;
+    if (month > 12) {
+      year += Math.floor((month - 1) / 12);
+      month = ((month - 1) % 12) + 1;
+    }
   }
 
   return dates;

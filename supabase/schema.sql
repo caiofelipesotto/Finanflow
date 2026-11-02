@@ -97,6 +97,9 @@ create table goals (
 );
 create index idx_goal_household on goals(household_id);
 
+-- Adicionar coluna interval_months para bancos existentes (executar uma vez quando disponível)
+-- alter table recurrence_rules add column if not exists interval_months integer not null default 1;
+
 -- 3) updated_at automático
 create function public.set_updated_at()
 returns trigger language plpgsql as $$

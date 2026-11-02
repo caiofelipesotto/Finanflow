@@ -47,6 +47,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
   const [installmentMode, setInstallmentMode] = useState<'total' | 'per_installment'>('total');
   const [totalInstallments, setTotalInstallments] = useState<number>(3);
   const [recurrentMonths, setRecurrentMonths] = useState<number>(12); // How many months to project
+  const [recurrentInterval, setRecurrentInterval] = useState<number>(1); // Months between each recurrence (1 = monthly, 2 = bimonthly, etc.)
   
   const [category, setCategory] = useState('');
   const [account, setAccount] = useState('');
@@ -97,6 +98,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
       setInstallmentMode('total');
       setTotalInstallments(3);
       setRecurrentMonths(12);
+      setRecurrentInterval(1);
 
       // Default category
       const firstExp = categories.find((c) => c.type === 'expense' || c.type === 'both');
@@ -266,7 +268,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
       return;
     }
 
-    // 3. CREATING NEW RECURRENT (Fixa / Todo Mês)
+    // 3. CREATING NEW RECURRENT (Fixa / Todo X Meses)
     if (entryMode === 'recurrent') {
       const recurrenceGroupId = `rec_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
       const fixedAmount = Math.round(parsedRawAmount * 100) / 100;
@@ -274,7 +276,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
       const generatedRecurrences: Omit<Transaction, 'id'>[] = [];
 
       for (let i = 0; i < recurrentMonths; i++) {
-        const recurrentDate = addMonthsToDate(date, i);
+        const recurrentDate = addMonthsToDate(date, i * recurrentInterval);
         generatedRecurrences.push({
           description: description.trim(),
           amount: fixedAmount,
@@ -613,11 +615,36 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                 ))}
               </div>
 
+              <div className="grid grid-cols-4 gap-1.5 mb-2">
+                {[
+                  { label: 'Mensal (1)', val: 1 },
+                  { label: 'Bimestral (2)', val: 2 },
+                  { label: 'Trimestral (3)', val: 3 },
+                  { label: 'Semestral (6)', val: 6 },
+                ].map((item) => (
+                  <button
+                    key={item.val}
+                    type="button"
+                    onClick={() => setRecurrentInterval(item.val)}
+                    className={`ui-seg-item !border !py-1.5 ${
+                      recurrentInterval === item.val
+                        ? 'ui-seg-item-active !border-[color-mix(in_srgb,var(--accent-text)_40%,transparent)]'
+                        : '!border-[var(--border-1)]'
+                    }`}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+
               {parsedRawAmount > 0 && (
                 <div className="ui-tile !bg-[var(--surface-1)] p-2.5 text-xs space-y-1 tabular-nums">
                   <div className="text-[var(--text-3)] text-[11px]">
-                    Serão gerados <strong className="text-[var(--text-1)]">{recurrentMonths} lançamentos mensais</strong> de{' '}
+                    Serão gerados <strong className="text-[var(--text-1)]">{recurrentMonths} lançamento{recurrentMonths !== 1 ? 's' : ''}</strong> de{' '}
                     <strong className="text-[var(--text-1)]">{formatCurrency(parsedRawAmount)}</strong>
+                    <span className="text-[var(--text-3)] font-normal">
+                      (a cada {recurrentInterval} mês{recurrentInterval !== 1 ? 'es' : ''})
+                    </span>
                   </div>
                   <div className="text-[11px] text-[var(--text-4)]">
                     De <strong className="text-[var(--text-2)]">{firstMonthLabel}</strong> até{' '}

@@ -127,6 +127,7 @@ export const recurrenceService = {
     for (const rule of rules) {
       const startDate = new Date(rule.start_date);
       const endDate = rule.end_date ? new Date(rule.end_date) : null;
+      const interval = rule.interval_months || 1;
 
       // Verifica se o mês solicitado está dentro do período da regra
       const ruleStartYear = startDate.getFullYear();
@@ -152,6 +153,14 @@ export const recurrenceService = {
         if (endYear < targetYear || (endYear === targetYear && endMonth < targetMonth)) {
           continue;
         }
+      }
+
+      // Verifica se o mês alvo está dentro do intervalo de recorrência
+      // (ex: regra bimestral começando em jan só aparece em jan, mar, mai, jul, set, nov)
+      const monthsDiff =
+        (targetYear - ruleStartYear) * 12 + (targetMonth - ruleStartMonth);
+      if (monthsDiff % interval !== 0) {
+        continue;
       }
 
       // Dia do mês (ajusta se o mês não tiver esse dia, ex: 31 em fevereiro)
@@ -181,6 +190,7 @@ export const recurrenceService = {
         accountId: rule.account_id,
         paymentMethod: rule.payment_method,
         isException: !!exception,
+        intervalMonths: interval,
       });
     }
 

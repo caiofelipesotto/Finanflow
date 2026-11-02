@@ -16,6 +16,7 @@ export function RecurrenceRulesView({ householdId, userId, onRuleCreated }: Recu
     description: '',
     amount: '',
     dayOfMonth: '5',
+    intervalMonths: '1',
     categoryId: '',
     accountId: '',
     paymentMethod: 'credit' as const,
@@ -50,6 +51,7 @@ export function RecurrenceRulesView({ householdId, userId, onRuleCreated }: Recu
         description: newRule.description,
         amount: parseFloat(newRule.amount.replace(',', '.')),
         day_of_month: parseInt(newRule.dayOfMonth, 10),
+        interval_months: parseInt(newRule.intervalMonths, 10),
         category_id: newRule.categoryId || undefined,
         account_id: newRule.accountId || undefined,
         payment_method: newRule.paymentMethod,
@@ -59,7 +61,7 @@ export function RecurrenceRulesView({ householdId, userId, onRuleCreated }: Recu
         is_active: true,
       });
       setNewRule({
-        description: '', amount: '', dayOfMonth: '5', categoryId: '', accountId: '',
+        description: '', amount: '', dayOfMonth: '5', intervalMonths: '1', categoryId: '', accountId: '',
         paymentMethod: 'credit', type: 'expense', startDate: '', endDate: '',
       });
       await loadRules();
@@ -127,6 +129,20 @@ export function RecurrenceRulesView({ householdId, userId, onRuleCreated }: Recu
             />
           </div>
           <div className="flex flex-col gap-1">
+            <label className="text-xs text-zinc-400">Repetir a cada</label>
+            <select
+              value={newRule.intervalMonths}
+              onChange={(e) => setNewRule({ ...newRule, intervalMonths: e.target.value })}
+              className="ui-input"
+            >
+              <option value="1">1 mês (mensal)</option>
+              <option value="2">2 meses (bimestral)</option>
+              <option value="3">3 meses (trimestral)</option>
+              <option value="6">6 meses (semestral)</option>
+              <option value="12">12 meses (anual)</option>
+            </select>
+          </div>
+          <div className="flex flex-col gap-1">
             <label className="text-xs text-zinc-400">Tipo</label>
             <select
               value={newRule.type}
@@ -188,6 +204,7 @@ export function RecurrenceRulesView({ householdId, userId, onRuleCreated }: Recu
               <th className="text-left p-3 text-zinc-400 text-xs">Descrição</th>
               <th className="text-right p-3 text-zinc-400 text-xs">Valor</th>
               <th className="text-center p-3 text-zinc-400 text-xs">Dia</th>
+              <th className="text-center p-3 text-zinc-400 text-xs">Repetir</th>
               <th className="text-center p-3 text-zinc-400 text-xs">Tipo</th>
               <th className="text-left p-3 text-zinc-400 text-xs">Início</th>
               <th className="text-left p-3 text-zinc-400 text-xs">Fim</th>
@@ -203,6 +220,9 @@ export function RecurrenceRulesView({ householdId, userId, onRuleCreated }: Recu
                 </td>
                 <td className="text-center p-3 text-zinc-400">
                   {String(rule.day_of_month)}
+                </td>
+                <td className="text-center p-3 text-zinc-400 text-xs">
+                  {(rule.interval_months || 1) === 1 ? 'Mensal' : `A cada ${rule.interval_months || 1} meses`}
                 </td>
                 <td className="text-center p-3 text-xs">
                   <span className={`px-2 py-0.5 rounded text-xs ${
@@ -225,7 +245,7 @@ export function RecurrenceRulesView({ householdId, userId, onRuleCreated }: Recu
             ))}
             {rules.length === 0 && (
               <tr>
-                <td colSpan={7} className="p-4 text-center text-zinc-500">
+                <td colSpan={8} className="p-4 text-center text-zinc-500">
                   Nenhuma regra de recorrência ainda.
                 </td>
               </tr>
