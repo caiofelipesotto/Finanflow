@@ -33,75 +33,77 @@ export const FinancialProjectionView: React.FC<FinancialProjectionViewProps> = (
     );
   }, [transactions]);
 
-  const monthlyProjection = useMemo(() => {
+  // Lista de meses no intervalo
+  const months = useMemo(() => {
     if (!fromMonth || !toMonth) return [];
     const [fromYear, fromMonthNum] = fromMonth.split('-').map(Number);
     const [toYear, toMonthNum] = toMonth.split('-').map(Number);
-    const months: Array<{ label: string; income: number; expense: number; balance: number }> = [];
+    const result: Array<{ year: number; month: number; label: string }> = [];
     let year = fromYear;
     let month = fromMonthNum;
-    let runningBalance = 0;
     while (year < toYear || (year === toYear && month <= toMonthNum)) {
-      const label = String(month).padStart(2, '0') + '/' + year;
-      let monthIncome = 0;
-      let monthExpense = 0;
-      for (const tx of recurringTransactions) {
-        const txDate = new Date(tx.date);
-        const txYear = txDate.getFullYear();
-        const txMonth = txDate.getMonth() + 1;
-        const startedBeforeOrInTarget = txYear < year || (txYear === year && txMonth <= month);
-        if (!startedBeforeOrInTarget) continue;
-        const monthsDiff = (year - txYear) * 12 + (month - txMonth);
-        if (monthsDiff % 1 !== 0) continue;
-        const dayOfMonth = txDate.getDate();
-        const daysInTargetMonth = new Date(year, month, 0).getDate();
-        const projectedDay = Math.min(dayOfMonth, daysInTargetMonth);
-        if (tx.type === 'income') monthIncome += tx.amount;
-        else monthExpense += tx.amount;
-      }
-      runningBalance += monthIncome - monthExpense;
-      months.push({ label: label, income: monthIncome, expense: monthExpense, balance: runningBalance });
+      result.push({
+        year,
+        month,
+        label: String(month).padStart(2, '0') + '/' + year,
+      });
       month++;
       if (month > 12) { month = 1; year++; }
     }
-    return months;
-  }, [transactions, recurringTransactions, fromMonth, toMonth]);
+    return result;
+  }, [fromMonth, toMonth]);
 
-  const totals = useMemo(() => {
-    const totalIncome = monthlyProjection.reduce((s, m) => s + m.income, 0);
-    const totalExpense = monthlyProjection.reduce((s, m) => s + m.expense, 0);
-    const finalBalance = monthlyProjection.length > 0 ? monthlyProjection[monthlyProjection.length - 1].balance : 0;
-    return { totalIncome: totalIncome, totalExpense: totalExpense, finalBalance: finalBalance };
-  }, [monthlyProjection]);
+  // Para cada lançamento recorrente, calcular valor em cada mês
+  const launchMonths = useMemo(() => {
+    return recurringTransactions.map((tx) => {
+      const txDate = new Date(tx.date);
+      const txYear = txDate.getFullYear();
+      const txMonth = txDate.getMonth() + 1;
+      const dayOfMonth = txDate.getDate();
+      const isIncome = tx.type === 'income';
 
-  const avgMonthlyIncome = monthlyProjection.length > 0 ? totals.totalIncome / monthlyProjection.length : 0;
-  const avgMonthlyExpense = monthlyProjection.length > 0 ? totals.totalExpense / monthlyProjection.length : 0;
-  const isNetPositive = avgMonthlyIncome - avgMonthlyExpense >= 0;
-  const balanceColor = isNetPositive ? 'text-[var(--accent-text)]' : 'text-[var(--danger-text)]';
+      const values: Array<number | null> = months.map((m) => {
+        // Só aparece a partir do mês de criação
+        if (m.year < txYear || (m.year === txYear && m.month < txMonth)) return null;
+        const monthsDiff = (m.year - txYear) * 12 + (m.month - txMonth);
+        if (monthsDiff % 1 !== 0) return null;
+        const daysInTargetMonth = new Date(m.year, m.month, 0).getDate();
+        const projectedDay = Math.min(dayOfMonth, daysInTargetMonth);
+        return isIncome ? tx.amount : -tx.amount;
+      });
 
-  const monthlyRows = monthlyProjection.map((m) => {
-    const balColor = m.balance >= 0 ? 'text-[var(--accent-text)]' : 'text-[var(--danger-text)]';
-    const sign = m.balance >= 0 ? '+' : '';
-    return (
-      <tr key={m.label} className="hover:bg-zinc-800/30">
-        <td className="p-3 font-mono text-zinc-200">{m.label}</td>
-        <td className="text-right p-3 font-mono text-[var(--accent-text)]">+{formatCurrency(m.income)}</td>
-        <td className="text-right p-3 font-mono text-[var(--danger-text)]">-{formatCurrency(m.expense)}</td>
-        <td className="text-right p-3 font-mono font-bold whitespace-nowrap tabular-nums">
-          <span className={balColor}>{sign}{formatCurrency(m.balance)}</span>
-        </td>
-      </tr>
-    );
-  });
+      const rowTotal = values.reduce((s: number, v: number | null) => s + (v || 0), 0);
 
-  const totalRowBalanceColor = totals.finalBalance >= 0 ? 'text-[var(--accent-text)]' : 'text-[var(--danger-text)]';
+      return {
+        id: tx.id,
+        name: tx.description || 'Lançamento',
+        type: tx.type,
+        values,
+        rowTotal,
+      };
+    });
+  }, [recurringTransactions, months]);
+
+  // Totais por coluna (mês)
+  const columnTotals = useMemo(() => {
+    return months.map((_, colIndex) => {
+      return launchMonths.reduce((s: number, lm) => s + (lm.values[colIndex] || 0), 0);
+    });
+  }, [launchMonths, months]);
+
+  const grandTotal = columnTotals.reduce((s: number, v: number) => s + v, 0);
+
+  const totalIncome = columnTotals.reduce((s: number, v: number) => s + (v > 0 ? v : 0), 0);
+  const totalExpense = columnTotals.reduce((s: number, v: number) => s + (v < 0 ? Math.abs(v) : 0), 0);
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-semibold">Simulação de Longo Prazo</h2>
-          <p className="text-sm text-zinc-500">Projeção do seu saldo com base em lançamentos recorrentes.</p>
+          <p className="text-sm text-zinc-500">
+            Projeção de lançamentos recorrentes por mês — formato planilha.
+          </p>
         </div>
       </div>
 
@@ -120,87 +122,6 @@ export const FinancialProjectionView: React.FC<FinancialProjectionViewProps> = (
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="ui-card p-4">
-          <span className="ui-stat-label">Receitas projetadas</span>
-          <div className="ui-stat-value !text-[var(--accent-text)]">{formatCurrency(totals.totalIncome)}</div>
-          <span className="ui-stat-note">média {formatCurrency(avgMonthlyIncome)}/mês</span>
-        </div>
-        <div className="ui-card p-4">
-          <span className="ui-stat-label">Despesas projetadas</span>
-          <div className="ui-stat-value !text-[var(--danger-text)]">{formatCurrency(totals.totalExpense)}</div>
-          <span className="ui-stat-note">média {formatCurrency(avgMonthlyExpense)}/mês</span>
-        </div>
-        <div className="ui-card p-4">
-          <span className="ui-stat-label">Saldo projetado (final)</span>
-          <div className={'ui-stat-value mt-0.5 ' + balanceColor}>{formatCurrency(totals.finalBalance)}</div>
-          <span className="ui-stat-note">{isNetPositive ? 'Saldo crescente' : 'Saldo decrescente'}</span>
-        </div>
-      </div>
-
-      <div className="ui-card p-4">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400">Projeção de saldo</h3>
-        </div>
-        <div className="flex items-end justify-center h-[200px] w-full" style={{ position: 'relative' }}>
-          <svg width={400} height={200} style={{ position: 'absolute', top: 0, left: 0 }}>
-            <line x1={0} y1={100} x2={400} y2={100} stroke="#34343d" strokeWidth="1" strokeDasharray="4" />
-          </svg>
-          <div className="flex justify-between w-full mt-2 pt-2">
-            {monthlyProjection
-              .filter((_, i) => i % Math.max(1, Math.floor(monthlyProjection.length / 6)) === 0 || i === monthlyProjection.length - 1)
-              .map((point, index) => (
-                <div key={index} className="flex flex-col items-center">
-                  <span className="text-[10px] text-[var(--text-4)] block">{point.label}</span>
-                  <span className="text-[10px] font-mono text-[var(--text-2)] block">{formatCurrency(point.balance)}</span>
-                </div>
-              ))}
-          </div>
-        </div>
-        <div className="mt-3 text-[11px] text-[var(--text-3)]">
-          <span className="flex items-center gap-1">
-            <span className="w-3 h-3 rounded-full bg-[#f97316]" />
-            Saldo projetado
-          </span>
-        </div>
-      </div>
-
-      <div className="ui-card p-4">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400">Detalhe por mês</h3>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="ui-table">
-            <thead>
-              <tr>
-                <th className="text-left p-3 text-zinc-400 text-xs">Mês</th>
-                <th className="text-right p-3 text-zinc-400 text-xs text-right">Receitas</th>
-                <th className="text-right p-3 text-zinc-400 text-xs text-right">Despesas</th>
-                <th className="text-right p-3 text-zinc-400 text-xs text-right">Saldo acumulado</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-zinc-800">{monthlyRows}</tbody>
-            <tfoot className="bg-zinc-900/50">
-              <tr>
-                <td className="p-3 text-zinc-400 text-xs font-semibold">Total</td>
-                <td className="text-right p-3 font-mono text-[var(--accent-text)]">+{formatCurrency(totals.totalIncome)}</td>
-                <td className="text-right p-3 font-mono text-[var(--danger-text)]">-{formatCurrency(totals.totalExpense)}</td>
-                <td className="text-right p-3 font-mono font-bold whitespace-nowrap tabular-nums">
-                  <span className={totalRowBalanceColor}>{formatCurrency(totals.finalBalance)}</span>
-                </td>
-              </tr>
-            </tfoot>
-          </table>
-        </div>
-      </div>
-
-      {monthlyProjection.length === 0 && (
-        <div className="py-12 text-center text-zinc-500">
-          Nenhum lançamento recorrente encontrado.
-          <p className="text-[11px] mt-2">Crie lançamentos com recorrência mensal em "Novo lançamento" para aparecer aqui.</p>
-        </div>
-      )}
-
       {recurringTransactions.length === 0 && (
         <div className="ui-alert flex-col !border-[color-mix(in_srgb,var(--accent-text)_32%,transparent)] !bg-[var(--accent-soft)]">
           <div className="flex items-start gap-2">
@@ -210,6 +131,80 @@ export const FinancialProjectionView: React.FC<FinancialProjectionViewProps> = (
               <span className="text-[var(--text-2)] text-[11px] mt-1">Vá em "Novo lançamento" e crie lançamentos com recorrência mensal para aparecer aqui.</span>
             </div>
           </div>
+        </div>
+      )}
+
+      <div className="overflow-x-auto">
+        <table className="ui-table min-w-full">
+          <thead>
+            <tr>
+              <th className="text-left p-3 text-zinc-400 text-xs font-semibold">Lançamento</th>
+              {months.map((m) => (
+                <th key={m.label} className="text-right p-3 text-zinc-400 text-xs font-semibold">
+                  {m.label}
+                </th>
+              ))}
+              <th className="text-right p-3 text-zinc-400 text-xs font-semibold">Total</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-zinc-800">
+            {launchMonths.map((lm) => (
+              <tr key={lm.id} className="hover:bg-zinc-800/30">
+                <td className="p-3 font-mono text-zinc-200">{lm.name}</td>
+                {lm.values.map((v, colIndex) => (
+                  <td
+                    key={colIndex}
+                    className={`text-right p-3 font-mono tabular-nums ${v !== null ? (v >= 0 ? 'text-[var(--accent-text)]' : 'text-[var(--danger-text)]') : 'text-zinc-600'}`}
+                  >
+                    {v === null ? '—' : (v >= 0 ? '+' : '') + formatCurrency(Math.abs(v || 0))}
+                  </td>
+                ))}
+                <td className="text-right p-3 font-mono font-bold text-[var(--text-1)] tabular-nums">
+                  {lm.rowTotal >= 0 ? '+' : ''}{formatCurrency(Math.abs(lm.rowTotal))}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+          <tfoot className="bg-zinc-900/50 border-t border-zinc-800">
+            <tr>
+              <td className="p-3 text-zinc-400 text-xs font-semibold">Total</td>
+              {columnTotals.map((ct, colIndex) => (
+                <td
+                  key={colIndex}
+                  className="text-right p-3 font-mono font-bold tabular-nums"
+                >
+                  {ct >= 0 ? '+' : ''}{formatCurrency(Math.abs(ct))}
+                </td>
+              ))}
+              <td className="text-right p-3 font-mono font-bold text-[var(--text-1)] tabular-nums">
+                {grandTotal >= 0 ? '+' : ''}{formatCurrency(Math.abs(grandTotal))}
+              </td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="ui-card p-4">
+          <span className="ui-stat-label">Receitas projetadas</span>
+          <div className="ui-stat-value !text-[var(--accent-text)]">{formatCurrency(totalIncome)}</div>
+        </div>
+        <div className="ui-card p-4">
+          <span className="ui-stat-label">Despesas projetadas</span>
+          <div className="ui-stat-value !text-[var(--danger-text)]">{formatCurrency(totalExpense)}</div>
+        </div>
+        <div className="ui-card p-4">
+          <span className="ui-stat-label">Saldo total projetado</span>
+          <div className={`ui-stat-value mt-0.5 ${grandTotal >= 0 ? '!text-[var(--accent-text)]' : '!text-[var(--danger-text)]'}`}>
+            {grandTotal >= 0 ? '+' : ''}{formatCurrency(Math.abs(grandTotal))}
+          </div>
+        </div>
+      </div>
+
+      {launchMonths.length === 0 && (
+        <div className="py-12 text-center text-zinc-500">
+          Nenhum lançamento recorrente encontrado no período selecionado.
+          <p className="text-[11px] mt-2">Crie lançamentos com recorrência mensal em "Novo lançamento" para aparecer aqui.</p>
         </div>
       )}
     </div>
