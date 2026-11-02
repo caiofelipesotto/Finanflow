@@ -50,19 +50,22 @@ export const Navbar: React.FC<NavbarProps> = ({
     <header className="sticky top-0 z-30 bg-[var(--app-bg)]/95 backdrop-blur-md border-b border-[var(--border-1)]">
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between gap-2 sm:gap-4 min-w-0">
         {/* Marca */}
-        <button
-          onClick={() => onSelectTab('dashboard')}
+        <a
+          href="#"
+          onClick={(e) => { e.preventDefault(); onSelectTab('dashboard'); }}
+          aria-current={currentTab === 'dashboard' ? 'page' : undefined}
+          aria-label="FinanFlow · Visão geral"
           className="flex items-center gap-2.5 text-left group cursor-pointer shrink-0"
           title="Voltar para a visão geral"
         >
-          <LogoMark className="w-8 h-8 group-hover:opacity-90 transition-opacity" />
+          <LogoMark className="w-8 h-8 group-hover:opacity-90 transition-opacity" aria-hidden="true" />
           <div className="flex items-center gap-2 min-w-0">
             <span className="text-base sm:text-lg font-black tracking-tight text-[var(--text-1)] truncate">
               FinanFlow
             </span>
             <span className="hidden sm:inline ui-badge">Pro</span>
           </div>
-        </button>
+        </a>
 
         {/* Navegação desktop */}
         <nav className="hidden xl:flex items-center gap-1 text-xs font-semibold min-w-0">
@@ -72,6 +75,8 @@ export const Navbar: React.FC<NavbarProps> = ({
               <button
                 key={item.id}
                 onClick={() => onSelectTab(item.id)}
+                aria-current={isActive ? 'page' : undefined}
+                aria-label={item.label}
                 className={`px-3 py-1.5 rounded-[var(--r-control)] whitespace-nowrap transition-colors cursor-pointer ${
                   isActive
                     ? 'bg-[var(--surface-3)] text-[var(--text-1)]'
@@ -91,11 +96,10 @@ export const Navbar: React.FC<NavbarProps> = ({
               {onLogout && (
                 <button
                   onClick={onLogout}
-                  title="Sair da conta"
                   aria-label="Sair da conta"
                   className="ui-btn ui-btn-ghost !px-2"
                 >
-                  <LogOut className="w-3.5 h-3.5" />
+                  <LogOut className="w-3.5 h-3.5" aria-hidden="true" />
                   <span className="hidden xl:inline">Sair</span>
                 </button>
               )}
@@ -127,44 +131,43 @@ export const Navbar: React.FC<NavbarProps> = ({
               {onReturnToLogin && (
                 <button
                   onClick={onReturnToLogin}
-                  title="Voltar para a tela inicial"
+                  aria-label="Voltar para a tela inicial"
                   className="hidden xl:inline-flex ui-btn ui-btn-ghost !px-2"
                 >
-                  <ArrowLeft className="w-3.5 h-3.5" />
+                  <ArrowLeft className="w-3.5 h-3.5" aria-hidden="true" />
                   <span>Tela inicial</span>
                 </button>
               )}
 
               <button
                 onClick={onOpenShareHousehold}
-                title="Entrar com conta Google e sincronizar na nuvem"
                 aria-label="Entrar com Google"
                 className="btn-google ui-btn !py-1.5"
               >
-                <GoogleIcon className="w-3.5 h-3.5 shrink-0" />
+                <GoogleIcon className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
                 <span className="hidden sm:inline">Entrar com Google</span>
               </button>
             </>
           )}
 
-          <button onClick={onOpenScanInvoice} title="Escanear fatura ou print" className="hidden md:inline-flex ui-btn ui-btn-secondary !px-2">
-            <Camera className="w-4 h-4" />
+          <button onClick={onOpenScanInvoice} aria-label="Escanear fatura ou print" className="hidden md:inline-flex ui-btn ui-btn-secondary !px-2">
+            <Camera className="w-4 h-4" aria-hidden="true" />
             <span className="hidden 2xl:inline">Escanear</span>
           </button>
 
-          <button onClick={onOpenImportSpreadsheet} title="Importar planilha" className="hidden 2xl:inline-flex ui-btn ui-btn-secondary !px-2">
-            <FileSpreadsheet className="w-4 h-4" />
+          <button onClick={onOpenImportSpreadsheet} aria-label="Importar planilha" className="hidden 2xl:inline-flex ui-btn ui-btn-secondary !px-2">
+            <FileSpreadsheet className="w-4 h-4" aria-hidden="true" />
             <span>Planilha</span>
           </button>
 
           <ThemeToggle theme={theme} onToggle={onToggleTheme} />
 
-          <button onClick={onOpenBackupModal} title="Dados e backup" aria-label="Dados e backup" className="hidden sm:inline-flex ui-btn ui-btn-ghost !px-2">
-            <Download className="w-4 h-4" />
+          <button onClick={onOpenBackupModal} aria-label="Dados e backup" className="hidden sm:inline-flex ui-btn ui-btn-ghost !px-2">
+            <Download className="w-4 h-4" aria-hidden="true" />
           </button>
 
-          <button onClick={onOpenNewTransaction} className="ui-btn ui-btn-primary">
-            <Plus className="w-4 h-4" />
+          <button onClick={onOpenNewTransaction} aria-label="Novo lançamento" className="ui-btn ui-btn-primary">
+            <Plus className="w-4 h-4" aria-hidden="true" />
             <span className="hidden sm:inline">Lançamento</span>
           </button>
         </div>
@@ -179,7 +182,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               key={item.id}
               onClick={() => onSelectTab(item.id)}
               aria-label={item.label}
-              className={`min-w-0 px-1 py-1.5 text-[10px] sm:text-xs text-center rounded-[var(--r-control)] truncate transition-colors cursor-pointer ${
+              className={`ui-mobile-nav-btn min-w-0 px-1 py-1.5 text-[10px] sm:text-xs text-center rounded-[var(--r-control)] truncate transition-colors cursor-pointer ${
                 isActive
                   ? 'bg-[var(--accent-soft)] text-[var(--accent-text)] font-bold'
                   : 'text-[var(--text-3)] hover:text-[var(--text-1)]'

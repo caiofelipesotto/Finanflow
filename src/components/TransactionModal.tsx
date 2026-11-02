@@ -316,14 +316,14 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
 
   return (
     <div className="ui-modal-overlay" onClick={onClose}>
-      <div className="ui-modal max-w-lg" onClick={(e) => e.stopPropagation()}>
+      <div className="ui-modal max-w-lg" role="dialog" aria-modal="true" aria-labelledby="modal-title" onClick={(e) => e.stopPropagation()}>
         {/* Cabeçalho */}
         <div className="ui-modal-header">
           <span className="ui-icon ui-icon-accent !w-9 !h-9">
-            {initialData ? <Pencil className="w-4 h-4" /> : <PlusCircle className="w-4 h-4" />}
+            {initialData ? <Pencil className="w-4 h-4" aria-hidden="true" /> : <PlusCircle className="w-4 h-4" aria-hidden="true" />}
           </span>
           <div className="min-w-0 flex-1">
-            <h2 className="ui-modal-title">{initialData ? 'Editar lançamento' : 'Novo lançamento'}</h2>
+            <h2 id="modal-title" className="ui-modal-title">{initialData ? 'Editar lançamento' : 'Novo lançamento'}</h2>
             <p className="ui-modal-sub">À vista, parcelado no cartão ou conta fixa</p>
           </div>
           <button
@@ -331,7 +331,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
             aria-label="Fechar"
             className="p-1.5 -mt-1 -mr-1 rounded-[var(--r-control)] text-[var(--text-4)] hover:text-[var(--text-1)] hover:bg-[var(--surface-3)] transition-colors shrink-0"
           >
-            <X className="w-4 h-4" />
+            <X className="w-4 h-4" aria-hidden="true" />
           </button>
         </div>
 
@@ -377,7 +377,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                       entryMode === 'single' ? 'text-[var(--accent-text)]' : 'text-[var(--text-2)]'
                     }`}
                   >
-                    <DollarSign className="w-3.5 h-3.5 shrink-0" />
+                    <DollarSign className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
                     <span className="truncate">À vista</span>
                   </div>
                   <span className="text-[10px] text-zinc-500 leading-tight">
@@ -405,7 +405,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                       entryMode === 'installment' ? 'text-[var(--accent-text)]' : 'text-[var(--text-2)]'
                     }`}
                   >
-                    <CreditCard className="w-3.5 h-3.5 shrink-0" />
+                    <CreditCard className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
                     <span className="truncate">Parcelado</span>
                   </div>
                   <span className="text-[10px] text-zinc-500 leading-tight">
@@ -430,7 +430,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                       entryMode === 'recurrent' ? 'text-[var(--accent-text)]' : 'text-[var(--text-2)]'
                     }`}
                   >
-                    <Repeat className="w-3.5 h-3.5 shrink-0" />
+                    <Repeat className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
                     <span className="truncate">Fixo</span>
                   </div>
                   <span className="text-[10px] text-zinc-500 leading-tight">
@@ -446,11 +446,14 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
             <label className="ui-label">Descrição</label>
             <input
               type="text"
+              name="description"
+              autoComplete="off"
               placeholder="Ex: Supermercado, aluguel, salário..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               className={`ui-input ${errors.description ? '!border-[var(--danger-text)]' : ''}`}
               autoFocus
+              touch-action="manipulation"
             />
             {errors.description && (
               <span className="text-[11px] text-[var(--danger-text)] mt-1 block">{errors.description}</span>
@@ -494,12 +497,16 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
               </span>
               <input
                 type="number"
+                name="amount"
+                inputMode="decimal"
+                autoComplete="off"
                 step="0.01"
                 min="0.01"
                 placeholder="0,00"
                 value={amountInput}
                 onChange={(e) => setAmountInput(e.target.value)}
                 className={`ui-input !pl-10 !text-lg !font-bold tabular-nums ${errors.amount ? '!border-[var(--danger-text)]' : ''}`}
+                touch-action="manipulation"
               />
             </div>
             {errors.amount && (
@@ -540,14 +547,17 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
 
                 {/* Custom installment input */}
                 <div className="flex items-center gap-2">
+                  <label className="ui-label sr-only">Número de parcelas</label>
                   <span className="text-[11px] text-[var(--text-3)]">Ou digite o número exato:</span>
                   <input
                     type="number"
+                    name="installments"
                     min="2"
                     max="72"
                     value={totalInstallments}
                     onChange={(e) => setTotalInstallments(parseInt(e.target.value) || 2)}
                     className="ui-input !w-16 !px-2 !py-1 text-center font-bold tabular-nums"
+                    aria-label="Número de parcelas"
                   />
                   <span className="text-[11px] text-[var(--text-3)]">vezes</span>
                 </div>
@@ -629,7 +639,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                     key={cat.id}
                     type="button"
                     onClick={() => setCategory(cat.id)}
-                    className={`flex items-center gap-2 min-h-[40px] px-2 py-1.5 rounded-[var(--r-control)] border text-left text-[11px] leading-tight transition-colors ${
+                    className={`flex items-center gap-2 min-h-[44px] px-2 py-2 rounded-[var(--r-control)] border text-left text-[11px] leading-tight transition-colors ${
                       isSelected
                         ? 'bg-[var(--accent-soft)] text-[var(--accent-text)] border-[color-mix(in_srgb,var(--accent-text)_45%,transparent)] font-semibold'
                         : 'bg-[var(--surface-2)] text-[var(--text-2)] border-[var(--border-1)] hover:border-[var(--border-2)]'
@@ -665,6 +675,8 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                 {entryMode === 'installment' ? 'Cartão de crédito' : 'Conta / cartão'}
               </label>
               <select
+                name="account"
+                autoComplete="off"
                 value={account}
                 onChange={(e) => setAccount(e.target.value)}
                 className="ui-input"
@@ -681,6 +693,8 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
             <div>
               <label className="ui-label">Forma de pagamento</label>
               <select
+                name="paymentMethod"
+                autoComplete="off"
                 value={paymentMethod}
                 onChange={(e) => setPaymentMethod(e.target.value as PaymentMethod)}
                 className="ui-input"
@@ -703,9 +717,12 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
               </label>
               <input
                 type="date"
+                name="date"
+                autoComplete="off"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
                 className="ui-input tabular-nums"
+                touch-action="manipulation"
               />
             </div>
 
@@ -733,10 +750,13 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
             <label className="ui-label">Observações (opcional)</label>
             <input
               type="text"
+              name="notes"
+              autoComplete="off"
               placeholder="Ex: garantia de 1 ano, loja física, código de rastreio..."
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               className="ui-input"
+              touch-action="manipulation"
             />
           </div>
         </form>
@@ -747,7 +767,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
             Cancelar
           </button>
           <button type="button" onClick={handleSubmit} className="ui-btn ui-btn-primary flex-1">
-            <Check className="w-4 h-4" />
+            <Check className="w-4 h-4" aria-hidden="true" />
             <span>
               {initialData
                 ? 'Salvar alterações'

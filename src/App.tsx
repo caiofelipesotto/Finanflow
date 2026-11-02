@@ -1134,7 +1134,8 @@ export default function App() {
           <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
             <button
               onClick={() => setIsShareHouseholdOpen(true)}
-              className="hover:text-[var(--text-2)] transition-colors flex items-center gap-1.5 cursor-pointer font-medium"
+              className="hover:text-[var(--text-2)] transition-colors flex items-center gap-1.5 cursor-pointer font-medium px-3 py-2 min-h-[44px]"
+              touch-action="manipulation"
             >
               <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-text)]" />
               <span>{currentUser ? 'Nuvem conectada' : 'Conectar na nuvem'}</span>
@@ -1142,14 +1143,16 @@ export default function App() {
             <span aria-hidden="true" className="text-[var(--border-2)]">·</span>
             <button
               onClick={() => setIsBackupModalOpen(true)}
-              className="hover:text-[var(--text-2)] transition-colors cursor-pointer font-medium"
+              className="hover:text-[var(--text-2)] transition-colors cursor-pointer font-medium px-3 py-2 min-h-[44px]"
+              touch-action="manipulation"
             >
               Exportar / backup
             </button>
             <span aria-hidden="true" className="text-[var(--border-2)]">·</span>
             <button
               onClick={() => setIsConfirmClearModalOpen(true)}
-              className="hover:text-[var(--danger-text)] transition-colors cursor-pointer font-medium"
+              className="hover:text-[var(--danger-text)] transition-colors cursor-pointer font-medium px-3 py-2 min-h-[44px]"
+              touch-action="manipulation"
             >
               Zerar dados
             </button>
@@ -1165,7 +1168,8 @@ export default function App() {
                 <span aria-hidden="true" className="text-[var(--border-2)]">·</span>
                 <button
                   onClick={() => setIsLogoutConfirmOpen(true)}
-                  className="hover:text-[var(--text-2)] transition-colors cursor-pointer font-medium"
+                  className="hover:text-[var(--text-2)] transition-colors cursor-pointer font-medium px-3 py-2 min-h-[44px]"
+                  touch-action="manipulation"
                 >
                   Sair da conta
                 </button>

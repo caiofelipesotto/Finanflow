@@ -99,7 +99,7 @@ export const CreditCardsWidget: React.FC<CreditCardsWidgetProps> = ({
         <div className="flex flex-wrap items-center gap-2">
           {onOpenScanInvoice && (
             <button type="button" onClick={onOpenScanInvoice} className="ui-btn ui-btn-secondary">
-              <Camera className="w-3.5 h-3.5" />
+              <Camera className="w-3.5 h-3.5" aria-hidden="true" />
               <span>Escanear fatura</span>
             </button>
           )}
@@ -188,11 +188,12 @@ export const CreditCardsWidget: React.FC<CreditCardsWidgetProps> = ({
             <button
               type="button"
               onClick={onOpenNewTransaction}
-              className="mt-3 pt-2.5 border-t border-[var(--border-1)] text-[11px] font-semibold text-[var(--text-3)] hover:text-[var(--accent-text)] flex items-center gap-1 transition-colors self-end"
+              className="mt-3 pt-2.5 pb-2.5 border-t border-[var(--border-1)] text-[11px] font-semibold text-[var(--text-3)] hover:text-[var(--accent-text)] flex items-center gap-1 transition-colors self-end min-h-[44px]"
+              touch-action="manipulation"
             >
-              <Plus className="w-3 h-3" />
+              <Plus className="w-3 h-3" aria-hidden="true" />
               <span>Parcelar neste cartão</span>
-              <ArrowRight className="w-3 h-3" />
+              <ArrowRight className="w-3 h-3" aria-hidden="true" />
             </button>
           </div>
         ))}

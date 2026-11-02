@@ -37,14 +37,14 @@ export const TransactionMobileList: React.FC<TransactionMobileListProps> = ({
             <button
               type="button"
               onClick={() => onTogglePaid(tx.id)}
-              title={tx.isPaid ? 'Marcar como pendente' : 'Marcar como pago'}
+              aria-label={tx.isPaid ? 'Marcar como pendente' : 'Marcar como pago'}
               className={`mt-0.5 w-5 h-5 rounded-full border inline-flex items-center justify-center shrink-0 transition-colors ${
                 tx.isPaid
                   ? 'bg-[var(--accent-soft)] border-[color-mix(in_srgb,var(--accent-text)_45%,transparent)] text-[var(--accent-text)]'
                   : 'border-[var(--border-2)] text-[var(--text-4)]'
               }`}
             >
-              {tx.isPaid ? <Check className="w-3 h-3" /> : <Circle className="w-3 h-3" />}
+              {tx.isPaid ? <Check className="w-3 h-3" aria-hidden="true" /> : <Circle className="w-3 h-3" aria-hidden="true" />}
             </button>
 
             <div className="min-w-0 flex-1">
@@ -76,18 +76,18 @@ export const TransactionMobileList: React.FC<TransactionMobileListProps> = ({
                   <button
                     type="button"
                     onClick={() => onEdit(tx)}
-                    title="Editar lançamento"
+                    aria-label="Editar lançamento"
                     className="p-1.5 text-[var(--text-3)] hover:text-[var(--text-1)] hover:bg-[var(--surface-3)] rounded-[var(--r-control)] transition-colors"
                   >
-                    <Edit2 className="w-3.5 h-3.5" />
+                    <Edit2 className="w-3.5 h-3.5" aria-hidden="true" />
                   </button>
                   <button
                     type="button"
                     onClick={() => onDelete(tx.id)}
-                    title="Excluir lançamento"
+                    aria-label="Excluir lançamento"
                     className="p-1.5 text-[var(--text-3)] hover:text-[var(--danger-text)] hover:bg-[var(--danger-soft)] rounded-[var(--r-control)] transition-colors"
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
+                    <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
                   </button>
                 </div>
               </div>
@@ -96,13 +96,13 @@ export const TransactionMobileList: React.FC<TransactionMobileListProps> = ({
                 <div className="flex flex-wrap items-center gap-1 mt-1">
                   {tx.installment && (
                     <span className="ui-badge">
-                      <CreditCard className="w-2.5 h-2.5" />
+                      <CreditCard className="w-2.5 h-2.5" aria-hidden="true" />
                       {tx.installment.current}/{tx.installment.total}
                     </span>
                   )}
                   {tx.recurrence === 'monthly' && (
                     <span className="ui-badge">
-                      <Repeat className="w-2.5 h-2.5" />
+                      <Repeat className="w-2.5 h-2.5" aria-hidden="true" />
                       Fixo
                     </span>
                   )}

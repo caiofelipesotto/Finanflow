@@ -126,6 +126,16 @@
     outline: 2px solid #f97316;
     outline-offset: 2px;
   }
+
+  /* Checkbox/radio com touch target mínimo 44px em mobile */
+  input[type="checkbox"],
+  input[type="radio"] {
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+    width: 2.75rem;
+    height: 2.75rem;
+    touch-action: manipulation;
+  }
 }
 
 /* Transição suave ao trocar de tema (sem animar tudo o tempo todo) */
@@ -486,12 +496,13 @@ html.theme-changing * {
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    width: 1.75rem;
-    height: 1.75rem;
+    width: 2.75rem; /* 44px touch target mínimo */
+    height: 2.75rem;
     border-radius: var(--r-control);
     border: 1px solid var(--border-1);
     background-color: var(--surface-3);
     color: var(--text-3);
+    touch-action: manipulation;
   }
 
   .ui-icon-accent {
@@ -571,13 +582,15 @@ html.theme-changing * {
     align-items: center;
     justify-content: center;
     gap: 0.25rem;
-    padding: 0.25rem 0.5rem;
+    padding: 0.5rem 0.75rem;
+    min-height: 2.75rem; /* 44px touch target mínimo */
     border-radius: calc(var(--r-control) - 2px);
     font-size: 0.6875rem;
     font-weight: 600;
     color: var(--text-3);
     white-space: nowrap;
     transition: background-color 150ms ease, color 150ms ease;
+    touch-action: manipulation;
   }
 
   .ui-seg-item:hover {
@@ -637,6 +650,12 @@ html.theme-changing * {
     .ui-table tbody td {
       padding: 0.6rem;
     }
+
+    .ui-mobile-nav-btn {
+      min-height: 2.75rem;
+      padding: 0.75rem 0.5rem;
+      touch-action: manipulation;
+    }
   }
 
   .ui-h1 {
@@ -672,7 +691,8 @@ html.theme-changing * {
 
   .ui-input {
     width: 100%;
-    padding: 0.6rem 0.75rem;
+    padding: 0.75rem 0.75rem; /* altura mínima 44px */
+    min-height: 2.75rem;
     font-size: 0.8125rem;
     color: var(--text-1);
     background-color: var(--surface-2);
@@ -680,6 +700,11 @@ html.theme-changing * {
     border-radius: var(--r-control);
     outline: none;
     transition: border-color 150ms ease, box-shadow 150ms ease;
+    touch-action: manipulation;
+  }
+  .ui-input:focus-visible {
+    outline: 2px solid #f97316;
+    outline-offset: 2px;
   }
 
   .ui-input::placeholder {
@@ -696,13 +721,15 @@ html.theme-changing * {
     align-items: center;
     justify-content: center;
     gap: 0.375rem;
-    padding: 0.55rem 0.9rem;
+    padding: 0.75rem 1rem;
+    min-height: 2.75rem; /* 44px touch target mínimo */
     border-radius: var(--r-control);
     border: 1px solid transparent;
     font-size: 0.75rem;
     font-weight: 700;
     white-space: nowrap;
     cursor: pointer;
+    touch-action: manipulation;
     transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
   }
 
@@ -841,6 +868,13 @@ html.theme-changing * {
     gap: 0.75rem;
     padding: 1rem 1.25rem;
     border-bottom: 1px solid var(--border-1);
+  }
+  .ui-modal-header button[aria-label="Fechar"] {
+    padding: 0.75rem;
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+    margin: -0.75rem;
+    touch-action: manipulation;
   }
 
   .ui-modal-title {

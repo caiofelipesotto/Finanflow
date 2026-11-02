@@ -504,7 +504,7 @@ export function ScanInvoiceModal({
   };
 
   return (
-    <div className="ui-modal-overlay overflow-y-auto">
+    <div className="ui-modal-overlay overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="scan-modal-title">
       {/* my-auto em vez de my-8: com conteúdo mais alto que a tela, margens
           automáticas alinham ao topo (cima acessível ao rolar); quando cabe,
           centraliza igual antes. items-center puro cortava o topo no celular. */}
@@ -512,13 +512,13 @@ export function ScanInvoiceModal({
         {/* Cabeçalho */}
         <div className="ui-modal-header">
           <span className="ui-icon ui-icon-accent !w-9 !h-9">
-            <Camera className="w-4 h-4" />
+            <Camera className="w-4 h-4" aria-hidden="true" />
           </span>
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
-              <h2 className="ui-modal-title">Escanear fatura e comprovantes</h2>
+              <h2 id="scan-modal-title" className="ui-modal-title">Escanear fatura e comprovantes</h2>
               <span className="ui-badge">
-                <Cpu className="w-3 h-3" />
+                <Cpu className="w-3 h-3" aria-hidden="true" />
                 OCR local
               </span>
             </div>
@@ -532,7 +532,7 @@ export function ScanInvoiceModal({
             aria-label="Fechar"
             className="p-1.5 -mt-1 -mr-1 rounded-[var(--r-control)] text-[var(--text-4)] hover:text-[var(--text-1)] hover:bg-[var(--surface-3)] transition-colors shrink-0"
           >
-            <X className="w-4 h-4" />
+            <X className="w-4 h-4" aria-hidden="true" />
           </button>
         </div>
 
@@ -582,7 +582,7 @@ export function ScanInvoiceModal({
                     />
 
                     <div className="ui-icon !w-14 !h-14 !rounded-[var(--r-card)] group-hover:text-[var(--accent-text)] group-hover:border-[color-mix(in_srgb,var(--accent-text)_40%,transparent)] mb-4 transition-colors">
-                      <Upload className="w-6 h-6" />
+                      <Upload className="w-6 h-6" aria-hidden="true" />
                     </div>
 
                     <h3 className="ui-section-title mb-1">
@@ -606,7 +606,7 @@ export function ScanInvoiceModal({
               {inputMode === 'text' && (
                 <div className="border border-[var(--border-2)] bg-[var(--surface-2)] rounded-[var(--r-card)] p-5">
                   <div className="flex items-center gap-2 mb-3">
-                    <FileText className="w-4 h-4 text-[var(--text-2)]" />
+                    <FileText className="w-4 h-4 text-[var(--text-2)]" aria-hidden="true" />
                     <span className="text-xs font-semibold text-[var(--text-1)] uppercase tracking-wider">
                       Colar lista de lançamentos
                     </span>
@@ -645,7 +645,7 @@ export function ScanInvoiceModal({
                 <div className="ui-tile p-5 flex flex-col items-center justify-center text-center space-y-3">
                   <div className="relative">
                     <div className="w-12 h-12 rounded-full border-2 border-orange-500/20 border-t-orange-400 animate-spin" />
-                    <Cpu className="w-5 h-5 text-zinc-400 absolute inset-0 m-auto" />
+                    <Cpu className="w-5 h-5 text-zinc-400 absolute inset-0 m-auto" aria-hidden="true" />
                   </div>
                   <div>
                     <h4 className="ui-section-title">{ocrLabel}...</h4>
@@ -675,7 +675,7 @@ export function ScanInvoiceModal({
                 <div className="ui-tile p-5 flex flex-col items-center justify-center text-center space-y-3">
                   <div className="relative">
                     <div className="w-12 h-12 rounded-full border-2 border-orange-500/20 border-t-orange-400 animate-spin" />
-                    <Cpu className="w-5 h-5 text-zinc-400 absolute inset-0 m-auto" />
+                    <Cpu className="w-5 h-5 text-zinc-400 absolute inset-0 m-auto" aria-hidden="true" />
                   </div>
                   <div>
                     <h4 className="ui-section-title">{ocrLabel}...</h4>
@@ -706,7 +706,7 @@ export function ScanInvoiceModal({
               {/* Error feedback */}
               {scanError && (
                 <div className="ui-alert !border-[color-mix(in_srgb,var(--danger-text)_32%,transparent)] !bg-[var(--danger-soft)] text-[var(--danger-text)] items-start">
-                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" aria-hidden="true" />
                   <div className="flex-1">
                     <strong className="block font-semibold">Falha ao escanear imagem</strong>
                     <span>{scanError}</span>
@@ -718,7 +718,7 @@ export function ScanInvoiceModal({
               <div className="pt-3 border-t border-[var(--border-1)]">
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-xs font-medium text-[var(--text-3)] flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5 text-[var(--warning-text)]" />
+                    <Sparkles className="w-3.5 h-3.5 text-[var(--warning-text)]" aria-hidden="true" />
                     Quer testar sem imagem? Use um exemplo pronto:
                   </span>
                 </div>
@@ -771,7 +771,7 @@ export function ScanInvoiceModal({
               {/* Summary box */}
               {detectedSummary && (
                 <div className="bg-zinc-950/30 border border-orange-500/30 rounded-xl p-4 flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-orange-400 shrink-0 mt-0.5" />
+                  <CheckCircle2 className="w-5 h-5 text-orange-400 shrink-0 mt-0.5" aria-hidden="true" />
                   <div>
                     <div className="flex items-center gap-2">
                       <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-400">
@@ -793,7 +793,7 @@ export function ScanInvoiceModal({
               {/* Vencimento da fatura e mês de competência */}
               {detectedDueDate && (
                 <div className="bg-zinc-950/30 border border-blue-500/30 rounded-xl p-4 flex items-start gap-3">
-                  <Calendar className="w-5 h-5 text-blue-400 shrink-0 mt-0.5" />
+                  <Calendar className="w-5 h-5 text-blue-400 shrink-0 mt-0.5" aria-hidden="true" />
                   <div>
                     <div className="flex items-center gap-2">
                       <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-400">
@@ -825,7 +825,7 @@ export function ScanInvoiceModal({
 
               {scanLowConfidence && (
                 <div className="bg-amber-950/40 border border-amber-500/40 rounded-xl p-4 flex items-start gap-3 text-amber-200 text-xs">
-                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-amber-400" />
+                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-amber-400" aria-hidden="true" />
                   <div>
                     <strong className="block font-semibold text-amber-300">
                       Leitura com baixa confiança
@@ -874,8 +874,9 @@ export function ScanInvoiceModal({
                         onClick={() => handleRemoveItem(item.id)}
                         className="text-zinc-500 hover:text-rose-400 p-1.5 rounded-lg hover:bg-zinc-800 transition-colors"
                         title="Remover este item"
+                        aria-label="Remover este item"
                       >
-                        <X className="w-4 h-4" />
+                        <X className="w-4 h-4" aria-hidden="true" />
                       </button>
                     </div>
 
@@ -957,7 +958,7 @@ export function ScanInvoiceModal({
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
                       <div>
                         <label className="ui-label flex items-center gap-1">
-                          <Calendar className="w-3 h-3 text-zinc-500" />
+                          <Calendar className="w-3 h-3 text-zinc-500" aria-hidden="true" />
                           Data 1ª Parcela / Compra
                         </label>
                         <input
@@ -977,7 +978,7 @@ export function ScanInvoiceModal({
 
                       <div>
                         <label className="ui-label flex items-center gap-1">
-                          <CreditCard className="w-3 h-3 text-zinc-500" />
+                          <CreditCard className="w-3 h-3 text-zinc-500" aria-hidden="true" />
                           Cartão / Conta
                         </label>
                         <select
@@ -997,7 +998,7 @@ export function ScanInvoiceModal({
 
                       <div>
                         <label className="ui-label flex items-center gap-1">
-                          <Layers className="w-3 h-3 text-zinc-500" />
+                          <Layers className="w-3 h-3 text-zinc-500" aria-hidden="true" />
                           Categoria
                         </label>
                         <select
@@ -1027,7 +1028,7 @@ export function ScanInvoiceModal({
                     {item.installmentsCount > 1 && (
                       <div className="ui-tile !bg-[var(--surface-1)] p-3">
                         <div className="ui-label !mb-2 flex items-center gap-1.5">
-                          <Sparkles className="w-3.5 h-3.5" />
+                          <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
                           Projeção dos meses ({item.installmentsCount} parcelas de {formatCurrency(item.installmentAmount)})
                         </div>
                         <div className="flex flex-wrap gap-1.5">
@@ -1066,7 +1067,7 @@ export function ScanInvoiceModal({
           {scanStep === 'success' && (
             <div className="py-12 flex flex-col items-center justify-center text-center space-y-4">
               <div className="ui-icon ui-icon-success !w-14 !h-14 !rounded-full">
-                <CheckCircle2 className="w-7 h-7" />
+                <CheckCircle2 className="w-7 h-7" aria-hidden="true" />
               </div>
               <h3 className="ui-h1 !text-base">Lançamentos adicionados</h3>
               <p className="ui-sub max-w-sm">
@@ -1088,7 +1089,7 @@ export function ScanInvoiceModal({
                 Cancelar
               </button>
               <div className="text-[11px] text-[var(--text-4)] flex items-center gap-1">
-                <ShieldCheck className="w-3.5 h-3.5" />
+                <ShieldCheck className="w-3.5 h-3.5" aria-hidden="true" />
                 Imagem lida no seu aparelho — nada é enviado
               </div>
             </>
@@ -1099,7 +1100,7 @@ export function ScanInvoiceModal({
                 onClick={() => setScanStep('upload')}
                 className="ui-btn ui-btn-ghost flex items-center gap-1.5"
               >
-                <RefreshCw className="w-3.5 h-3.5" />
+                <RefreshCw className="w-3.5 h-3.5" aria-hidden="true" />
                 Escanear outro
               </button>
 
@@ -1117,7 +1118,7 @@ export function ScanInvoiceModal({
                   disabled={items.length === 0}
                   className="ui-btn ui-btn-primary"
                 >
-                  <CheckCircle2 className="w-4 h-4" />
+                  <CheckCircle2 className="w-4 h-4" aria-hidden="true" />
                   Criar {items.reduce((acc, it) => acc + it.installmentsCount, 0)} lançamentos
                 </button>
               </div>

@@ -115,15 +115,15 @@ export const ShareHouseholdModal: React.FC<ShareHouseholdModalProps> = ({
   };
 
   return (
-    <div className="ui-modal-overlay" onClick={onClose}>
+    <div className="ui-modal-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-labelledby="share-modal-title">
       <div className="ui-modal max-w-lg" onClick={(e) => e.stopPropagation()}>
         {/* Cabeçalho */}
         <div className="ui-modal-header">
           <span className="ui-icon ui-icon-accent !w-9 !h-9">
-            <Users className="w-4 h-4" />
+            <Users className="w-4 h-4" aria-hidden="true" />
           </span>
           <div className="min-w-0 flex-1">
-            <h2 className="ui-modal-title">Espaço financeiro na nuvem</h2>
+            <h2 id="share-modal-title" className="ui-modal-title">Espaço financeiro na nuvem</h2>
             <p className="ui-modal-sub">Sincronização em tempo real entre membros e aparelhos</p>
           </div>
           <button
@@ -131,7 +131,7 @@ export const ShareHouseholdModal: React.FC<ShareHouseholdModalProps> = ({
             aria-label="Fechar"
             className="p-1.5 -mt-1 -mr-1 rounded-[var(--r-control)] text-[var(--text-4)] hover:text-[var(--text-1)] hover:bg-[var(--surface-3)] transition-colors shrink-0"
           >
-            <X className="w-4 h-4" />
+            <X className="w-4 h-4" aria-hidden="true" />
           </button>
         </div>
 
@@ -141,7 +141,7 @@ export const ShareHouseholdModal: React.FC<ShareHouseholdModalProps> = ({
           {!user ? (
             <div className="ui-tile p-5 text-center space-y-4">
               <div className="ui-icon ui-icon-accent !w-11 !h-11 mx-auto">
-                <Cloud className="w-5 h-5" />
+                <Cloud className="w-5 h-5" aria-hidden="true" />
               </div>
               <div>
                 <h3 className="ui-section-title">Entrar com o Google</h3>
@@ -172,7 +172,7 @@ export const ShareHouseholdModal: React.FC<ShareHouseholdModalProps> = ({
                 <div className="min-w-0">
                   <div className="text-xs font-semibold text-[var(--text-1)] flex items-center gap-1.5">
                     <span className="truncate">{user.name || 'Usuário'}</span>
-                    <ShieldCheck className="w-3.5 h-3.5 text-[var(--success-text)] shrink-0" />
+                    <ShieldCheck className="w-3.5 h-3.5 text-[var(--success-text)] shrink-0" aria-hidden="true" />
                   </div>
                   <div className="text-[11px] text-[var(--text-4)] truncate max-w-[200px]">
                     {user.email}
@@ -180,8 +180,8 @@ export const ShareHouseholdModal: React.FC<ShareHouseholdModalProps> = ({
                 </div>
               </div>
 
-              <button onClick={handleLogout} className="ui-btn ui-btn-danger shrink-0">
-                <LogOut className="w-3.5 h-3.5" />
+              <button onClick={handleLogout} aria-label="Sair da conta" className="ui-btn ui-btn-danger shrink-0">
+                <LogOut className="w-3.5 h-3.5" aria-hidden="true" />
                 <span>Sair</span>
               </button>
             </div>
@@ -193,7 +193,7 @@ export const ShareHouseholdModal: React.FC<ShareHouseholdModalProps> = ({
               <div className="ui-tile p-4 space-y-3">
                 <div className="flex items-center justify-between gap-2">
                   <span className="ui-label !mb-0 flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5" />
+                    <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
                     Espaço compartilhado ativo
                   </span>
                   <span className="ui-badge ui-badge-success">Conectado</span>
@@ -215,12 +215,12 @@ export const ShareHouseholdModal: React.FC<ShareHouseholdModalProps> = ({
                     >
                       {copied ? (
                         <>
-                          <Check className="w-4 h-4" />
+                          <Check className="w-4 h-4" aria-hidden="true" />
                           <span>Copiado!</span>
                         </>
                       ) : (
                         <>
-                          <Copy className="w-4 h-4" />
+                          <Copy className="w-4 h-4" aria-hidden="true" />
                           <span>Copiar</span>
                         </>
                       )}
@@ -228,7 +228,7 @@ export const ShareHouseholdModal: React.FC<ShareHouseholdModalProps> = ({
                   </div>
 
                   <button onClick={handleCopyLink} className="ui-btn ui-btn-secondary w-full mt-1">
-                    <Share2 className="w-3.5 h-3.5" />
+                    <Share2 className="w-3.5 h-3.5" aria-hidden="true" />
                     <span>
                       {copiedLink ? 'Link copiado para o WhatsApp' : 'Copiar link do convite'}
                     </span>
@@ -240,7 +240,7 @@ export const ShareHouseholdModal: React.FC<ShareHouseholdModalProps> = ({
               <div className="ui-tile p-4 space-y-3">
                 <div className="flex items-center justify-between gap-2">
                   <span className="ui-label !mb-0 flex items-center gap-1.5">
-                    <Users className="w-3.5 h-3.5" />
+                    <Users className="w-3.5 h-3.5" aria-hidden="true" />
                     Quem compartilha
                   </span>
                   <span className="ui-badge">
@@ -299,7 +299,7 @@ export const ShareHouseholdModal: React.FC<ShareHouseholdModalProps> = ({
                 <div className="ui-tile p-3.5 flex items-center justify-between gap-3">
                   <div className="flex items-center gap-2.5 min-w-0">
                     <span className="ui-icon ui-icon-accent">
-                      <UploadCloud className="w-4 h-4" />
+                      <UploadCloud className="w-4 h-4" aria-hidden="true" />
                     </span>
                     <div className="min-w-0">
                       <div className="text-xs font-semibold text-[var(--text-1)]">
@@ -320,14 +320,14 @@ export const ShareHouseholdModal: React.FC<ShareHouseholdModalProps> = ({
                 </div>
               ) : sentCount !== null && sentCount > 0 ? (
                 <div className="ui-tile p-3.5 flex items-center gap-2.5 !border-[color-mix(in_srgb,var(--success-text)_30%,transparent)] !bg-[var(--success-soft)]">
-                  <Check className="w-4 h-4 text-[var(--success-text)] shrink-0" />
+                  <Check className="w-4 h-4 text-[var(--success-text)] shrink-0" aria-hidden="true" />
                   <div className="text-[11px] text-[var(--text-2)]">
                     {sentCount} lançamento(s) enviados. Agora tudo está na nuvem.
                   </div>
                 </div>
               ) : (
                 <div className="flex items-center gap-2 px-1 text-[11px] text-[var(--text-4)]">
-                  <Check className="w-3.5 h-3.5 text-[var(--success-text)] shrink-0" />
+                  <Check className="w-3.5 h-3.5 text-[var(--success-text)] shrink-0" aria-hidden="true" />
                   Tudo o que está aqui já foi salvo na nuvem.
                 </div>
               )}

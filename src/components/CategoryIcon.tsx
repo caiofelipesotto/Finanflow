@@ -54,5 +54,5 @@ export const CategoryIcon: React.FC<CategoryIconProps> = ({
   color,
 }) => {
   const IconComponent = ICON_MAP[name] || Tag;
-  return <IconComponent className={className} style={color ? { color } : undefined} />;
+  return <IconComponent className={className} style={color ? { color } : undefined} aria-hidden="true" />;
 };

@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { X, Download, Upload, RefreshCw, Trash2, ShieldCheck, FileSpreadsheet } from 'lucide-react';
 import { Transaction, Category, Account, Goal } from '../types/finance';
 import { exportBackupJson, exportTransactionsToCsv } from '../utils/formatters';
@@ -34,6 +34,7 @@ export const BackupModal: React.FC<BackupModalProps> = ({
   onClearAll,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [importMessage, setImportMessage] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
@@ -75,13 +76,16 @@ export const BackupModal: React.FC<BackupModalProps> = ({
             accounts: json.accounts || accounts,
             goals: json.goals || goals,
           });
-          alert('Dados importados com sucesso!');
+          setImportMessage('Dados importados com sucesso!');
+          setTimeout(() => setImportMessage(null), 5000);
           onClose();
         } else {
-          alert('Arquivo de backup inválido.');
+          setImportMessage('Arquivo de backup inválido.');
+          setTimeout(() => setImportMessage(null), 5000);
         }
       } catch (err) {
-        alert('Erro ao ler arquivo de backup.');
+        setImportMessage('Erro ao ler arquivo de backup.');
+        setTimeout(() => setImportMessage(null), 5000);
       }
     };
     reader.readAsText(file);
@@ -89,13 +93,13 @@ export const BackupModal: React.FC<BackupModalProps> = ({
 
   return (
     <div className="ui-modal-overlay" onClick={onClose}>
-      <div className="ui-modal max-w-md" onClick={(e) => e.stopPropagation()}>
+      <div className="ui-modal max-w-md" role="dialog" aria-modal="true" aria-labelledby="backup-modal-title" onClick={(e) => e.stopPropagation()}>
         <div className="ui-modal-header">
           <span className="ui-icon">
-            <ShieldCheck className="w-4 h-4" />
+            <ShieldCheck className="w-4 h-4" aria-hidden="true" />
           </span>
           <div className="min-w-0 flex-1">
-            <h2 className="ui-modal-title">Privacidade e dados</h2>
+            <h2 id="backup-modal-title" className="ui-modal-title">Privacidade e dados</h2>
             <p className="ui-modal-sub">Backup, importação e limpeza dos seus registros</p>
           </div>
           <button
@@ -108,6 +112,15 @@ export const BackupModal: React.FC<BackupModalProps> = ({
         </div>
 
         <div className="ui-modal-body space-y-5">
+          {importMessage && (
+            <div
+              role="alert"
+              aria-live="polite"
+              className="p-3 rounded-[var(--r-control)] bg-[var(--accent-soft)] text-[var(--accent-text)] border border-[var(--border-1)] text-[11px] font-medium"
+            >
+              {importMessage}
+            </div>
+          )}
           <div className="ui-tile p-3 text-[11px] leading-relaxed text-[var(--text-3)]">
             <strong className="text-[var(--text-1)] block mb-0.5">Seus dados são 100% seus</strong>
             Seus lançamentos ficam na sua conta na nuvem e também neste navegador, como cópia offline.
@@ -119,21 +132,31 @@ export const BackupModal: React.FC<BackupModalProps> = ({
 
             <button onClick={handleExportCsv} className="ui-tile ui-tile-hover w-full flex items-center justify-between p-3 text-xs font-medium text-[var(--text-2)]">
               <div className="flex items-center gap-2.5">
-                <FileSpreadsheet className="w-4 h-4 text-[var(--text-4)]" />
+                <FileSpreadsheet className="w-4 h-4 text-[var(--text-4)]" aria-hidden="true" />
                 <span>Exportar planilha (CSV / Excel)</span>
               </div>
-              <Download className="w-3.5 h-3.5 text-[var(--text-4)]" />
+              <Download className="w-3.5 h-3.5 text-[var(--text-4)]" aria-hidden="true" />
             </button>
 
             <button onClick={handleExportJson} className="ui-tile ui-tile-hover w-full flex items-center justify-between p-3 text-xs font-medium text-[var(--text-2)]">
               <div className="flex items-center gap-2.5">
-                <Download className="w-4 h-4 text-[var(--text-4)]" />
+                <Download className="w-4 h-4 text-[var(--text-4)]" aria-hidden="true" />
                 <span>Baixar backup completo (JSON)</span>
               </div>
               <span className="ui-badge tabular-nums">{transactions.length} transações</span>
             </button>
 
+            <label
+              htmlFor="backup-file-input"
+              className="ui-tile ui-tile-hover w-full flex items-center justify-between p-3 text-xs font-medium text-[var(--text-2)] cursor-pointer"
+            >
+              <div className="flex items-center gap-2.5">
+                <Upload className="w-4 h-4 text-[var(--text-4)]" aria-hidden="true" />
+                <span>Restaurar backup (JSON)</span>
+              </div>
+            </label>
             <input
+              id="backup-file-input"
               type="file"
               ref={fileInputRef}
               onChange={handleFileChange}
@@ -149,20 +172,10 @@ export const BackupModal: React.FC<BackupModalProps> = ({
               className="ui-tile ui-tile-hover w-full flex items-center justify-between p-3 text-xs font-medium text-[var(--text-2)]"
             >
               <div className="flex items-center gap-2.5">
-                <FileSpreadsheet className="w-4 h-4 text-[var(--text-4)]" />
+                <FileSpreadsheet className="w-4 h-4 text-[var(--text-4)]" aria-hidden="true" />
                 <span>Importar planilha (Excel / Sheets / CSV)</span>
               </div>
               <span className="ui-badge ui-badge-accent">Novo</span>
-            </button>
-
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              className="ui-tile ui-tile-hover w-full flex items-center justify-between p-3 text-xs font-medium text-[var(--text-2)]"
-            >
-              <div className="flex items-center gap-2.5">
-                <Upload className="w-4 h-4 text-[var(--text-4)]" />
-                <span>Restaurar backup (JSON)</span>
-              </div>
             </button>
           </div>
 

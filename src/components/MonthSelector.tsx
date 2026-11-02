@@ -44,14 +44,14 @@ export const MonthSelector: React.FC<MonthSelectorProps> = ({
       <div className="ui-panel flex items-center p-0.5">
         <button
           onClick={handlePrev}
-          title="Mês Anterior"
+          aria-label="Mês anterior"
           className="p-1.5 text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 rounded-md transition-colors"
         >
-          <ChevronLeft className="w-4 h-4" />
+          <ChevronLeft className="w-4 h-4" aria-hidden="true" />
         </button>
 
         <div className="flex items-center gap-2 px-3 py-1 text-sm font-semibold text-neutral-900 min-w-[150px] justify-center select-none">
-          <Calendar className="w-4 h-4 text-neutral-400" />
+          <Calendar className="w-4 h-4 text-neutral-400" aria-hidden="true" />
           <span>
             {getMonthName(selectedMonth)} {selectedYear}
           </span>
@@ -59,10 +59,10 @@ export const MonthSelector: React.FC<MonthSelectorProps> = ({
 
         <button
           onClick={handleNext}
-          title="Próximo Mês"
+          aria-label="Próximo mês"
           className="p-1.5 text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 rounded-md transition-colors"
         >
-          <ChevronRight className="w-4 h-4" />
+          <ChevronRight className="w-4 h-4" aria-hidden="true" />
         </button>
       </div>
 

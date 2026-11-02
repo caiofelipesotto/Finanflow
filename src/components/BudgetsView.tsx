@@ -183,10 +183,10 @@ export const BudgetsView: React.FC<BudgetsViewProps> = ({
 
                   <button
                     onClick={() => handleStartEdit(cat)}
+                    aria-label={`Editar limite de ${cat.name}`}
                     className="p-1.5 text-[var(--text-4)] hover:text-[var(--text-1)] hover:bg-[var(--surface-3)] rounded-[var(--r-control)] transition-colors shrink-0"
-                    title="Editar limite"
                   >
-                    <Edit3 className="w-3.5 h-3.5" />
+                    <Edit3 className="w-3.5 h-3.5" aria-hidden="true" />
                   </button>
                 </div>
 
@@ -225,7 +225,7 @@ export const BudgetsView: React.FC<BudgetsViewProps> = ({
                       onClick={() => handleStartEdit(cat)}
                       className="text-[var(--accent-text)] hover:underline font-semibold flex items-center gap-0.5"
                     >
-                      <Plus className="w-3 h-3" />
+                      <Plus className="w-3 h-3" aria-hidden="true" />
                       Definir limite
                     </button>
                   </div>

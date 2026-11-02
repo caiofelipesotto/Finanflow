@@ -63,7 +63,7 @@ export const MonthBalanceHero: React.FC<MonthBalanceHeroProps> = ({
               aria-label="Mês anterior"
               className="ui-seg-item !px-1.5 hover:text-[var(--text-1)]"
             >
-              <ChevronLeft className="w-4 h-4" />
+              <ChevronLeft className="w-4 h-4" aria-hidden="true" />
             </button>
 
             <span className="px-2 text-xs font-bold text-[var(--text-1)] select-none min-w-[64px] text-center tabular-nums">
@@ -76,12 +76,12 @@ export const MonthBalanceHero: React.FC<MonthBalanceHeroProps> = ({
               aria-label="Próximo mês"
               className="ui-seg-item !px-1.5 hover:text-[var(--text-1)]"
             >
-              <ChevronRight className="w-4 h-4" />
+              <ChevronRight className="w-4 h-4" aria-hidden="true" />
             </button>
           </div>
 
           <button onClick={onOpenNewTransaction} className="ui-btn ui-btn-primary">
-            <PlusCircle className="w-4 h-4" />
+            <PlusCircle className="w-4 h-4" aria-hidden="true" />
             <span className="hidden sm:inline">Novo lançamento</span>
             <span className="sm:hidden">Novo</span>
           </button>
@@ -94,7 +94,7 @@ export const MonthBalanceHero: React.FC<MonthBalanceHeroProps> = ({
           <div className="flex items-start justify-between gap-2 mb-2">
             <span className="ui-stat-label">Receitas do mês</span>
             <span className="ui-icon ui-icon-success">
-              <ArrowUpRight className="w-3.5 h-3.5" />
+              <ArrowUpRight className="w-3.5 h-3.5" aria-hidden="true" />
             </span>
           </div>
           <div className="ui-stat-value">{formatCurrency(totalIncome)}</div>
@@ -107,7 +107,7 @@ export const MonthBalanceHero: React.FC<MonthBalanceHeroProps> = ({
           <div className="flex items-start justify-between gap-2 mb-2">
             <span className="ui-stat-label">Despesas e contas</span>
             <span className="ui-icon ui-icon-danger">
-              <ArrowDownRight className="w-3.5 h-3.5" />
+              <ArrowDownRight className="w-3.5 h-3.5" aria-hidden="true" />
             </span>
           </div>
           <div className="ui-stat-value">{formatCurrency(totalExpense)}</div>
@@ -130,7 +130,7 @@ export const MonthBalanceHero: React.FC<MonthBalanceHeroProps> = ({
               Disponível para poupar
             </span>
             <span className="ui-icon ui-icon-accent">
-              <Wallet className="w-3.5 h-3.5" />
+              <Wallet className="w-3.5 h-3.5" aria-hidden="true" />
             </span>
           </div>
           <div
@@ -145,12 +145,12 @@ export const MonthBalanceHero: React.FC<MonthBalanceHeroProps> = ({
               'Valores calculados em tempo real'
             ) : isPositive ? (
               <>
-                <CheckCircle2 className="w-3 h-3 text-[var(--accent-text)] shrink-0" />
+                <CheckCircle2 className="w-3 h-3 text-[var(--accent-text)] shrink-0" aria-hidden="true" />
                 Livre depois das contas do mês
               </>
             ) : (
               <>
-                <TriangleAlert className="w-3 h-3 text-[var(--danger-text)] shrink-0" />
+                <TriangleAlert className="w-3 h-3 text-[var(--danger-text)] shrink-0" aria-hidden="true" />
                 Saídas superam as entradas
               </>
             )}
@@ -161,7 +161,7 @@ export const MonthBalanceHero: React.FC<MonthBalanceHeroProps> = ({
           <div className="flex items-start justify-between gap-2 mb-2">
             <span className="ui-stat-label">Fatura e parcelas</span>
             <span className="ui-icon">
-              <CreditCard className="w-3.5 h-3.5" />
+              <CreditCard className="w-3.5 h-3.5" aria-hidden="true" />
             </span>
           </div>
           <div className="ui-stat-value">{formatCurrency(creditCardTotal)}</div>

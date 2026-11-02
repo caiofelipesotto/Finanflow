@@ -93,7 +93,7 @@ export const MonthBreakdownTable: React.FC<MonthBreakdownTableProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[var(--border-1)]">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="ui-section-title">Movimentações do mês</h3>
+            <h2 className="ui-section-title">Movimentações do mês</h2>
             <span className="ui-badge">
               {filteredList.length} {filteredList.length === 1 ? 'item' : 'itens'}
             </span>
@@ -102,7 +102,7 @@ export const MonthBreakdownTable: React.FC<MonthBreakdownTableProps> = ({
         </div>
 
         <button onClick={onOpenNewTransaction} className="ui-btn ui-btn-primary self-start sm:self-auto">
-          <Plus className="w-3.5 h-3.5" />
+          <Plus className="w-3.5 h-3.5" aria-hidden="true" />
           <span>Novo lançamento</span>
         </button>
       </div>
@@ -110,13 +110,17 @@ export const MonthBreakdownTable: React.FC<MonthBreakdownTableProps> = ({
       {/* Busca e filtros */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 py-3">
         <div className="relative flex-1 min-w-0">
-          <Search className="w-4 h-4 text-[var(--text-4)] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <label className="sr-only">Buscar transações</label>
+          <Search className="w-4 h-4 text-[var(--text-4)] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" aria-hidden="true" />
           <input
             type="text"
+            name="search"
+            autoComplete="off"
             placeholder="Buscar por descrição, cartão ou categoria..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="ui-input !pl-9"
+            aria-label="Buscar transações"
           />
         </div>
 
@@ -138,7 +142,7 @@ export const MonthBreakdownTable: React.FC<MonthBreakdownTableProps> = ({
       {/* Conteúdo */}
       {filteredList.length === 0 ? (
         <div className="py-12 px-4 text-center border border-dashed border-[var(--border-2)] rounded-[var(--r-panel)]">
-          <Calendar className="w-8 h-8 text-[var(--text-4)] mx-auto mb-2" />
+          <Calendar className="w-8 h-8 text-[var(--text-4)] mx-auto mb-2" aria-hidden="true" />
           <h4 className="text-xs font-bold text-[var(--text-1)]">
             {transactions.length === 0
               ? 'Nenhum lançamento cadastrado neste mês'
@@ -150,7 +154,7 @@ export const MonthBreakdownTable: React.FC<MonthBreakdownTableProps> = ({
               : 'Tente alterar os termos da busca ou os filtros aplicados.'}
           </p>
           <button onClick={onOpenNewTransaction} className="ui-btn ui-btn-primary">
-            <Plus className="w-3.5 h-3.5" />
+            <Plus className="w-3.5 h-3.5" aria-hidden="true" />
             <span>Adicionar primeiro lançamento</span>
           </button>
         </div>
@@ -192,14 +196,14 @@ export const MonthBreakdownTable: React.FC<MonthBreakdownTableProps> = ({
                         <button
                           type="button"
                           onClick={() => onTogglePaid(tx.id)}
-                          title={tx.isPaid ? 'Marcado como pago' : 'Marcar como pago'}
+                          aria-label={tx.isPaid ? 'Marcar como não pago' : 'Marcar como pago'}
                           className={`p-1 rounded-[var(--r-control)] transition-colors ${
                             tx.isPaid
                               ? 'text-[var(--accent-text)] hover:text-[var(--text-1)]'
                               : 'text-[var(--text-4)] hover:text-[var(--text-2)]'
                           }`}
                         >
-                          {tx.isPaid ? <CheckCircle2 className="w-4 h-4" /> : <Circle className="w-4 h-4" />}
+                          {tx.isPaid ? <CheckCircle2 className="w-4 h-4" aria-hidden="true" /> : <Circle className="w-4 h-4" aria-hidden="true" />}
                         </button>
                       </td>
 
@@ -215,14 +219,14 @@ export const MonthBreakdownTable: React.FC<MonthBreakdownTableProps> = ({
 
                           {tx.installment && (
                             <span className="ui-badge">
-                              <CreditCard className="w-2.5 h-2.5" />
+                              <CreditCard className="w-2.5 h-2.5" aria-hidden="true" />
                               {tx.installment.current}/{tx.installment.total}
                             </span>
                           )}
 
                           {tx.recurrence === 'monthly' && (
                             <span className="ui-badge">
-                              <Repeat className="w-2.5 h-2.5" />
+                              <Repeat className="w-2.5 h-2.5" aria-hidden="true" />
                               Fixo
                             </span>
                           )}
@@ -266,18 +270,18 @@ export const MonthBreakdownTable: React.FC<MonthBreakdownTableProps> = ({
                           <button
                             type="button"
                             onClick={() => onEditTransaction(tx)}
-                            title="Editar lançamento"
+                            aria-label="Editar lançamento"
                             className="p-1 text-[var(--text-3)] hover:text-[var(--text-1)] hover:bg-[var(--surface-3)] rounded-[var(--r-control)] transition-colors"
                           >
-                            <Edit2 className="w-3.5 h-3.5" />
+                            <Edit2 className="w-3.5 h-3.5" aria-hidden="true" />
                           </button>
                           <button
                             type="button"
                             onClick={() => onDeleteTransaction(tx.id)}
-                            title="Excluir lançamento"
+                            aria-label="Excluir lançamento"
                             className="p-1 text-[var(--text-3)] hover:text-[var(--danger-text)] hover:bg-[var(--danger-soft)] rounded-[var(--r-control)] transition-colors"
                           >
-                            <Trash2 className="w-3.5 h-3.5" />
+                            <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
                           </button>
                         </div>
                       </td>

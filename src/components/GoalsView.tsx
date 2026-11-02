@@ -100,7 +100,7 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
         </div>
 
         <button onClick={() => setIsAddModalOpen(true)} className="ui-btn ui-btn-primary self-start sm:self-auto">
-          <Plus className="w-3.5 h-3.5" />
+          <Plus className="w-3.5 h-3.5" aria-hidden="true" />
           <span>Nova meta</span>
         </button>
       </header>
@@ -140,7 +140,7 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
       {goals.length === 0 && (
         <section className="ui-card p-8 text-center">
           <div className="ui-icon ui-icon-accent w-12 h-12 mx-auto mb-3">
-            <Target className="w-6 h-6" />
+            <Target className="w-6 h-6" aria-hidden="true" />
           </div>
           <h3 className="ui-section-title">Nenhuma meta por aqui ainda</h3>
           <p className="ui-sub max-w-sm mx-auto leading-relaxed">
@@ -148,7 +148,7 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
             emergência, viagem, troca de carro, o que você quiser.
           </p>
           <button onClick={() => setIsAddModalOpen(true)} className="ui-btn ui-btn-primary mt-4">
-            <Plus className="w-3.5 h-3.5" />
+            <Plus className="w-3.5 h-3.5" aria-hidden="true" />
             Criar primeira meta
           </button>
         </section>
@@ -181,7 +181,7 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
                         {goal.title}
                       </h3>
                       <div className="flex items-center gap-1 text-[11px] text-[var(--text-4)] mt-0.5">
-                        <Calendar className="w-3 h-3 shrink-0" />
+                        <Calendar className="w-3 h-3 shrink-0" aria-hidden="true" />
                         <span>Até {formatDate(goal.deadline)}</span>
                       </div>
                     </div>
@@ -189,10 +189,10 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
 
                   <button
                     onClick={() => onDeleteGoal(goal.id)}
-                    title="Excluir meta"
+                    aria-label={`Excluir meta ${goal.title}`}
                     className="p-1.5 text-[var(--text-4)] hover:text-[var(--danger-text)] hover:bg-[var(--danger-soft)] rounded-[var(--r-control)] transition-colors shrink-0"
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
+                    <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
                   </button>
                 </div>
 
@@ -269,10 +269,10 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
       {/* Modal guardar/resgatar */}
       {adjustingGoal && (
         <div className="ui-modal-overlay" onClick={() => setAdjustingGoal(null)}>
-          <div className="ui-modal max-w-md" onClick={(e) => e.stopPropagation()}>
+          <div className="ui-modal max-w-md" role="dialog" aria-modal="true" aria-labelledby="adjust-modal-title" onClick={(e) => e.stopPropagation()}>
             <div className="ui-modal-header">
               <div className="min-w-0 flex-1">
-                <h2 className="ui-modal-title">
+                <h2 id="adjust-modal-title" className="ui-modal-title">
                   {adjustingGoal.mode === 'deposit' ? 'Guardar dinheiro' : 'Resgatar dinheiro'}
                 </h2>
                 <p className="ui-modal-sub">
@@ -319,10 +319,10 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
       {/* Modal nova meta */}
       {isAddModalOpen && (
         <div className="ui-modal-overlay" onClick={() => setIsAddModalOpen(false)}>
-          <div className="ui-modal" onClick={(e) => e.stopPropagation()}>
+          <div className="ui-modal" role="dialog" aria-modal="true" aria-labelledby="create-modal-title" onClick={(e) => e.stopPropagation()}>
             <div className="ui-modal-header">
               <div className="min-w-0 flex-1">
-                <h2 className="ui-modal-title">Criar nova meta</h2>
+                <h2 id="create-modal-title" className="ui-modal-title">Criar nova meta</h2>
                 <p className="ui-modal-sub">Defina o objetivo e acompanhe sua evolução mês a mês</p>
               </div>
             </div>

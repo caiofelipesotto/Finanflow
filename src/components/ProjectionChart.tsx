@@ -127,7 +127,7 @@ export const ProjectionChart: React.FC<ProjectionChartProps> = ({
             onClick={() => setChartMode('card')}
             className={`ui-seg-item flex-1 sm:flex-none ${chartMode === 'card' ? 'ui-seg-item-active' : ''}`}
           >
-            <CreditCard className="w-3.5 h-3.5 shrink-0" />
+            <CreditCard className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
             <span>Faturas do cartão</span>
           </button>
         </div>
@@ -189,7 +189,7 @@ export const ProjectionChart: React.FC<ProjectionChartProps> = ({
       {/* SVG Chart Container */}
       {!hasAnyData ? (
         <div className="py-12 px-4 text-center border border-dashed border-[var(--border-2)] rounded-[var(--r-panel)]">
-          <Calendar className="w-8 h-8 text-[var(--text-4)] mx-auto mb-2" />
+          <Calendar className="w-8 h-8 text-[var(--text-4)] mx-auto mb-2" aria-hidden="true" />
           <h4 className="text-xs font-bold text-[var(--text-1)]">Nenhum lançamento no período</h4>
           <p className="text-[11px] text-[var(--text-3)] max-w-md mx-auto mt-1">
             Cadastre seus ganhos, contas ou compras parceladas no cartão. O gráfico calculará a projeção do seu saldo mês a mês.

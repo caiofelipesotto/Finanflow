@@ -412,15 +412,15 @@ export const ImportSpreadsheetModal: React.FC<ImportSpreadsheetModalProps> = ({
   }, {});
 
   return (
-    <div className="ui-modal-overlay" onClick={onClose}>
+    <div className="ui-modal-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-labelledby="import-modal-title">
       <div className="ui-modal max-w-2xl" onClick={(e) => e.stopPropagation()}>
         {/* Cabeçalho */}
         <div className="ui-modal-header">
           <span className="ui-icon ui-icon-accent !w-9 !h-9">
-            <FileSpreadsheet className="w-4 h-4" />
+            <FileSpreadsheet className="w-4 h-4" aria-hidden="true" />
           </span>
           <div className="min-w-0 flex-1">
-            <h2 className="ui-modal-title">Importar planilha</h2>
+            <h2 id="import-modal-title" className="ui-modal-title">Importar planilha</h2>
             <p className="ui-modal-sub">Excel, Google Sheets ou CSV: cole as linhas ou envie o arquivo</p>
           </div>
           <button
@@ -428,7 +428,7 @@ export const ImportSpreadsheetModal: React.FC<ImportSpreadsheetModalProps> = ({
             aria-label="Fechar"
             className="p-1.5 -mt-1 -mr-1 rounded-[var(--r-control)] text-[var(--text-4)] hover:text-[var(--text-1)] hover:bg-[var(--surface-3)] transition-colors shrink-0"
           >
-            <X className="w-4 h-4" />
+            <X className="w-4 h-4" aria-hidden="true" />
           </button>
         </div>
 

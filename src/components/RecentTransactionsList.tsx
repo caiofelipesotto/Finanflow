@@ -90,7 +90,7 @@ export const RecentTransactionsList: React.FC<RecentTransactionsListProps> = ({
                       : 'border-neutral-300 text-transparent hover:border-orange-500 hover:text-zinc-500'
                   }`}
                 >
-                  <Check className="w-3.5 h-3.5 stroke-[2.5]" />
+                  <Check className="w-3.5 h-3.5 stroke-[2.5]" aria-hidden="true" />
                 </button>
 
                 {/* Category Icon */}
@@ -116,7 +116,7 @@ export const RecentTransactionsList: React.FC<RecentTransactionsListProps> = ({
                       <>
                         <span aria-hidden="true">·</span>
                         <span className="text-amber-600 font-medium flex items-center gap-0.5">
-                          <Clock className="w-3 h-3 inline" /> Pendente
+                          <Clock className="w-3 h-3 inline" aria-hidden="true" /> Pendente
                         </span>
                       </>
                     )}
@@ -137,17 +137,17 @@ export const RecentTransactionsList: React.FC<RecentTransactionsListProps> = ({
                 <div className="opacity-0 group-hover:opacity-100 flex items-center gap-1 transition-opacity">
                   <button
                     onClick={() => onEdit(tx)}
-                    title="Editar"
+                    aria-label="Editar lançamento"
                     className="p-1 text-neutral-400 hover:text-neutral-700 rounded transition-colors"
                   >
-                    <Edit2 className="w-3.5 h-3.5" />
+                    <Edit2 className="w-3.5 h-3.5" aria-hidden="true" />
                   </button>
                   <button
                     onClick={() => onDelete(tx.id)}
-                    title="Excluir"
+                    aria-label="Excluir lançamento"
                     className="p-1 text-neutral-400 hover:text-rose-600 rounded transition-colors"
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
+                    <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
                   </button>
                 </div>
               </div>

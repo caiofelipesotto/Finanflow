@@ -24,7 +24,7 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({ theme, onToggle, class
       aria-label={label}
       className={`ui-btn ui-btn-ghost !px-2 shrink-0 ${className}`}
     >
-      {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+      {isDark ? <Sun className="w-4 h-4" aria-hidden="true" /> : <Moon className="w-4 h-4" aria-hidden="true" />}
     </button>
   );
 };

@@ -78,7 +78,7 @@ export const AuthGateScreen: React.FC<AuthGateScreenProps> = ({
           <div className="ui-card p-6 sm:p-7">
             <div className="text-center mb-6">
               <div className="ui-icon ui-icon-accent !w-12 !h-12 mx-auto mb-3">
-                <Sparkles className="w-5 h-5" />
+                <Sparkles className="w-5 h-5" aria-hidden="true" />
               </div>
               <h1 className="ui-h1 !text-xl">
                 {inviteCode ? 'Acessar espaço compartilhado' : 'Acessar FinanFlow'}
@@ -106,7 +106,7 @@ export const AuthGateScreen: React.FC<AuthGateScreenProps> = ({
             <ul className="mt-6 pt-5 border-t border-[var(--border-1)] space-y-2.5">
               <li className="flex items-start gap-2.5 text-[11px] text-[var(--text-3)] leading-relaxed">
                 <span className="ui-icon ui-icon-accent !w-6 !h-6 mt-0.5">
-                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
                 </span>
                 <span>
                   <strong className="text-[var(--text-2)]">Sincronização em tempo real:</strong> lançamentos
@@ -116,7 +116,7 @@ export const AuthGateScreen: React.FC<AuthGateScreenProps> = ({
 
               <li className="flex items-start gap-2.5 text-[11px] text-[var(--text-3)] leading-relaxed">
                 <span className="ui-icon !w-6 !h-6 mt-0.5">
-                  <Camera className="w-3.5 h-3.5" />
+                  <Camera className="w-3.5 h-3.5" aria-hidden="true" />
                 </span>
                 <span>
                   <strong className="text-[var(--text-2)]">Leitor de faturas e prints:</strong> extração
@@ -126,7 +126,7 @@ export const AuthGateScreen: React.FC<AuthGateScreenProps> = ({
 
               <li className="flex items-start gap-2.5 text-[11px] text-[var(--text-3)] leading-relaxed">
                 <span className="ui-icon !w-6 !h-6 mt-0.5">
-                  <ShieldCheck className="w-3.5 h-3.5" />
+                  <ShieldCheck className="w-3.5 h-3.5" aria-hidden="true" />
                 </span>
                 <span>
                   <strong className="text-[var(--text-2)]">Segurança e backup:</strong> seus dados ficam no
@@ -137,7 +137,7 @@ export const AuthGateScreen: React.FC<AuthGateScreenProps> = ({
           </div>
 
           <div className="text-center mt-5 text-[11px] text-[var(--text-4)] flex items-center justify-center gap-1.5">
-            <ShieldCheck className="w-3.5 h-3.5" />
+            <ShieldCheck className="w-3.5 h-3.5" aria-hidden="true" />
             <span>Autenticação rápida e segura via Google</span>
           </div>
         </div>

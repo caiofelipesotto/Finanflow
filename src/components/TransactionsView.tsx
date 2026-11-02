@@ -144,13 +144,13 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
         <div className="flex flex-wrap items-center gap-2">
           {onOpenScanInvoice && (
             <button onClick={onOpenScanInvoice} className="ui-btn ui-btn-secondary">
-              <Camera className="w-3.5 h-3.5" />
+              <Camera className="w-3.5 h-3.5" aria-hidden="true" />
               <span>Escanear fatura</span>
             </button>
           )}
 
           <button onClick={onOpenImportSpreadsheet} className="ui-btn ui-btn-secondary">
-            <FileSpreadsheet className="w-3.5 h-3.5" />
+            <FileSpreadsheet className="w-3.5 h-3.5" aria-hidden="true" />
             <span>Importar planilha</span>
           </button>
 
@@ -158,12 +158,12 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
             onClick={() => exportTransactionsToCsv(filteredTransactions, categoriesMap, accountsMap)}
             className="ui-btn ui-btn-secondary"
           >
-            <Download className="w-3.5 h-3.5" />
+            <Download className="w-3.5 h-3.5" aria-hidden="true" />
             <span>Exportar CSV</span>
           </button>
 
           <button onClick={onOpenNewTransaction} className="ui-btn ui-btn-primary">
-            <Plus className="w-3.5 h-3.5" />
+            <Plus className="w-3.5 h-3.5" aria-hidden="true" />
             <span>Nova transação</span>
           </button>
         </div>
@@ -351,7 +351,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
                               : 'border-[var(--border-2)] text-transparent hover:border-[var(--accent-text)]'
                           }`}
                         >
-                          <Check className="w-3.5 h-3.5" />
+                          <Check className="w-3.5 h-3.5" aria-hidden="true" />
                         </button>
                       </td>
 
@@ -418,17 +418,17 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
                         <div className="flex items-center justify-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                           <button
                             onClick={() => onEditTransaction(tx)}
-                            title="Editar"
+                            aria-label="Editar lançamento"
                             className="p-1.5 text-[var(--text-3)] hover:text-[var(--text-1)] hover:bg-[var(--surface-3)] rounded-[var(--r-control)] transition-colors"
                           >
-                            <Edit2 className="w-3.5 h-3.5" />
+                            <Edit2 className="w-3.5 h-3.5" aria-hidden="true" />
                           </button>
                           <button
                             onClick={() => onDeleteTransaction(tx.id)}
-                            title="Excluir"
+                            aria-label="Excluir lançamento"
                             className="p-1.5 text-[var(--text-3)] hover:text-[var(--danger-text)] hover:bg-[var(--danger-soft)] rounded-[var(--r-control)] transition-colors"
                           >
-                            <Trash2 className="w-3.5 h-3.5" />
+                            <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
                           </button>
                         </div>
                       </td>
