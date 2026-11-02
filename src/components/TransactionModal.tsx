@@ -615,26 +615,22 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                 ))}
               </div>
 
-              <div className="grid grid-cols-4 gap-1.5 mb-2">
-                {[
-                  { label: 'Mensal (1)', val: 1 },
-                  { label: 'Bimestral (2)', val: 2 },
-                  { label: 'Trimestral (3)', val: 3 },
-                  { label: 'Semestral (6)', val: 6 },
-                ].map((item) => (
-                  <button
-                    key={item.val}
-                    type="button"
-                    onClick={() => setRecurrentInterval(item.val)}
-                    className={`ui-seg-item !border !py-1.5 ${
-                      recurrentInterval === item.val
-                        ? 'ui-seg-item-active !border-[color-mix(in_srgb,var(--accent-text)_40%,transparent)]'
-                        : '!border-[var(--border-1)]'
-                    }`}
-                  >
-                    {item.label}
-                  </button>
-                ))}
+              <div className="flex items-center gap-2 mb-2">
+                <label className="ui-label text-[11px]">Repetir a cada</label>
+                <input
+                  type="number"
+                  name="recurrentInterval"
+                  min="1"
+                  max="120"
+                  value={recurrentInterval}
+                  onChange={(e) => setRecurrentInterval(Math.max(1, parseInt(e.target.value) || 1))}
+                  className="ui-input !w-20 text-center tabular-nums"
+                  aria-label="Repetir a cada X meses"
+                  touch-action="manipulation"
+                />
+                <span className="text-[11px] text-[var(--text-3)]">
+                  mês{recurrentInterval !== 1 ? 'es' : ''}
+                </span>
               </div>
 
               {parsedRawAmount > 0 && (

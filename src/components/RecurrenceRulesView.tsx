@@ -130,17 +130,18 @@ export function RecurrenceRulesView({ householdId, userId, onRuleCreated }: Recu
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-xs text-zinc-400">Repetir a cada</label>
-            <select
-              value={newRule.intervalMonths}
-              onChange={(e) => setNewRule({ ...newRule, intervalMonths: e.target.value })}
-              className="ui-input"
-            >
-              <option value="1">1 mês (mensal)</option>
-              <option value="2">2 meses (bimestral)</option>
-              <option value="3">3 meses (trimestral)</option>
-              <option value="6">6 meses (semestral)</option>
-              <option value="12">12 meses (anual)</option>
-            </select>
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                min="1"
+                max="120"
+                value={newRule.intervalMonths}
+                onChange={(e) => setNewRule({ ...newRule, intervalMonths: e.target.value })}
+                className="ui-input !w-20 text-center tabular-nums"
+                touch-action="manipulation"
+              />
+              <span className="text-[11px] text-[var(--text-3)]">mes(es)</span>
+            </div>
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-xs text-zinc-400">Tipo</label>
