@@ -27,10 +27,25 @@ export const FinancialProjectionView: React.FC<FinancialProjectionViewProps> = (
     if (!toMonth) setToMonth(defaultTo);
   }, []);
 
-  const recurringTransactions = useMemo(() => {
-    return transactions.filter(
+  // Filtrar lançamentos recorrentes e agrupar por descrição (evitar duplicatas)
+  const groupedRecurring = useMemo(() => {
+    const recurring = transactions.filter(
       (t) => t.recurrence === 'monthly' || t.recurrence === 'installment' || Boolean(t.recurrenceGroupId)
     );
+
+    const grouped = new Map<string, { tx: Transaction; totalAmount: number; count: number }>();
+    for (const tx of recurring) {
+      const key = tx.description || 'Lançamento';
+      if (grouped.has(key)) {
+        const existing = grouped.get(key)!;
+        existing.totalAmount += tx.amount;
+        existing.count += 1;
+      } else {
+        grouped.set(key, { tx, totalAmount: tx.amount, count: 1 });
+      }
+    }
+
+    return Array.from(grouped.values()).map((g) => g.tx);
   }, [transactions]);
 
   // Lista de meses no intervalo
@@ -53,9 +68,9 @@ export const FinancialProjectionView: React.FC<FinancialProjectionViewProps> = (
     return result;
   }, [fromMonth, toMonth]);
 
-  // Para cada lançamento recorrente, calcular valor em cada mês
+  // Para cada lançamento, calcular valor em cada mês
   const launchMonths = useMemo(() => {
-    return recurringTransactions.map((tx) => {
+    return groupedRecurring.map((tx) => {
       const txDate = new Date(tx.date);
       const txYear = txDate.getFullYear();
       const txMonth = txDate.getMonth() + 1;
@@ -82,7 +97,7 @@ export const FinancialProjectionView: React.FC<FinancialProjectionViewProps> = (
         rowTotal,
       };
     });
-  }, [recurringTransactions, months]);
+  }, [groupedRecurring, months]);
 
   // Totais por coluna (mês)
   const columnTotals = useMemo(() => {
@@ -122,7 +137,7 @@ export const FinancialProjectionView: React.FC<FinancialProjectionViewProps> = (
         </div>
       </div>
 
-      {recurringTransactions.length === 0 && (
+      {groupedRecurring.length === 0 && (
         <div className="ui-alert flex-col !border-[color-mix(in_srgb,var(--accent-text)_32%,transparent)] !bg-[var(--accent-soft)]">
           <div className="flex items-start gap-2">
             <Calendar className="w-4 h-4 text-[var(--accent-text)] shrink-0" />
