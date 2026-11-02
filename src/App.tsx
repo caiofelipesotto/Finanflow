@@ -24,8 +24,7 @@ import { DashboardView } from './components/DashboardView';
 import { TransactionsView } from './components/TransactionsView';
 import { BudgetsView } from './components/BudgetsView';
 import { GoalsView } from './components/GoalsView';
-import { RecurrenceRulesView } from './components/RecurrenceRulesView';
-import { RecurrenceSimulatorView } from './components/RecurrenceSimulatorView';
+import { FinancialProjectionView } from './components/FinancialProjectionView';
 import { TransactionModal } from './components/TransactionModal';
 import { BackupModal } from './components/BackupModal';
 import { ImportSpreadsheetModal } from './components/ImportSpreadsheetModal';
@@ -1092,33 +1091,12 @@ export default function App() {
           />
         )}
 
-        {currentTab === 'simulation' && currentHousehold?.id ? (
-          <div className="space-y-6">
-            <RecurrenceRulesView
-              householdId={currentHousehold.id}
-              userId={currentUser?.sub || ''}
-            />
-            <RecurrenceSimulatorView
-              householdId={currentHousehold.id}
-            />
-          </div>
-        ) : currentTab === 'simulation' ? (
-          <div className="space-y-6">
-            <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 flex flex-col items-center justify-center text-center">
-              <h3 className="text-lg font-semibold text-zinc-100 mb-2">Conecte seu espaço compartilhado</h3>
-              <p className="text-zinc-400 text-sm mb-4">
-                Para criar regras de recorrência, você precisa estar conectado a um espaço (household) na nuvem.
-              </p>
-              {currentUser && (
-                <button
-                  onClick={() => setIsShareHouseholdOpen(true)}
-                  className="ui-btn ui-btn-primary"
-                >
-                  Conectar espaço
-                </button>
-              )}
-            </div>
-          </div>
+        {currentTab === 'simulation' ? (
+          <FinancialProjectionView
+            transactions={transactions}
+            categories={categories}
+            accounts={accounts}
+          />
         ) : null}
       </main>
 
