@@ -27,25 +27,11 @@ export const FinancialProjectionView: React.FC<FinancialProjectionViewProps> = (
     if (!toMonth) setToMonth(defaultTo);
   }, []);
 
-  // Filtrar lançamentos recorrentes e agrupar por descrição (evitar duplicatas)
-  const groupedRecurring = useMemo(() => {
-    const recurring = transactions.filter(
+  // Filtrar lançamentos recorrentes (cada um como linha própria)
+  const recurringTransactions = useMemo(() => {
+    return transactions.filter(
       (t) => t.recurrence === 'monthly' || t.recurrence === 'installment' || Boolean(t.recurrenceGroupId)
     );
-
-    const grouped = new Map<string, { tx: Transaction; totalAmount: number; count: number }>();
-    for (const tx of recurring) {
-      const key = tx.description || 'Lançamento';
-      if (grouped.has(key)) {
-        const existing = grouped.get(key)!;
-        existing.totalAmount += tx.amount;
-        existing.count += 1;
-      } else {
-        grouped.set(key, { tx, totalAmount: tx.amount, count: 1 });
-      }
-    }
-
-    return Array.from(grouped.values()).map((g) => g.tx);
   }, [transactions]);
 
   // Lista de meses no intervalo
@@ -68,17 +54,20 @@ export const FinancialProjectionView: React.FC<FinancialProjectionViewProps> = (
     return result;
   }, [fromMonth, toMonth]);
 
-  // Para cada lançamento, calcular valor em cada mês
+  // Para cada lançamento recorrente, calcular valor em cada mês
   const launchMonths = useMemo(() => {
-    return groupedRecurring.map((tx) => {
+    return recurringTransactions.map((tx) => {
       const txDate = new Date(tx.date);
       const txYear = txDate.getFullYear();
       const txMonth = txDate.getMonth() + 1;
       const dayOfMonth = txDate.getDate();
       const isIncome = tx.type === 'income';
+      const dateValid = !isNaN(txDate.getTime());
 
       const values: Array<number | null> = months.map((m) => {
-        // Só aparece a partir do mês de criação
+        // Se a data for invalida, mostra a partir do primeiro mes do range
+        if (!dateValid) return isIncome ? tx.amount : -tx.amount;
+        // Só aparece a partir do mes de criacao
         if (m.year < txYear || (m.year === txYear && m.month < txMonth)) return null;
         const monthsDiff = (m.year - txYear) * 12 + (m.month - txMonth);
         if (monthsDiff % 1 !== 0) return null;
@@ -97,9 +86,9 @@ export const FinancialProjectionView: React.FC<FinancialProjectionViewProps> = (
         rowTotal,
       };
     });
-  }, [groupedRecurring, months]);
+  }, [recurringTransactions, months]);
 
-  // Totais por coluna (mês)
+  // Totais por coluna (mes)
   const columnTotals = useMemo(() => {
     return months.map((_, colIndex) => {
       return launchMonths.reduce((s: number, lm) => s + (lm.values[colIndex] || 0), 0);
@@ -117,7 +106,7 @@ export const FinancialProjectionView: React.FC<FinancialProjectionViewProps> = (
         <div>
           <h2 className="text-lg font-semibold">Simulação de Longo Prazo</h2>
           <p className="text-sm text-zinc-500">
-            Projeção de lançamentos recorrentes por mês — formato planilha.
+            Projeção de lançamentos recorrentes por mes — formato planilha.
           </p>
         </div>
       </div>
@@ -133,11 +122,11 @@ export const FinancialProjectionView: React.FC<FinancialProjectionViewProps> = (
         </div>
         <div className="flex flex-col gap-1 w-full sm:w-auto">
           <label className="text-xs text-zinc-400">&nbsp;</label>
-          <button className="ui-btn ui-btn-primary w-full sm:w-auto">Atualizar simulação</button>
+          <button className="ui-btn ui-btn-primary w-full sm:w-auto">Atualizar simulacao</button>
         </div>
       </div>
 
-      {groupedRecurring.length === 0 && (
+      {recurringTransactions.length === 0 && (
         <div className="ui-alert flex-col !border-[color-mix(in_srgb,var(--accent-text)_32%,transparent)] !bg-[var(--accent-soft)]">
           <div className="flex items-start gap-2">
             <Calendar className="w-4 h-4 text-[var(--accent-text)] shrink-0" />
