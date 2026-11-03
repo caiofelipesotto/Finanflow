@@ -104,6 +104,78 @@ export const ImportSpreadsheetModal: React.FC<ImportSpreadsheetModalProps> = ({
     return `${year}-${String(month).padStart(2, '0')}-01`;
   };
 
+  // ============================================================
+  // Mapeamentos inteligentes por palavras-chave na descrição
+  // Funciona para qualquer CSV (flat ou projeção), sem depender
+  // de colunas específicas de categoria/conta.
+  // ============================================================
+
+  /** Palavras-chave para inferir categoria pela descrição */
+  const CATEGORY_KEYWORDS: Record<string, string[]> = {
+    cat_salario: ['salario', 'salário', 'vencimento', 'pagamento salario'],
+    cat_renda_extra: ['renda extra', 'freelance', 'free lance', 'bico', 'extra'],
+    cat_rendimentos: ['rendimento', 'juros', 'dividendo', 'dividendos', 'rentabilidade'],
+    cat_aluguel: ['aluguel'],
+    cat_veiculo: ['ipva', 'licenciamento', 'dpvat', 'financiamento', 'virtus', 'parcela carro', 'carro'],
+    cat_combustivel: ['gasolina', 'etanol', 'diesel', 'posto', 'combustivel', 'combustível', 'abastecimento'],
+    cat_alimentacao: ['supermercado', 'mercado', 'padaria', 'açougue', 'hortifruti', 'ifood', 'rappi', 'uber eats', 'zé delivery', 'japa', 'restaurante', 'lanche', 'almoço', 'jantar'],
+    cat_saude: ['farmacia', 'farmácia', 'drogaria', 'medico', 'médico', 'hospital', 'clinica', 'clínica', 'exame', 'plano de saude', 'plano de saúde', 'seguro saude', 'seguro saúde', 'unimed', 'amil', 'sulamerica'],
+    cat_assinaturas: ['netflix', 'spotify', 'prime', 'youtube', 'google one', 'amazonprime', 'amazon prime', 'apple', 'disney', 'hbo', 'paramount', 'globoplay', 'premiere', 'telecine', 'microsoft', 'office 365', 'adobe'],
+    cat_lazer: ['cinema', 'teatro', 'show', 'viagem', 'uber', '99', 'uber eats', 'airbnb', 'booking', 'hotel', 'pousada', 'passagem', 'ingresso'],
+    cat_educacao: ['escola', 'faculdade', 'universidade', 'curso', 'mensalidade', 'colegio', 'colégio', 'creche', 'material escolar'],
+    cat_investimentos_saida: ['investimento', 'aporte', 'cdb', 'tesouro', 'acoes', 'ações', 'fundo', 'btg', 'xp', 'rico', 'clear', 'modal', 'inter', 'nubank invest'],
+    cat_moradia: ['condominio', 'condomínio', 'iptu', 'agua', 'água', 'luz', 'energia', 'internet fixa', 'tv', 'telefone', 'celular', 'fixo', 'iptv', 'net', 'claro', 'oi', 'vivo', 'tim', 'fibra', 'banda larga'],
+    cat_compras_cartao: ['riachuelo', 'renner', 'ceara', 'ceará', 'marisa', 'loja', 'e-commerce', 'ecommerce', 'magazine', 'magalu', 'casas bahia', 'ponto frio', 'fast shop', 'americanas', 'submarino', 'shoptime'],
+    cat_outros: ['outros', 'diversos', 'variados'],
+  };
+
+  /** Palavras-chave para inferir conta/cartão pela descrição */
+  const ACCOUNT_KEYWORDS: Record<string, string[]> = {
+    acc_picpay: ['picpay', 'pic pay', 'claro flex', 'amazonprime', 'amazon prime', 'google one', 'youtube', 'netflix', 'amazon br', 'netshoes', 'dermo ervas', 'paypal', 'lojafastop', 'shopee', 'mercado pago', 'mercadopago', 'internet pg', 'internet p g', 'fibra', 'banda larga'],
+    acc_santander: ['santander', 'jim.com', 'panvel'],
+    acc_riachuelo: ['riachuelo'],
+    acc_mercado_livre: ['mercado livre', 'mercadolivre', 'compra diversa', 'secadora'],
+    acc_itau: ['itau', 'itáu', 'fatura itau', 'fatura itáu', 'itau unibanco'],
+    acc_shopee: ['shopee'],
+    acc_nubank: ['nubank', 'nu bank', 'roxinho'],
+    acc_inter: ['inter', 'banco inter'],
+    acc_c6: ['c6', 'c6 bank'],
+    acc_bb: ['banco do brasil', 'bb '],
+    acc_caixa: ['caixa', 'caixa economica', 'caixa econômica'],
+    acc_original: ['original', 'banco original'],
+    acc_next: ['next', 'banco next'],
+  };
+
+  /**
+   * Tenta encontrar categoria pela descrição usando palavras-chave.
+   * Retorna o ID da categoria ou null se não encontrar.
+   */
+  const inferCategoryFromDescription = (description: string, type: TransactionType): string | null => {
+    const desc = description.toLowerCase();
+    for (const [catId, keywords] of Object.entries(CATEGORY_KEYWORDS)) {
+      if (keywords.some((k) => desc.includes(k))) {
+        const cat = categories.find((c) => c.id === catId);
+        if (cat && (cat.type === type || cat.type === 'both')) return catId;
+      }
+    }
+    return null;
+  };
+
+  /**
+   * Tenta encontrar conta/cartão pela descrição usando palavras-chave.
+   * Retorna o ID da conta ou null se não encontrar.
+   */
+  const inferAccountFromDescription = (description: string): string | null => {
+    const desc = description.toLowerCase();
+    for (const [accId, keywords] of Object.entries(ACCOUNT_KEYWORDS)) {
+      if (keywords.some((k) => desc.includes(k))) {
+        const acc = accounts.find((a) => a.id === accId);
+        if (acc) return accId;
+      }
+    }
+    return null;
+  };
+
   const detectFormat = (headers: string[]): 'flat' | 'projection' | null => {
     const hasMonthCols = headers.slice(2).some((h) => parseMonthLabel(h));
     if (hasMonthCols) return 'projection';
@@ -317,14 +389,25 @@ export const ImportSpreadsheetModal: React.FC<ImportSpreadsheetModalProps> = ({
         txType = detectedType;
       }
 
-      const categoryId = matchCategory(rawCat, txType);
+      // --- Categoria: prioridade 1 = coluna explícita, 2 = inferida pela descrição ---
+      let categoryId: string;
+      if (rawCat) {
+        categoryId = matchCategory(rawCat, txType);
+      } else {
+        const inferred = inferCategoryFromDescription(rawDesc, txType);
+        categoryId = inferred || matchCategory('', txType);
+      }
 
+      // --- Conta: prioridade 1 = coluna explícita, 2 = inferida pela descrição ---
       let accountId = accounts[0]?.id || 'acc_nubank';
       if (rawAccount) {
         const foundAcc = accounts.find((a) =>
           a.name.toLowerCase().includes(rawAccount.toLowerCase())
         );
         if (foundAcc) accountId = foundAcc.id;
+      } else {
+        const inferred = inferAccountFromDescription(rawDesc);
+        if (inferred) accountId = inferred;
       }
 
       transactionsList.push({
@@ -368,17 +451,6 @@ export const ImportSpreadsheetModal: React.FC<ImportSpreadsheetModalProps> = ({
 
       if (!rawDesc) continue;
 
-      // --- Categoria: tenta casar o grupo (RECEITAS, DESPESAS FIXAS, etc.) ---
-      let categoryId = categories[0]?.id || 'cat_outros_despesa';
-      if (rawGroup) {
-        const clean = rawGroup.toLowerCase().trim();
-        const found = categories.find((c) => {
-          const n = c.name.toLowerCase();
-          return n.includes(clean) || clean.includes(n);
-        });
-        if (found) categoryId = found.id;
-      }
-
       // --- Tipo: usa o grupo (RECEITA → receita, DESPESA/INVESTIMENTO → despesa) ---
       const groupLower = rawGroup.toLowerCase();
       const isIncomeByGroup = groupLower.includes('receita');
@@ -405,13 +477,34 @@ export const ImportSpreadsheetModal: React.FC<ImportSpreadsheetModalProps> = ({
           }
         }
 
+        // --- Categoria: prioridade 1 = inferida pela descrição, 2 = grupo amplo ---
+        let categoryId: string;
+        const inferredCat = inferCategoryFromDescription(rawDesc, txType);
+        if (inferredCat) {
+          categoryId = inferredCat;
+        } else if (rawGroup) {
+          const clean = rawGroup.toLowerCase().trim();
+          const found = categories.find((c) => {
+            const n = c.name.toLowerCase();
+            return n.includes(clean) || clean.includes(n);
+          });
+          categoryId = found?.id || matchCategory('', txType);
+        } else {
+          categoryId = matchCategory('', txType);
+        }
+
+        // --- Conta: inferida pela descrição ---
+        let accountId = accounts[0]?.id || 'acc_nubank';
+        const inferredAcc = inferAccountFromDescription(rawDesc);
+        if (inferredAcc) accountId = inferredAcc;
+
         transactionsList.push({
           date: mc.date,
           description: rawDesc,
           amount,
           type: txType,
           category: categoryId,
-          account: accounts[0]?.id || 'acc_nubank',
+          account: accountId,
           paymentMethod: 'pix',
           isPaid: false,
           recurrence: 'single',
