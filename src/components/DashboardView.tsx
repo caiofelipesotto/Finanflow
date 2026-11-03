@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Transaction,
   Category,
@@ -13,7 +13,7 @@ import { DonutCategoryChart } from './DonutCategoryChart';
 import { MonthBreakdownTable } from './MonthBreakdownTable';
 import { CreditCardsWidget } from './CreditCardsWidget';
 import { formatCurrency, getMonthName, formatMonthShort } from '../utils/formatters';
-import { PlusCircle, CreditCard, Sparkles, AlertCircle, ArrowRight } from 'lucide-react';
+import { PlusCircle, CreditCard, Sparkles, AlertCircle, ArrowRight, ChevronDown, ChevronUp, BarChart2 } from 'lucide-react';
 
 interface DashboardViewProps {
   transactions: Transaction[];
@@ -179,9 +179,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     onSelectMonth(month);
   };
 
+  // UI state for collapsible sections
+  const [showTable, setShowTable] = useState(false);
+  const [showCharts, setShowCharts] = useState(true);
+
   return (
-    <div className="space-y-5">
-      {/* 1. Hero Balance for the selected month */}
+    <div className="space-y-4">
+      {/* 1. Hero Balance — sempre visível, comando central */}
       <MonthBalanceHero
         monthLabel={monthLabel}
         shortLabel={shortLabel}
@@ -198,7 +202,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         onOpenNewTransaction={onOpenNewTransaction}
       />
 
-      {/* 2. Credit Cards & Installments Hub */}
+      {/* 2. Cartões de Crédito — MÓDULO PRINCIPAL com transações do mês */}
       <CreditCardsWidget
         transactions={transactions}
         accounts={accounts}
@@ -208,37 +212,88 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         onOpenScanInvoice={onOpenScanInvoice}
       />
 
-      {/* 3. Charts Section (Projection + Donut) */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="lg:col-span-2 min-w-0">
-          <ProjectionChart
-            transactions={transactions}
-            selectedYear={selectedYear}
-            selectedMonth={selectedMonth}
-            onSelectMonth={handleSelectMonthFromChart}
-          />
-        </div>
+      {/* 3. Gráficos de apoio (colapsáveis) */}
+      <section className="ui-card p-4">
+        <button
+          type="button"
+          onClick={() => setShowCharts(!showCharts)}
+          className="flex items-center justify-between w-full pb-3 border-b border-[var(--border-1)] mb-3"
+          aria-expanded={showCharts}
+        >
+          <div className="flex items-center gap-2">
+            <BarChart2 className="w-4 h-4 text-[var(--text-3)]" aria-hidden="true" />
+            <h3 className="ui-section-title">Visão gráfica do mês</h3>
+            <span className="ui-badge">opcional</span>
+          </div>
+          {showCharts ? (
+            <ChevronUp className="w-4 h-4 text-[var(--text-3)]" aria-hidden="true" />
+          ) : (
+            <ChevronDown className="w-4 h-4 text-[var(--text-3)]" aria-hidden="true" />
+          )}
+        </button>
 
-        <div className="lg:col-span-1">
-          <DonutCategoryChart
-            items={donutItems}
-            totalExpense={totalExpense}
-            monthLabel={monthLabel}
-          />
-        </div>
-      </div>
+        {showCharts && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 animate-in fade-in-50 duration-200">
+            <div className="lg:col-span-2 min-w-0">
+              <ProjectionChart
+                transactions={transactions}
+                selectedYear={selectedYear}
+                selectedMonth={selectedMonth}
+                onSelectMonth={handleSelectMonthFromChart}
+              />
+            </div>
 
-      {/* 4. Detailed Line Items Table for Active Month */}
-      <MonthBreakdownTable
-        transactions={monthTransactions}
-        categories={categories}
-        accounts={accounts}
-        monthLabel={monthLabel}
-        onTogglePaid={onTogglePaid}
-        onEditTransaction={onEditTransaction}
-        onDeleteTransaction={onDeleteTransaction}
-        onOpenNewTransaction={onOpenNewTransaction}
-      />
+            <div className="lg:col-span-1">
+              <DonutCategoryChart
+                items={donutItems}
+                totalExpense={totalExpense}
+                monthLabel={monthLabel}
+              />
+            </div>
+          </div>
+        )}
+      </section>
+
+      {/* 4. Tabela detalhada (colapsável — só abre quando precisa) */}
+      <section className="ui-card p-4">
+        <button
+          type="button"
+          onClick={() => setShowTable(!showTable)}
+          className="flex items-center justify-between w-full pb-3 border-b border-[var(--border-1)] mb-3"
+          aria-expanded={showTable}
+        >
+          <div className="flex items-center gap-2">
+            <span className="w-4 h-4 text-[var(--text-3)]" aria-hidden="true">📋</span>
+            <h3 className="ui-section-title">Lançamentos do mês ({monthTransactions.length})</h3>
+          </div>
+          {showTable ? (
+            <ChevronUp className="w-4 h-4 text-[var(--text-3)]" aria-hidden="true" />
+          ) : (
+            <ChevronDown className="w-4 h-4 text-[var(--text-3)]" aria-hidden="true" />
+          )}
+        </button>
+
+        {showTable && (
+          <div className="animate-in fade-in-50 duration-200">
+            <MonthBreakdownTable
+              transactions={monthTransactions}
+              categories={categories}
+              accounts={accounts}
+              monthLabel={monthLabel}
+              onTogglePaid={onTogglePaid}
+              onEditTransaction={onEditTransaction}
+              onDeleteTransaction={onDeleteTransaction}
+              onOpenNewTransaction={onOpenNewTransaction}
+            />
+          </div>
+        )}
+
+        {!showTable && (
+          <p className="text-center py-4 text-[var(--text-4)] text-[11px]">
+            Clique para expandir a tabela completa de lançamentos.
+          </p>
+        )}
+      </section>
     </div>
   );
 };
