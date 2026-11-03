@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, FileSpreadsheet, Upload, Check, AlertCircle, ArrowRight, Table } from 'lucide-react';
+import { X, FileSpreadsheet, Upload, Check, AlertCircle, ArrowRight, Table, Sparkles } from 'lucide-react';
 import { Transaction, Category, Account, TransactionType } from '../types/finance';
 import { formatCurrency, getTodayString } from '../utils/formatters';
 
@@ -18,21 +18,16 @@ export const ImportSpreadsheetModal: React.FC<ImportSpreadsheetModalProps> = ({
   accounts,
   onImportTransactions,
 }) => {
-  const [activeTab, setActiveTab] = useState<'link' | 'paste' | 'file' | 'projection'>('link');
-  const [sheetUrl, setSheetUrl] = useState('https://docs.google.com/spreadsheets/d/1Gnz7jctYUKb4yNTsdg5vHSgOv2BzIrZLg3BYCG1mNDQ/edit?usp=drivesdk');
   const [pastedText, setPastedText] = useState('');
-  const [projectionText, setProjectionText] = useState('');
   const [importMode, setImportMode] = useState<'append' | 'replace'>('append');
   const [step, setStep] = useState<'input' | 'preview'>('input');
   const [parsedRows, setParsedRows] = useState<Omit<Transaction, 'id'>[]>([]);
   const [errorsList, setErrorsList] = useState<string[]>([]);
-  const [isLoadingLink, setIsLoadingLink] = useState(false);
-  const [linkError, setLinkError] = useState<string | null>(null);
-  const [projectionParsing, setProjectionParsing] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [detectedFormat, setDetectedFormat] = useState<'flat' | 'projection' | null>(null);
 
   if (!isOpen) return null;
 
-  // Helper to parse BRL or standard currency numbers
   const parseAmount = (val: string): { amount: number; detectedType?: TransactionType } => {
     if (!val) return { amount: 0 };
     let cleaned = val.replace(/R\$/g, '').trim();
@@ -46,17 +41,13 @@ export const ImportSpreadsheetModal: React.FC<ImportSpreadsheetModalProps> = ({
       cleaned = cleaned.replace(/[+]/g, '').trim();
     }
 
-    // Check for Brazilian format 1.234,56
     if (cleaned.includes(',') && cleaned.includes('.')) {
       if (cleaned.indexOf('.') < cleaned.indexOf(',')) {
-        // 1.250,50 -> remove dots, replace comma with dot
         cleaned = cleaned.replace(/\./g, '').replace(',', '.');
       } else {
-        // 1,250.50 -> remove commas
         cleaned = cleaned.replace(/,/g, '');
       }
     } else if (cleaned.includes(',')) {
-      // 1250,50 -> 1250.50
       cleaned = cleaned.replace(',', '.');
     }
 
@@ -67,12 +58,9 @@ export const ImportSpreadsheetModal: React.FC<ImportSpreadsheetModalProps> = ({
     };
   };
 
-  // Helper to normalize dates (DD/MM/YYYY or YYYY-MM-DD)
   const parseDate = (val: string): string => {
     if (!val) return getTodayString();
     const trimmed = val.trim();
-    
-    // DD/MM/YYYY or DD-MM-YYYY
     const brMatch = trimmed.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
     if (brMatch) {
       let day = brMatch[1].padStart(2, '0');
@@ -81,235 +69,113 @@ export const ImportSpreadsheetModal: React.FC<ImportSpreadsheetModalProps> = ({
       if (year.length === 2) year = `20${year}`;
       return `${year}-${month}-${day}`;
     }
-
-    // YYYY-MM-DD
     const isoMatch = trimmed.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);
     if (isoMatch) {
       return `${isoMatch[1]}-${isoMatch[2].padStart(2, '0')}-${isoMatch[3].padStart(2, '0')}`;
     }
-
     return getTodayString();
   };
 
-  // Find best matching category by name
   const matchCategory = (catName: string, type: TransactionType): string => {
     if (!catName) {
       const fallback = categories.find((c) => c.type === type || c.type === 'both');
       return fallback?.id || categories[0]?.id || 'cat_outros_despesa';
     }
-
     const clean = catName.toLowerCase().trim();
     const found = categories.find((c) => {
       const n = c.name.toLowerCase();
       return n.includes(clean) || clean.includes(n);
     });
-
     if (found) return found.id;
     const fallback = categories.find((c) => c.type === type || c.type === 'both');
     return fallback?.id || categories[0]?.id || 'cat_outros_despesa';
   };
 
+  const parseMonthLabel = (label: string): string | null => {
+    const ptMonths: Record<string, number> = {
+      jan: 1, fev: 2, mar: 3, abr: 4, mai: 5, jun: 6,
+      jul: 7, ago: 8, set: 9, out: 10, nov: 11, dez: 12,
+    };
+    const m = label.trim().match(/^([a-z]{3})[\/\-](\d{2})$/i);
+    if (!m) return null;
+    const month = ptMonths[m[1].toLowerCase()];
+    if (!month) return null;
+    const year = 2000 + parseInt(m[2]);
+    return `${year}-${String(month).padStart(2, '0')}-01`;
+  };
+
+  const detectFormat = (headers: string[]): 'flat' | 'projection' | null => {
+    const hasMonthCols = headers.slice(2).some((h) => parseMonthLabel(h));
+    if (hasMonthCols) return 'projection';
+
+    const hasDateCol = headers.some((h) => /data|date/i.test(h));
+    const hasAmountCol = headers.some((h) => /valor|amount|preço|preco/i.test(h));
+    const hasDescCol = headers.some((h) => /desc|hist|título|titulo/i.test(h));
+    if (hasDateCol && hasAmountCol && hasDescCol) return 'flat';
+
+    return null;
+  };
+
   const handleProcessText = () => {
     if (!pastedText.trim()) return;
+    setIsProcessing(true);
+    setErrorsList([]);
 
     const lines = pastedText
       .split(/\r?\n/)
       .map((l) => l.trim())
       .filter((l) => l.length > 0);
 
-    if (lines.length === 0) return;
+    if (lines.length === 0) {
+      setErrorsList(['Texto vazio.']);
+      setIsProcessing(false);
+      return;
+    }
 
-    // Detect delimiter: tab (\t), semicolon (;), or comma (,)
     const firstLine = lines[0];
     let delimiter = '\t';
-    if (firstLine.includes('\t')) {
-      delimiter = '\t';
-    } else if (firstLine.includes(';')) {
-      delimiter = ';';
-    } else if (firstLine.includes(',')) {
-      delimiter = ',';
-    }
+    if (firstLine.includes('\t')) delimiter = '\t';
+    else if (firstLine.includes(';')) delimiter = ';';
+    else if (firstLine.includes(',')) delimiter = ',';
 
-    // Split headers
     const rawHeaders = firstLine.split(delimiter).map((h) => h.trim().toLowerCase());
-    
-    // Check if first line is a header row
-    const isHeaderRow = rawHeaders.some(
-      (h) =>
-        h.includes('data') ||
-        h.includes('date') ||
-        h.includes('desc') ||
-        h.includes('valor') ||
-        h.includes('amount') ||
-        h.includes('cat') ||
-        h.includes('tipo')
-    );
+    const format = detectFormat(rawHeaders);
+    setDetectedFormat(format);
 
-    let dateIdx = -1;
-    let descIdx = -1;
-    let amountIdx = -1;
-    let categoryIdx = -1;
-    let typeIdx = -1;
-    let accountIdx = -1;
-
-    if (isHeaderRow) {
-      rawHeaders.forEach((h, idx) => {
-        if (h.includes('data') || h.includes('date')) dateIdx = idx;
-        else if (h.includes('desc') || h.includes('historico') || h.includes('histórico') || h.includes('titulo')) descIdx = idx;
-        else if (h.includes('valor') || h.includes('amount') || h.includes('preco') || h.includes('preço')) amountIdx = idx;
-        else if (h.includes('cat')) categoryIdx = idx;
-        else if (h.includes('tipo') || h.includes('type')) typeIdx = idx;
-        else if (h.includes('conta') || h.includes('banco') || h.includes('cartao') || h.includes('cartão')) accountIdx = idx;
-      });
+    if (!format) {
+      setErrorsList([
+        'Não consegui identificar o formato. Use uma das opções:\n'
+        + '1. Formato flat (uma linha = uma transação): Data, Descrição, Valor, Categoria, Tipo\n'
+        + '2. Formato projeção (linhas = lançamentos, colunas = meses): Categoria, Descrição, Nov/26, Dez/26...\n'
+      ]);
+      setIsProcessing(false);
+      return;
     }
 
-    // Fallbacks if not auto-detected by name
-    if (dateIdx === -1) dateIdx = 0;
-    if (descIdx === -1) descIdx = 1 < rawHeaders.length ? 1 : 0;
-    if (amountIdx === -1) amountIdx = rawHeaders.length > 2 ? 2 : 1;
+    let transactionsList: Omit<Transaction, 'id'>[] = [];
 
-    const startIndex = isHeaderRow ? 1 : 0;
-    const transactionsList: Omit<Transaction, 'id'>[] = [];
-    const errors: string[] = [];
-
-    for (let i = startIndex; i < lines.length; i++) {
-      const line = lines[i];
-      const cols = line.split(delimiter).map((c) => c.replace(/^["']|["']$/g, '').trim());
-
-      const rawDate = cols[dateIdx] || '';
-      const rawDesc = cols[descIdx] || 'Transação Importada';
-      const rawAmount = cols[amountIdx] || '0';
-      const rawCat = categoryIdx >= 0 ? cols[categoryIdx] : '';
-      const rawType = typeIdx >= 0 ? cols[typeIdx]?.toLowerCase() : '';
-      const rawAccount = accountIdx >= 0 ? cols[accountIdx] : '';
-
-      const { amount, detectedType } = parseAmount(rawAmount);
-
-      if (amount <= 0 && !rawDesc) {
-        continue; // skip blank rows
-      }
-
-      let txType: TransactionType = 'expense';
-      if (rawType.includes('receita') || rawType.includes('income') || rawType.includes('entrada') || rawType.includes('salario') || rawType.includes('salário') || rawType.includes('crédito') && !rawType.includes('cartão')) {
-        txType = 'income';
-      } else if (detectedType) {
-        txType = detectedType;
-      }
-
-      const categoryId = matchCategory(rawCat, txType);
-
-      // Match account
-      let accountId = accounts[0]?.id || 'acc_nubank';
-      if (rawAccount) {
-        const foundAcc = accounts.find((a) =>
-          a.name.toLowerCase().includes(rawAccount.toLowerCase())
-        );
-        if (foundAcc) accountId = foundAcc.id;
-      }
-
-      transactionsList.push({
-        date: parseDate(rawDate),
-        description: rawDesc || 'Transação sem descrição',
-        amount,
-        type: txType,
-        category: categoryId,
-        account: accountId,
-        paymentMethod: 'pix',
-        isPaid: true,
-        recurrence: 'single',
-      });
+    if (format === 'flat') {
+      transactionsList = parseFlatFormat(lines, delimiter, rawHeaders);
+    } else {
+      transactionsList = parseProjectionFormat(lines, delimiter, rawHeaders);
     }
+
+    setIsProcessing(false);
 
     if (transactionsList.length === 0) {
-      errors.push('Não conseguimos identificar transações válidas nas linhas coladas.');
-      setErrorsList(errors);
+      setErrorsList(['Não encontrei transações válidas.']);
       return;
     }
 
     setParsedRows(transactionsList);
-    setErrorsList([]);
     setStep('preview');
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (evt) => {
-      const text = evt.target?.result as string;
-      if (text) {
-        setPastedText(text);
-      }
-    };
-    reader.readAsText(file);
-  };
-
-  const handleFetchGoogleSheet = async () => {
-    setLinkError(null);
-    if (!sheetUrl.trim()) {
-      setLinkError('Por favor informe o link da planilha.');
-      return;
-    }
-
-    const match = sheetUrl.match(/\/d\/([a-zA-Z0-9-_]+)/);
-    if (!match || !match[1]) {
-      setLinkError('Link do Google Sheets inválido. Certifique-se de copiar o link completo.');
-      return;
-    }
-
-    const sheetId = match[1];
-    setIsLoadingLink(true);
-
-    try {
-      // Try direct CSV export endpoint
-      const exportUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv`;
-      const res = await fetch(exportUrl);
-      const text = await res.text();
-
-      // Check if it returned Google login HTML page
-      if (text.includes('accounts.google.com') || text.includes('Sign in to your Google Account') || text.includes('document-root loading')) {
-        setLinkError(
-          'A planilha está com acesso Restrito no Google Drive. Para liberar o link: no Google Sheets, clique em "Compartilhar" (no canto superior direito) e mude o Acesso Geral para "Qualquer pessoa com o link" (como Leitor).'
-        );
-        setIsLoadingLink(false);
-        return;
-      }
-
-      if (text.length < 10) {
-        setLinkError('A planilha retornou vazia ou inacessível.');
-        setIsLoadingLink(false);
-        return;
-      }
-
-      setPastedText(text);
-      setIsLoadingLink(false);
-      // Auto-trigger parse
-      setTimeout(() => {
-        handleProcessTextFromValue(text);
-      }, 50);
-    } catch (err) {
-      setLinkError(
-        'Não foi possível conectar ao Google Sheets diretamente (bloqueio de acesso ou CORS). Se a planilha for privada, você pode simplesmente abrir sua planilha, selecionar as células, dar Ctrl+C e colar na aba "Colar Dados" abaixo!'
-      );
-      setIsLoadingLink(false);
-    }
-  };
-
-  const handleProcessTextFromValue = (raw: string) => {
-    const lines = raw
-      .split(/\r?\n/)
-      .map((l) => l.trim())
-      .filter((l) => l.length > 0);
-
-    if (lines.length === 0) return;
-
-    const firstLine = lines[0];
-    let delimiter = ',';
-    if (firstLine.includes('\t')) delimiter = '\t';
-    else if (firstLine.includes(';')) delimiter = ';';
-
-    const rawHeaders = firstLine.split(delimiter).map((h) => h.trim().toLowerCase());
+  const parseFlatFormat = (
+    lines: string[],
+    delimiter: string,
+    rawHeaders: string[]
+  ): Omit<Transaction, 'id'>[] => {
     const isHeaderRow = rawHeaders.some(
       (h) =>
         h.includes('data') ||
@@ -361,7 +227,7 @@ export const ImportSpreadsheetModal: React.FC<ImportSpreadsheetModalProps> = ({
       if (amount <= 0 && !rawDesc) continue;
 
       let txType: TransactionType = 'expense';
-      if (rawType.includes('receita') || rawType.includes('income') || rawType.includes('entrada') || rawType.includes('salario') || rawType.includes('salário')) {
+      if (rawType.includes('receita') || rawType.includes('income') || rawType.includes('entrada') || rawType.includes('salario') || rawType.includes('salário') || rawType.includes('crédito') && !rawType.includes('cartão')) {
         txType = 'income';
       } else if (detectedType) {
         txType = detectedType;
@@ -390,50 +256,26 @@ export const ImportSpreadsheetModal: React.FC<ImportSpreadsheetModalProps> = ({
       });
     }
 
-    if (transactionsList.length > 0) {
-      setParsedRows(transactionsList);
-      setErrorsList([]);
-      setStep('preview');
-    }
+    return transactionsList;
   };
 
-  const handleProcessProjection = () => {
-    if (!projectionText.trim()) return;
-    setProjectionParsing(true);
-
-    const lines = projectionText
-      .split(/\r?\n/)
-      .map((l) => l.trim())
-      .filter((l) => l.length > 0);
-
-    if (lines.length < 2) {
-      setErrorsList(['Preciso de pelo menos 2 linhas (cabeçalho + dados).']);
-      setProjectionParsing(false);
-      return;
-    }
-
-    // Split by tab (Excel paste format)
-    const delimiter = '\t';
-    const headers = lines[0].split(delimiter).map((h) => h.trim());
-
-    // Detect month columns (columns after index 1 that look like month/year)
+  const parseProjectionFormat = (
+    lines: string[],
+    delimiter: string,
+    rawHeaders: string[]
+  ): Omit<Transaction, 'id'>[] => {
     const monthCols: Array<{ idx: number; label: string; date: string }> = [];
-    headers.forEach((h, idx) => {
-      if (idx < 2) return; // skip category and description columns
+    rawHeaders.forEach((h, idx) => {
+      if (idx < 2) return;
       const date = parseMonthLabel(h);
       if (date) {
         monthCols.push({ idx, label: h, date });
       }
     });
 
-    if (monthCols.length === 0) {
-      setErrorsList(['Não consegui identificar colunas de mês no cabeçalho (ex: Nov/26, Dez/26).']);
-      setProjectionParsing(false);
-      return;
-    }
+    if (monthCols.length === 0) return [];
 
     const transactionsList: Omit<Transaction, 'id'>[] = [];
-    const errors: string[] = [];
 
     for (let i = 1; i < lines.length; i++) {
       const cols = lines[i].split(delimiter).map((c) => c.replace(/^["']|["']$/g, '').trim());
@@ -442,7 +284,6 @@ export const ImportSpreadsheetModal: React.FC<ImportSpreadsheetModalProps> = ({
 
       if (!rawDesc) continue;
 
-      // Match category
       let categoryId = categories[0]?.id || 'cat_outros_despesa';
       if (rawCategory) {
         const clean = rawCategory.toLowerCase().trim();
@@ -453,7 +294,6 @@ export const ImportSpreadsheetModal: React.FC<ImportSpreadsheetModalProps> = ({
         if (found) categoryId = found.id;
       }
 
-      // For each month column, create a transaction if there's a value
       monthCols.forEach((mc) => {
         const rawVal = cols[mc.idx] || '';
         if (!rawVal || rawVal === '—' || rawVal === '0' || rawVal === '0,00' || rawVal === 'R$ 0,00') return;
@@ -485,30 +325,22 @@ export const ImportSpreadsheetModal: React.FC<ImportSpreadsheetModalProps> = ({
       });
     }
 
-    setProjectionParsing(false);
-
-    if (transactionsList.length === 0) {
-      setErrorsList(['Não encontrei valores válidos nas células da planilha.']);
-      return;
-    }
-
-    setParsedRows(transactionsList);
-    setErrorsList([]);
-    setStep('preview');
+    return transactionsList;
   };
 
-  // Parse month labels like "Nov/26", "Dez/26", "Jan/27" to YYYY-MM-01
-  const parseMonthLabel = (label: string): string | null => {
-    const ptMonths: Record<string, number> = {
-      jan: 1, fev: 2, mar: 3, abr: 4, mai: 5, jun: 6,
-      jul: 7, ago: 8, set: 9, out: 10, nov: 11, dez: 12,
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      const text = evt.target?.result as string;
+      if (text) {
+        setPastedText(text);
+        setTimeout(() => handleProcessText(), 50);
+      }
     };
-    const m = label.trim().match(/^([a-z]{3})[\/\-](\d{2})$/i);
-    if (!m) return null;
-    const month = ptMonths[m[1].toLowerCase()];
-    if (!month) return null;
-    const year = 2000 + parseInt(m[2]);
-    return `${year}-${String(month).padStart(2, '0')}-01`;
+    reader.readAsText(file);
   };
 
   const handleConfirmImport = () => {
@@ -530,14 +362,13 @@ export const ImportSpreadsheetModal: React.FC<ImportSpreadsheetModalProps> = ({
   return (
     <div className="ui-modal-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-labelledby="import-modal-title">
       <div className="ui-modal max-w-2xl" onClick={(e) => e.stopPropagation()}>
-        {/* Cabeçalho */}
         <div className="ui-modal-header">
           <span className="ui-icon ui-icon-accent !w-9 !h-9">
             <FileSpreadsheet className="w-4 h-4" aria-hidden="true" />
           </span>
           <div className="min-w-0 flex-1">
             <h2 id="import-modal-title" className="ui-modal-title">Importar planilha</h2>
-            <p className="ui-modal-sub">Excel, Google Sheets ou CSV: cole as linhas ou envie o arquivo</p>
+            <p className="ui-modal-sub">Cole os dados (Excel, Google Sheets, CSV) — o app detecta o formato automaticamente</p>
           </div>
           <button
             onClick={onClose}
@@ -548,263 +379,111 @@ export const ImportSpreadsheetModal: React.FC<ImportSpreadsheetModalProps> = ({
           </button>
         </div>
 
-        {/* Conteúdo */}
         <div className="ui-modal-body space-y-4">
           {step === 'input' ? (
             <>
-              {/* Mode Tabs */}
-              <div className="ui-segmented w-full">
-                {([
-                  { id: 'link', label: 'Link do Sheets' },
-                  { id: 'paste', label: 'Colar células' },
-                  { id: 'file', label: 'Arquivo .CSV' },
-                ] as const).map((tab) => (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`ui-seg-item flex-1 !py-1.5 ${activeTab === tab.id ? 'ui-seg-item-active' : ''}`}
-                  >
-                    {tab.label}
-                  </button>
-                ))}
-              </div>
-
-              {/* Tab 1: Google Sheets Link */}
-              {activeTab === 'link' && (
-                <div className="space-y-3.5">
-                  <div>
-                    <label className="ui-label">Link da planilha do Google Sheets</label>
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                      <input
-                        type="url"
-                        placeholder="https://docs.google.com/spreadsheets/d/.../edit"
-                        value={sheetUrl}
-                        onChange={(e) => setSheetUrl(e.target.value)}
-                        className="ui-input flex-1"
-                      />
-                      <button
-                        type="button"
-                        onClick={handleFetchGoogleSheet}
-                        disabled={isLoadingLink}
-                        className="ui-btn ui-btn-primary shrink-0"
-                      >
-                        {isLoadingLink ? 'Carregando...' : 'Carregar planilha'}
-                      </button>
-                    </div>
-                  </div>
-
-                  {linkError && (
-                    <div className="ui-alert flex-col !border-[color-mix(in_srgb,var(--warning-text)_32%,transparent)] !bg-[var(--warning-soft)]">
-                      <div className="flex items-start gap-2">
-                        <AlertCircle className="w-4 h-4 text-[var(--warning-text)] shrink-0 mt-0.5" />
-                        <div className="text-[var(--warning-text)]">
-                          <strong className="block font-semibold mb-1">Acesso restrito no Google Drive</strong>
-                          <span className="text-[var(--text-2)]">{linkError}</span>
-                        </div>
-                      </div>
-
-                      <div className="w-full pt-2 border-t border-[color-mix(in_srgb,var(--warning-text)_28%,transparent)] flex items-center justify-between gap-2">
-                        <span className="text-[11px] text-[var(--text-3)]">
-                          Prefere copiar e colar?
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => setActiveTab('paste')}
-                          className="ui-btn ui-btn-secondary shrink-0"
-                        >
-                          Colar células
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="ui-tile p-3 text-xs text-[var(--text-3)] space-y-1.5">
-                    <span className="font-semibold text-[var(--text-1)] block">
-                      Como permitir leitura por link no Google Sheets
-                    </span>
-                    <ol className="list-decimal list-inside space-y-1 text-[var(--text-4)] text-[11px]">
-                      <li>No Google Sheets, clique no botão azul <strong>Compartilhar</strong> (canto superior direito).</li>
-                      <li>Em <strong>Acesso geral</strong>, mude de <em>Restrito</em> para <strong>Qualquer pessoa com o link</strong> (Leitor).</li>
-                      <li>Pronto! Clique em <strong>Carregar Planilha</strong> acima.</li>
-                    </ol>
-                  </div>
+              <div className="space-y-3">
+                <div className="ui-tile p-2.5 text-xs text-[var(--text-3)] flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-[var(--accent-text)] shrink-0" />
+                  <span>
+                    <strong>Cole aqui</strong> (Ctrl+V) os dados da planilha. O app detecta se é formato <strong>flat</strong> (uma linha = uma transação) ou <strong>projeção</strong> (linhas = lançamentos, colunas = meses).
+                  </span>
                 </div>
-              )}
 
-              {/* Tab 2: Paste Rows */}
-              {activeTab === 'paste' && (
-                <div className="space-y-3">
-                  <div className="ui-tile p-2.5 text-xs text-[var(--text-3)]">
-                    Basta abrir sua planilha no Google Sheets ou Excel, selecionar os dados (ou apertar <strong>Ctrl+A</strong>), copiar com <strong>Ctrl+C</strong> e colar no campo abaixo.
-                  </div>
-
-                  <div>
-                    <label className="ui-label">Linhas coladas</label>
+                <div>
+                  <label className="ui-label">Dados colados</label>
+                  <div className="relative">
                     <textarea
-                      rows={7}
-                      placeholder={`Data	Descrição	Categoria	Valor	Tipo
-15/10/2026	Supermercado	Alimentação	250,50	Despesa
-16/10/2026	Salário Mensal	Salário	5000,00	Receita
-18/10/2026	Posto Combustível	Transporte	120,00	Despesa`}
+                      rows={10}
+                      placeholder={detectedFormat === 'projection'
+                        ? 'Categoria\tDescrição\tNov/26\tDez/26\tJan/27\nSalário\tSalário Lúcia\t4508,00\t4508,00\t4508,00\nSalário\tSalário Caio\t5272,00\t5272,00\t5272,00\nAlimentação\tSupermercado\t1200,50\t1350,00\t1100,00'
+                        : detectedFormat === 'flat'
+                        ? 'Data\tDescrição\tValor\tCategoria\tTipo\n15/10/2026\tSupermercado\t250,50\tAlimentação\tDespesa\n16/10/2026\tSalário Mensal\t5000,00\tSalário\tReceita'
+                        : 'Exemplo formato flat:\nData\tDescrição\tValor\tCategoria\tTipo\n15/10/2026\tSupermercado\t250,50\tAlimentação\tDespesa\n\nExemplo formato projeção:\nCategoria\tDescrição\tNov/26\tDez/26\nSalário\tSalário Lúcia\t4508,00\t4508,00'}
                       value={pastedText}
                       onChange={(e) => setPastedText(e.target.value)}
                       className="ui-input !p-3 font-mono"
                       touch-action="manipulation"
+                      aria-describedby="format-hint"
                     />
+                    {isProcessing && (
+                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-[var(--r-control)]">
+                        <div className="flex items-center gap-2 text-white px-4 py-2 bg-zinc-900 rounded-[var(--r-panel)]">
+                          <div className="w-5 h-5 border-2 border-[var(--accent-text)] border-t-transparent rounded-full animate-spin" />
+                          <span className="text-sm font-medium">Analisando formato...</span>
+                        </div>
+                      </div>
+                    )}
                   </div>
-
-                  <div className="flex items-center gap-2 mt-2">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setPastedText(`Data	Descrição	Categoria	Valor	Tipo
-15/10/2026	Supermercado	Alimentação	250,50	Despesa
-16/10/2026	Salário Mensal	Salário	5000,00	Receita
-18/10/2026	Posto Combustível	Transporte	120,00	Despesa
-20/10/2026	Netflix	Assinaturas	35,90	Despesa
-22/10/2026	Uber	Transporte	28,50	Despesa
-25/10/2026	Ifood	Alimentação	42,00	Despesa`);
-                      }}
-                      className="ui-btn ui-btn-secondary text-[11px] px-2 py-1.5"
-                    >
-                      Usar exemplo
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setPastedText('')}
-                      className="ui-btn ui-btn-ghost text-[11px] px-2 py-1.5"
-                    >
-                      Limpar
-                    </button>
-                  </div>
-
-                  <div className="ui-tile p-2.5 mt-2">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Table className="w-4 h-4 text-[var(--text-4)]" />
-                      <span className="text-xs font-semibold text-[var(--text-1)]">Formato esperado</span>
-                    </div>
-                    <div className="space-y-1 text-[11px] text-[var(--text-3)]">
-                      <div className="flex items-center gap-2">
-                        <span className="w-8 font-mono text-[var(--text-2)]">Data</span>
-                        <span>DD/MM/YYYY (ex: 15/10/2026)</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="w-8 font-mono text-[var(--text-2)]">Descrição</span>
-                        <span>Nome da transação</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="w-8 font-mono text-[var(--text-2)]">Categoria</span>
-                        <span>Nome da categoria (ou deixe vazio)</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="w-8 font-mono text-[var(--text-2)]">Valor</span>
-                        <span>R$ com vírgula (ex: 250,50)</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="w-8 font-mono text-[var(--text-2)]">Tipo</span>
-                        <span>Despesa ou Receita</span>
-                      </div>
-                    </div>
+                  <div id="format-hint" className="text-[11px] text-[var(--text-4)] mt-1">
+                    {detectedFormat === 'projection' && (
+                      <span className="flex items-center gap-1 text-[var(--accent-text)]">
+                        <Sparkles className="w-3 h-3" /> Formato projeção detectado
+                      </span>
+                    )}
+                    {detectedFormat === 'flat' && (
+                      <span className="flex items-center gap-1 text-[var(--accent-text)]">
+                        <Table className="w-3 h-3" /> Formato flat detectado
+                      </span>
+                    )}
+                    {!detectedFormat && (
+                      <span>Cole os dados acima — o app vai detectar o formato automaticamente</span>
+                    )}
                   </div>
                 </div>
-              )}
 
-              {/* Tab 3: CSV File Upload */}
-              {activeTab === 'file' && (
-                <div className="space-y-4 py-2">
-                  <div className="border border-dashed border-[var(--border-2)] hover:border-[var(--accent-text)] rounded-[var(--r-card)] p-8 text-center transition-colors bg-[var(--surface-2)]">
-                    <Upload className="w-7 h-7 text-[var(--text-4)] mx-auto mb-2" />
-                    <p className="text-xs font-semibold text-[var(--text-1)]">
-                      Escolha seu arquivo de planilha (.csv ou .tsv)
-                    </p>
-                    <p className="text-[11px] text-[var(--text-4)] mt-1 mb-4">
-                      No Google Sheets: Arquivo → Fazer download → Valores separados por vírgula (.csv)
-                    </p>
-                    <label className="ui-btn ui-btn-primary cursor-pointer">
-                      <span>Selecionar arquivo .CSV</span>
-                      <input
-                        type="file"
-                        accept=".csv,.tsv,.txt"
-                        onChange={(e) => {
-                          handleFileUpload(e);
-                          setActiveTab('paste');
-                        }}
-                        className="hidden"
-                      />
-                    </label>
-                  </div>
-                </div>
-              )}
-
-              {/* Tab 4: Projection (Planilha formato linhas x meses) */}
-              {activeTab === 'projection' && (
-                <div className="space-y-3">
-                  <div className="ui-tile p-2.5 text-xs text-[var(--text-3)]">
-                    Abra sua planilha no Google Sheets ou Excel, selecione os dados (Ctrl+A), 
-                    copie (Ctrl+C) e cole abaixo. Formato esperado:
-                    <br />
-                    <strong>Coluna A:</strong> Categoria | <strong>Coluna B:</strong> Descrição | 
-                    <strong>Coluna C+:</strong> Meses (ex: Nov/26, Dez/26, Jan/27...)
-                  </div>
-
-                  <div>
-                    <label className="ui-label">Linhas coladas (formato planilha)</label>
-                    <textarea
-                      rows={8}
-                      placeholder={`Categoria	Descrição	Nov/26	Dez/26	Jan/27	Fev/27
-Salário	Salário Lúcia	4508,00	4508,00	4508,00	4508,00
-Salário	Salário Caio	5272,00	5272,00	5272,00	5272,00
-Alimentação	Supermercado	1200,50	1350,00	1100,00	1250,00
-Transporte	Combustível	450,00	400,00	500,00	450,00`}
-                      value={projectionText}
-                      onChange={(e) => setProjectionText(e.target.value)}
-                      className="ui-input !p-3 font-mono"
-                      touch-action="manipulation"
-                    />
-                  </div>
-
-                  <div className="flex items-center gap-2 mt-2">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setProjectionText(`Categoria	Descrição	Nov/26	Dez/26	Jan/27	Fev/27
-Salário	Salário Lúcia	4508,00	4508,00	4508,00	4508,00
-Salário	Salário Caio	5272,00	5272,00	5272,00	5272,00
-Alimentação	Supermercado	1200,50	1350,00	1100,00	1250,00
-Transporte	Combustível	450,00	400,00	500,00	450,00`);
-                      }}
-                      className="ui-btn ui-btn-secondary text-[11px] px-2 py-1.5"
-                    >
-                      Usar exemplo
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setProjectionText('')}
-                      className="ui-btn ui-btn-ghost text-[11px] px-2 py-1.5"
-                    >
-                      Limpar
-                    </button>
-                  </div>
-
+                <div className="flex items-center gap-2 mt-2">
                   <button
                     type="button"
-                    onClick={handleProcessProjection}
-                    disabled={!projectionText.trim() || projectionParsing}
-                    className="ui-btn ui-btn-primary w-full"
+                    onClick={() => {
+                      setPastedText(`Categoria\tDescrição\tNov/26\tDez/26\tJan/27\tFev/27\nSalário\tSalário Lúcia\t4508,00\t4508,00\t4508,00\t4508,00\nSalário\tSalário Caio\t5272,00\t5272,00\t5272,00\t5272,00\nAlimentação\tSupermercado\t1200,50\t1350,00\t1100,00\t1250,00\nTransporte\tCombustível\t450,00\t400,00\t500,00\t450,00`);
+                    }}
+                    className="ui-btn ui-btn-secondary text-[11px] px-2 py-1.5"
                   >
-                    {projectionParsing ? 'Processando...' : 'Processar Projeção'}
-                    <ArrowRight className="w-3.5 h-3.5" />
+                    Exemplo Projeção
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPastedText(`Data\tDescrição\tValor\tCategoria\tTipo\n15/10/2026\tSupermercado\t250,50\tAlimentação\tDespesa\n16/10/2026\tSalário Mensal\t5000,00\tSalário\tReceita\n18/10/2026\tPosto Combustível\t120,00\tTransporte\tDespesa\n20/10/2026\tNetflix\t35,90\tAssinaturas\tDespesa`);
+                    }}
+                    className="ui-btn ui-btn-secondary text-[11px] px-2 py-1.5"
+                  >
+                    Exemplo Flat
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPastedText('')}
+                    className="ui-btn ui-btn-ghost text-[11px] px-2 py-1.5"
+                  >
+                    Limpar
                   </button>
                 </div>
-              )}
+
+                <div className="border border-dashed border-[var(--border-2)] hover:border-[var(--accent-text)] rounded-[var(--r-card)] p-6 text-center transition-colors bg-[var(--surface-2)]">
+                  <Upload className="w-6 h-6 text-[var(--text-4)] mx-auto mb-2" />
+                  <p className="text-xs font-semibold text-[var(--text-1)]">Ou envie arquivo .CSV / .TSV</p>
+                  <p className="text-[11px] text-[var(--text-4)] mt-1 mb-4">
+                    No Google Sheets: Arquivo → Fazer download → Valores separados por vírgula (.csv)
+                  </p>
+                  <label className="ui-btn ui-btn-primary cursor-pointer">
+                    <span>Selecionar arquivo</span>
+                    <input
+                      type="file"
+                      accept=".csv,.tsv,.txt"
+                      onChange={(e) => handleFileUpload(e)}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
+              </div>
 
               {errorsList.length > 0 && (
                 <div className="ui-alert !border-[color-mix(in_srgb,var(--danger-text)_32%,transparent)] !bg-[var(--danger-soft)] text-[var(--danger-text)] items-start">
                   <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-400" />
                   <div>
                     {errorsList.map((err, i) => (
-                      <div key={i}>{err}</div>
+                      <div key={i} className="whitespace-pre-wrap">{err}</div>
                     ))}
                   </div>
                 </div>
@@ -812,17 +491,16 @@ Transporte	Combustível	450,00	400,00	500,00	450,00`);
             </>
           ) : (
             <>
-              {/* Preview Mode */}
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-xs font-bold text-[var(--text-1)]">
                     Pré-visualização: {parsedRows.length} transações identificadas
+                    <span className="ml-2 text-[10px] bg-[var(--accent-soft)] text-[var(--accent-text)] px-1.5 py-0.5 rounded">
+                      {detectedFormat === 'projection' ? 'Projeção' : 'Flat'}
+                    </span>
                   </h3>
-                  <p className="text-[11px] text-[var(--text-3)]">
-                    Revise os dados antes de adicionar ao FinanFlow.
-                  </p>
+                  <p className="text-[11px] text-[var(--text-3)]">Revise os dados antes de adicionar ao FinanFlow.</p>
                 </div>
-
                 <div className="flex items-center gap-2">
                   <span className="ui-label !mb-0">Modo</span>
                   <select
@@ -881,7 +559,6 @@ Transporte	Combustível	450,00	400,00	500,00	450,00`);
           )}
         </div>
 
-        {/* Footer */}
         <div className="ui-modal-footer justify-between">
           {step === 'preview' ? (
             <button
@@ -905,10 +582,10 @@ Transporte	Combustível	450,00	400,00	500,00	450,00`);
             <button
               type="button"
               onClick={handleProcessText}
-              disabled={!pastedText.trim()}
+              disabled={!pastedText.trim() || isProcessing}
               className="ui-btn ui-btn-primary"
             >
-              <span>Processar Planilha</span>
+              <span>Analisar e processar</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           ) : (
