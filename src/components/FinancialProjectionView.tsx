@@ -27,11 +27,30 @@ export const FinancialProjectionView: React.FC<FinancialProjectionViewProps> = (
     if (!toMonth) setToMonth(defaultTo);
   }, []);
 
-  // Filtrar lançamentos recorrentes (cada um como linha própria)
-  const recurringTransactions = useMemo(() => {
-    return transactions.filter(
+  // Agrupar lançamentos recorrentes por descricao, pegando a data mais antiga de cada grupo
+  const groupedRecurring = useMemo(() => {
+    const recurring = transactions.filter(
       (t) => t.recurrence === 'monthly' || t.recurrence === 'installment' || Boolean(t.recurrenceGroupId)
     );
+
+    const grouped = new Map<string, { tx: Transaction; earliestDate: Date }>();
+    for (const tx of recurring) {
+      const key = tx.description || 'Lançamento';
+      const txDate = new Date(tx.date);
+      if (grouped.has(key)) {
+        const existing = grouped.get(key)!;
+        if (txDate < existing.earliestDate) {
+          existing.earliestDate = txDate;
+        }
+      } else {
+        grouped.set(key, { tx, earliestDate: txDate });
+      }
+    }
+
+    return Array.from(grouped.values()).map((g) => ({
+      ...g.tx,
+      date: g.earliestDate.toISOString().split('T')[0],
+    }));
   }, [transactions]);
 
   // Lista de meses no intervalo
@@ -54,9 +73,9 @@ export const FinancialProjectionView: React.FC<FinancialProjectionViewProps> = (
     return result;
   }, [fromMonth, toMonth]);
 
-  // Para cada lançamento recorrente, calcular valor em cada mês
+  // Para cada lançamento (agrupado), calcular valor em cada mes
   const launchMonths = useMemo(() => {
-    return recurringTransactions.map((tx) => {
+    return groupedRecurring.map((tx) => {
       const txDate = new Date(tx.date);
       const txYear = txDate.getFullYear();
       const txMonth = txDate.getMonth() + 1;
@@ -65,9 +84,8 @@ export const FinancialProjectionView: React.FC<FinancialProjectionViewProps> = (
       const dateValid = !isNaN(txDate.getTime());
 
       const values: Array<number | null> = months.map((m) => {
-        // Se a data for invalida, mostra a partir do primeiro mes do range
         if (!dateValid) return isIncome ? tx.amount : -tx.amount;
-        // Só aparece a partir do mes de criacao
+        // Só aparece a partir do mes de criacao (data mais antiga do grupo)
         if (m.year < txYear || (m.year === txYear && m.month < txMonth)) return null;
         const monthsDiff = (m.year - txYear) * 12 + (m.month - txMonth);
         if (monthsDiff % 1 !== 0) return null;
@@ -86,7 +104,7 @@ export const FinancialProjectionView: React.FC<FinancialProjectionViewProps> = (
         rowTotal,
       };
     });
-  }, [recurringTransactions, months]);
+  }, [groupedRecurring, months]);
 
   // Totais por coluna (mes)
   const columnTotals = useMemo(() => {
@@ -126,7 +144,7 @@ export const FinancialProjectionView: React.FC<FinancialProjectionViewProps> = (
         </div>
       </div>
 
-      {recurringTransactions.length === 0 && (
+      {groupedRecurring.length === 0 && (
         <div className="ui-alert flex-col !border-[color-mix(in_srgb,var(--accent-text)_32%,transparent)] !bg-[var(--accent-soft)]">
           <div className="flex items-start gap-2">
             <Calendar className="w-4 h-4 text-[var(--accent-text)] shrink-0" />
