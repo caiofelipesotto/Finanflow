@@ -18,15 +18,17 @@ export const ImportSpreadsheetModal: React.FC<ImportSpreadsheetModalProps> = ({
   accounts,
   onImportTransactions,
 }) => {
-  const [activeTab, setActiveTab] = useState<'link' | 'paste' | 'file'>('link');
+  const [activeTab, setActiveTab] = useState<'link' | 'paste' | 'file' | 'projection'>('link');
   const [sheetUrl, setSheetUrl] = useState('https://docs.google.com/spreadsheets/d/1Gnz7jctYUKb4yNTsdg5vHSgOv2BzIrZLg3BYCG1mNDQ/edit?usp=drivesdk');
   const [pastedText, setPastedText] = useState('');
+  const [projectionText, setProjectionText] = useState('');
   const [importMode, setImportMode] = useState<'append' | 'replace'>('append');
   const [step, setStep] = useState<'input' | 'preview'>('input');
   const [parsedRows, setParsedRows] = useState<Omit<Transaction, 'id'>[]>([]);
   const [errorsList, setErrorsList] = useState<string[]>([]);
   const [isLoadingLink, setIsLoadingLink] = useState(false);
   const [linkError, setLinkError] = useState<string | null>(null);
+  const [projectionParsing, setProjectionParsing] = useState(false);
 
   if (!isOpen) return null;
 
@@ -395,6 +397,120 @@ export const ImportSpreadsheetModal: React.FC<ImportSpreadsheetModalProps> = ({
     }
   };
 
+  const handleProcessProjection = () => {
+    if (!projectionText.trim()) return;
+    setProjectionParsing(true);
+
+    const lines = projectionText
+      .split(/\r?\n/)
+      .map((l) => l.trim())
+      .filter((l) => l.length > 0);
+
+    if (lines.length < 2) {
+      setErrorsList(['Preciso de pelo menos 2 linhas (cabeçalho + dados).']);
+      setProjectionParsing(false);
+      return;
+    }
+
+    // Split by tab (Excel paste format)
+    const delimiter = '\t';
+    const headers = lines[0].split(delimiter).map((h) => h.trim());
+
+    // Detect month columns (columns after index 1 that look like month/year)
+    const monthCols: Array<{ idx: number; label: string; date: string }> = [];
+    headers.forEach((h, idx) => {
+      if (idx < 2) return; // skip category and description columns
+      const date = parseMonthLabel(h);
+      if (date) {
+        monthCols.push({ idx, label: h, date });
+      }
+    });
+
+    if (monthCols.length === 0) {
+      setErrorsList(['Não consegui identificar colunas de mês no cabeçalho (ex: Nov/26, Dez/26).']);
+      setProjectionParsing(false);
+      return;
+    }
+
+    const transactionsList: Omit<Transaction, 'id'>[] = [];
+    const errors: string[] = [];
+
+    for (let i = 1; i < lines.length; i++) {
+      const cols = lines[i].split(delimiter).map((c) => c.replace(/^["']|["']$/g, '').trim());
+      const rawCategory = cols[0] || '';
+      const rawDesc = cols[1] || 'Lançamento Importado';
+
+      if (!rawDesc) continue;
+
+      // Match category
+      let categoryId = categories[0]?.id || 'cat_outros_despesa';
+      if (rawCategory) {
+        const clean = rawCategory.toLowerCase().trim();
+        const found = categories.find((c) => {
+          const n = c.name.toLowerCase();
+          return n.includes(clean) || clean.includes(n);
+        });
+        if (found) categoryId = found.id;
+      }
+
+      // For each month column, create a transaction if there's a value
+      monthCols.forEach((mc) => {
+        const rawVal = cols[mc.idx] || '';
+        if (!rawVal || rawVal === '—' || rawVal === '0' || rawVal === '0,00' || rawVal === 'R$ 0,00') return;
+
+        const { amount, detectedType } = parseAmount(rawVal);
+        if (amount <= 0) return;
+
+        let txType: TransactionType = 'expense';
+        if (detectedType) {
+          txType = detectedType;
+        } else {
+          const d = rawDesc.toLowerCase();
+          if (d.includes('salario') || d.includes('salário') || d.includes('venda') || d.includes('receita') || d.includes('bonus')) {
+            txType = 'income';
+          }
+        }
+
+        transactionsList.push({
+          date: mc.date,
+          description: rawDesc,
+          amount,
+          type: txType,
+          category: categoryId,
+          account: accounts[0]?.id || 'acc_nubank',
+          paymentMethod: 'pix',
+          isPaid: false,
+          recurrence: 'single',
+        });
+      });
+    }
+
+    setProjectionParsing(false);
+
+    if (transactionsList.length === 0) {
+      setErrorsList(['Não encontrei valores válidos nas células da planilha.']);
+      return;
+    }
+
+    setParsedRows(transactionsList);
+    setErrorsList([]);
+    setStep('preview');
+  };
+
+  // Parse month labels like "Nov/26", "Dez/26", "Jan/27" to YYYY-MM-01
+  const parseMonthLabel = (label: string): string | null => {
+    const ptMonths: Record<string, number> = {
+      jan: 1, fev: 2, mar: 3, abr: 4, mai: 5, jun: 6,
+      jul: 7, ago: 8, set: 9, out: 10, nov: 11, dez: 12,
+    };
+    const m = label.trim().match(/^([a-z]{3})[\/\-](\d{2})$/i);
+    if (!m) return null;
+    const month = ptMonths[m[1].toLowerCase()];
+    if (!month) return null;
+    const year = 2000 + parseInt(m[2]);
+    return `${year}-${String(month).padStart(2, '0')}-01`;
+  };
+
   const handleConfirmImport = () => {
     const fullTransactions: Transaction[] = parsedRows.map((r, index) => ({
       ...r,
@@ -618,6 +734,68 @@ export const ImportSpreadsheetModal: React.FC<ImportSpreadsheetModalProps> = ({
                       />
                     </label>
                   </div>
+                </div>
+              )}
+
+              {/* Tab 4: Projection (Planilha formato linhas x meses) */}
+              {activeTab === 'projection' && (
+                <div className="space-y-3">
+                  <div className="ui-tile p-2.5 text-xs text-[var(--text-3)]">
+                    Abra sua planilha no Google Sheets ou Excel, selecione os dados (Ctrl+A), 
+                    copie (Ctrl+C) e cole abaixo. Formato esperado:
+                    <br />
+                    <strong>Coluna A:</strong> Categoria | <strong>Coluna B:</strong> Descrição | 
+                    <strong>Coluna C+:</strong> Meses (ex: Nov/26, Dez/26, Jan/27...)
+                  </div>
+
+                  <div>
+                    <label className="ui-label">Linhas coladas (formato planilha)</label>
+                    <textarea
+                      rows={8}
+                      placeholder={`Categoria	Descrição	Nov/26	Dez/26	Jan/27	Fev/27
+Salário	Salário Lúcia	4508,00	4508,00	4508,00	4508,00
+Salário	Salário Caio	5272,00	5272,00	5272,00	5272,00
+Alimentação	Supermercado	1200,50	1350,00	1100,00	1250,00
+Transporte	Combustível	450,00	400,00	500,00	450,00`}
+                      value={projectionText}
+                      onChange={(e) => setProjectionText(e.target.value)}
+                      className="ui-input !p-3 font-mono"
+                      touch-action="manipulation"
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-2 mt-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setProjectionText(`Categoria	Descrição	Nov/26	Dez/26	Jan/27	Fev/27
+Salário	Salário Lúcia	4508,00	4508,00	4508,00	4508,00
+Salário	Salário Caio	5272,00	5272,00	5272,00	5272,00
+Alimentação	Supermercado	1200,50	1350,00	1100,00	1250,00
+Transporte	Combustível	450,00	400,00	500,00	450,00`);
+                      }}
+                      className="ui-btn ui-btn-secondary text-[11px] px-2 py-1.5"
+                    >
+                      Usar exemplo
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setProjectionText('')}
+                      className="ui-btn ui-btn-ghost text-[11px] px-2 py-1.5"
+                    >
+                      Limpar
+                    </button>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleProcessProjection}
+                    disabled={!projectionText.trim() || projectionParsing}
+                    className="ui-btn ui-btn-primary w-full"
+                  >
+                    {projectionParsing ? 'Processando...' : 'Processar Projeção'}
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
                 </div>
               )}
 
