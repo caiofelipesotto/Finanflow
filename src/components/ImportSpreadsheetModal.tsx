@@ -116,6 +116,82 @@ export const ImportSpreadsheetModal: React.FC<ImportSpreadsheetModalProps> = ({
     return null;
   };
 
+  /**
+   * Detecta o delimitador com base numa linha de candidatos.
+   * Tenta tab, ponto-e-vírgula e vírgula (nesta ordem de prioridade).
+   */
+  const detectDelimiter = (line: string): string => {
+    if (line.includes('\t')) return '\t';
+    if (line.includes(';')) return ';';
+    if (line.includes(',')) return ',';
+    return ',';
+  };
+
+  /**
+   * Faz split de uma linha CSV respeitando aspas duplas (padrão RFC 4180).
+   * Ex: `RECEITAS,"Salário, com vírgula","R$ 5.322,00"` → 3 colunas corretas.
+   * Isso evita que valores monetários com vírgula decimal sejam partidos ao meio
+   * quando o delimitador também é vírgula.
+   */
+  const parseCSVLine = (line: string, delimiter: string): string[] => {
+    const cols: string[] = [];
+    let current = '';
+    let inQuotes = false;
+
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+
+      if (ch === '"') {
+        if (inQuotes && line[i + 1] === '"') {
+          // aspas duplas escapadas dentro de campo entre aspas
+          current += '"';
+          i++; // pular a próxima aspa
+        } else {
+          inQuotes = !inQuotes;
+        }
+      } else if (ch === delimiter && !inQuotes) {
+        cols.push(current);
+        current = '';
+      } else {
+        current += ch;
+      }
+    }
+    cols.push(current);
+    return cols;
+  };
+
+  /**
+   * Localiza a linha de cabeçalho real entre as linhas coladas.
+   * Ignora linhas de título/metadados (ex: "DASHBOARD FINANCEIRO...").
+   * Retorna o índice da linha de cabeçalho e o delimitador detectado.
+   */
+  const findHeaderLine = (lines: string[]): { headerIdx: number; delimiter: string; rawHeaders: string[] } | null => {
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const delimiter = detectDelimiter(line);
+      const parts = parseCSVLine(line, delimiter).map((h) => h.trim().toLowerCase());
+
+      // Cabeçalho de projeção: tem "categoria" ou "descrição" nas 2 primeiras colunas
+      // e pelo menos uma coluna de mês a partir da coluna 2.
+      const hasCategoryOrDesc = parts.slice(0, 2).some(
+        (h) => h.includes('categoria') || h.includes('descri') || h.includes('item')
+      );
+      const hasMonthCols = parts.slice(2).some((h) => parseMonthLabel(h));
+      if (hasCategoryOrDesc && hasMonthCols) {
+        return { headerIdx: i, delimiter, rawHeaders: parts };
+      }
+
+      // Cabeçalho flat: tem colunas de data, valor e descrição
+      const hasDateCol = parts.some((h) => /data|date/i.test(h));
+      const hasAmountCol = parts.some((h) => /valor|amount|preço|preco/i.test(h));
+      const hasDescCol = parts.some((h) => /desc|hist|título|titulo/i.test(h));
+      if (hasDateCol && hasAmountCol && hasDescCol) {
+        return { headerIdx: i, delimiter, rawHeaders: parts };
+      }
+    }
+    return null;
+  };
+
   const handleProcessText = () => {
     if (!pastedText.trim()) return;
     setIsProcessing(true);
@@ -132,13 +208,18 @@ export const ImportSpreadsheetModal: React.FC<ImportSpreadsheetModalProps> = ({
       return;
     }
 
-    const firstLine = lines[0];
-    let delimiter = '\t';
-    if (firstLine.includes('\t')) delimiter = '\t';
-    else if (firstLine.includes(';')) delimiter = ';';
-    else if (firstLine.includes(',')) delimiter = ',';
+    const headerInfo = findHeaderLine(lines);
+    if (!headerInfo) {
+      setErrorsList([
+        'Não consegui identificar o formato. Use uma das opções:\n'
+        + '1. Formato flat (uma linha = uma transação): Data, Descrição, Valor, Categoria, Tipo\n'
+        + '2. Formato projeção (linhas = lançamentos, colunas = meses): Categoria, Descrição, Nov/26, Dez/26...\n'
+      ]);
+      setIsProcessing(false);
+      return;
+    }
 
-    const rawHeaders = firstLine.split(delimiter).map((h) => h.trim().toLowerCase());
+    const { headerIdx, delimiter, rawHeaders } = headerInfo;
     const format = detectFormat(rawHeaders);
     setDetectedFormat(format);
 
@@ -152,12 +233,15 @@ export const ImportSpreadsheetModal: React.FC<ImportSpreadsheetModalProps> = ({
       return;
     }
 
+    // Só processa linhas APÓS o cabeçalho
+    const dataLines = lines.slice(headerIdx + 1);
+
     let transactionsList: Omit<Transaction, 'id'>[] = [];
 
     if (format === 'flat') {
-      transactionsList = parseFlatFormat(lines, delimiter, rawHeaders);
+      transactionsList = parseFlatFormat(dataLines, delimiter, rawHeaders);
     } else {
-      transactionsList = parseProjectionFormat(lines, delimiter, rawHeaders);
+      transactionsList = parseProjectionFormat(dataLines, delimiter, rawHeaders);
     }
 
     setIsProcessing(false);
@@ -214,7 +298,7 @@ export const ImportSpreadsheetModal: React.FC<ImportSpreadsheetModalProps> = ({
 
     for (let i = startIndex; i < lines.length; i++) {
       const line = lines[i];
-      const cols = line.split(delimiter).map((c) => c.replace(/^["']|["']$/g, '').trim());
+      const cols = parseCSVLine(line, delimiter).map((c) => c.replace(/^["']|["']$/g, '').trim());
 
       const rawDate = cols[dateIdx] || '';
       const rawDesc = cols[descIdx] || 'Transação Importada';
@@ -277,22 +361,28 @@ export const ImportSpreadsheetModal: React.FC<ImportSpreadsheetModalProps> = ({
 
     const transactionsList: Omit<Transaction, 'id'>[] = [];
 
-    for (let i = 1; i < lines.length; i++) {
-      const cols = lines[i].split(delimiter).map((c) => c.replace(/^["']|["']$/g, '').trim());
-      const rawCategory = cols[0] || '';
+    for (let i = 0; i < lines.length; i++) {
+      const cols = parseCSVLine(lines[i], delimiter).map((c) => c.replace(/^["']|["']$/g, '').trim());
+      const rawGroup = cols[0] || '';
       const rawDesc = cols[1] || 'Lançamento Importado';
 
       if (!rawDesc) continue;
 
+      // --- Categoria: tenta casar o grupo (RECEITAS, DESPESAS FIXAS, etc.) ---
       let categoryId = categories[0]?.id || 'cat_outros_despesa';
-      if (rawCategory) {
-        const clean = rawCategory.toLowerCase().trim();
+      if (rawGroup) {
+        const clean = rawGroup.toLowerCase().trim();
         const found = categories.find((c) => {
           const n = c.name.toLowerCase();
           return n.includes(clean) || clean.includes(n);
         });
         if (found) categoryId = found.id;
       }
+
+      // --- Tipo: usa o grupo (RECEITA → receita, DESPESA/INVESTIMENTO → despesa) ---
+      const groupLower = rawGroup.toLowerCase();
+      const isIncomeByGroup = groupLower.includes('receita');
+      const isExpenseByGroup = groupLower.includes('despesa') || groupLower.includes('investimento');
 
       monthCols.forEach((mc) => {
         const rawVal = cols[mc.idx] || '';
@@ -304,6 +394,10 @@ export const ImportSpreadsheetModal: React.FC<ImportSpreadsheetModalProps> = ({
         let txType: TransactionType = 'expense';
         if (detectedType) {
           txType = detectedType;
+        } else if (isIncomeByGroup) {
+          txType = 'income';
+        } else if (isExpenseByGroup) {
+          txType = 'expense';
         } else {
           const d = rawDesc.toLowerCase();
           if (d.includes('salario') || d.includes('salário') || d.includes('venda') || d.includes('receita') || d.includes('bonus')) {
