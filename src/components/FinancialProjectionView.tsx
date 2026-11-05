@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { Transaction, Category, Account, RecurringTransactionDraft, RecurrenceRule } from '../types/finance';
 import { formatCurrency, getMonthName } from '../utils/formatters';
 import { isAporte } from '../utils/aportes';
-import { Calendar, ChevronLeft, ChevronRight, TrendingUp, TrendingDown, Minus, AlertCircle, CreditCard } from 'lucide-react';
+import { Calendar, ChevronLeft, ChevronRight, TrendingUp, TrendingDown, Minus, AlertCircle, CreditCard, BarChart2 } from 'lucide-react';
 
 interface FinancialProjectionViewProps {
   transactions: Transaction[];
@@ -11,6 +11,111 @@ interface FinancialProjectionViewProps {
   recurringTransactions?: RecurringTransactionDraft[];
   recurrenceRules?: RecurrenceRule[];
 }
+
+interface MonthlyBalancePoint {
+  key: string;
+  label: string;
+  balance: number;
+}
+
+const MonthlyBalanceChart: React.FC<{ points: MonthlyBalancePoint[] }> = ({ points }) => {
+  if (points.length === 0) return null;
+
+  const values = points.map((p) => p.balance);
+  const minVal = Math.min(0, ...values);
+  const maxVal = Math.max(0, ...values);
+  const span = maxVal - minVal || 1;
+
+  const chartHeight = 160;
+  const paddingTop = 16;
+  const paddingBottom = 26;
+  const paddingLeft = 10;
+  const paddingRight = 10;
+  const availableHeight = chartHeight - paddingTop - paddingBottom;
+  const colWidth = Math.max(48, 400 / points.length);
+  const totalWidth = Math.max(points.length * colWidth, 400);
+
+  const getY = (value: number) => paddingTop + availableHeight * (1 - (value - minVal) / span);
+  const getX = (idx: number) => paddingLeft + idx * colWidth + colWidth / 2;
+
+  // Zero baseline
+  const zeroY = getY(0);
+
+  // Bars
+  const bars = points.map((p, idx) => {
+    const x = getX(idx) - colWidth * 0.3;
+    const barWidth = colWidth * 0.6;
+    const y = getY(p.balance);
+    const height = Math.abs(zeroY - y);
+    const isPositive = p.balance >= 0;
+    return (
+      <rect
+        key={p.key}
+        x={x}
+        y={isPositive ? y : zeroY}
+        width={barWidth}
+        height={Math.max(height, 2)}
+        fill={isPositive ? 'var(--chart-income)' : 'var(--chart-expense)'}
+        fillOpacity={0.8}
+        rx={3}
+        className="transition-all duration-150 hover:brightness-125"
+      />
+    );
+  });
+
+  // Zero line
+  const zeroLine = minVal < 0 && maxVal > 0 ? (
+    <line
+      x1={paddingLeft}
+      y1={zeroY}
+      x2={totalWidth + paddingRight}
+      y2={zeroY}
+      stroke="var(--chart-grid-strong)"
+      strokeWidth="1.5"
+    />
+  ) : null;
+
+  // Month labels
+  const labels = points.map((p, idx) => (
+    <text
+      key={p.key}
+      x={getX(idx)}
+      y={chartHeight - 6}
+      textAnchor="middle"
+      fontSize="10"
+      fontWeight="normal"
+      fill="var(--chart-axis)"
+      className="font-mono"
+    >
+      {p.label}
+    </text>
+  ));
+
+  // Balance value on hover (using CSS hover)
+  return (
+    <div className="w-full">
+      <svg
+        viewBox={`0 0 ${totalWidth + paddingLeft + paddingRight} ${chartHeight}`}
+        className="w-full h-52 sm:h-60 overflow-visible select-none"
+        preserveAspectRatio="none"
+      >
+        {zeroLine}
+        {bars}
+        {labels}
+      </svg>
+      <div className="flex flex-wrap items-center justify-center gap-3 mt-2 text-[11px] text-[var(--text-3)]">
+        <div className="flex items-center gap-1.5">
+          <span className="w-2 h-2 rounded-sm" style={{ backgroundColor: 'var(--chart-income)' }} />
+          <span>Positivo (Sobrou)</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="w-2 h-2 rounded-sm" style={{ backgroundColor: 'var(--chart-expense)' }} />
+          <span>Negativo (Faltou)</span>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export const FinancialProjectionView: React.FC<FinancialProjectionViewProps> = ({
   transactions,
@@ -269,6 +374,29 @@ export const FinancialProjectionView: React.FC<FinancialProjectionViewProps> = (
     setCenterMonth(now.getMonth());
   };
 
+  // Calcular saldo mensal (income - expense - aportes) para o gráfico
+  const monthlyBalance = useMemo(() => {
+    return months.map((m, idx) => {
+      const income = allRows.reduce((s, row) => {
+        if (row.type !== 'income' || row.isAporteRow) return s;
+        const v = row.values[idx];
+        return s + (v && v > 0 ? v : 0);
+      }, 0);
+      const expense = allRows.reduce((s, row) => {
+        if (row.type !== 'expense' || row.isAporteRow) return s;
+        const v = row.values[idx];
+        return s + (v && v < 0 ? Math.abs(v) : 0);
+      }, 0);
+      const aportes = allRows.reduce((s, row) => {
+        if (!row.isAporteRow) return s;
+        const v = row.values[idx];
+        return s + (v ? Math.abs(v) : 0);
+      }, 0);
+      const balance = income - expense - aportes;
+      return { ...m, income, expense, aportes, balance };
+    });
+  }, [allRows, months]);
+
   const currentMonthLabel = `${getMonthName(centerMonth)} de ${centerYear}`;
 
   if (allRows.length === 0) {
@@ -335,6 +463,18 @@ export const FinancialProjectionView: React.FC<FinancialProjectionViewProps> = (
             Hoje
           </button>
         </div>
+      </div>
+
+      {/* Gráfico de Evolução do Saldo (Sobrou) */}
+      <div className="ui-card p-4">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <BarChart2 className="w-4 h-4 text-[var(--text-3)]" aria-hidden="true" />
+            <h3 className="ui-section-title">Evolução do Saldo Mensal (Sobrou)</h3>
+          </div>
+          <span className="text-xs text-[var(--text-4)]">{viewMonths} meses</span>
+        </div>
+        <MonthlyBalanceChart points={monthlyBalance} />
       </div>
 
       {/* Timeline Table */}

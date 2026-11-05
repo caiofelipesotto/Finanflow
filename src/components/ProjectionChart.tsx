@@ -188,11 +188,12 @@ export const ProjectionChart: React.FC<ProjectionChartProps> = ({
           </p>
         </div>
       ) : (
-        <div className="overflow-x-auto py-2 flex-1 flex items-center scrollbar-thin">
-          <div className="min-w-[620px]">
+        <div className="overflow-x-auto py-2 flex-1 flex items-center scrollbar-thin min-w-0">
+          <div className="w-full min-w-0">
             <svg
-              viewBox={`0 0 ${monthsData.length * colWidth + 20} ${chartHeight}`}
+              viewBox={`0 0 ${Math.max(monthsData.length * colWidth + 20, 400)} ${chartHeight}`}
               className="w-full h-52 sm:h-60 overflow-visible select-none"
+              preserveAspectRatio="none"
             >
               {/* Horizontal Reference Lines */}
               {[0, 0.5, 1].map((pct, idx) => {
