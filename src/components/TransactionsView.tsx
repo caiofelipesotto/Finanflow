@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Search,
   Download,
@@ -18,6 +18,10 @@ import {
 } from '../utils/formatters';
 import { CategoryIcon } from './CategoryIcon';
 import { TransactionMobileList } from './TransactionMobileList';
+import { useMediaQuery } from '../hooks/useMediaQuery';
+
+/** Quantidade de linhas renderizadas por vez. O restante carrega sob demanda. */
+const PAGE_SIZE = 40;
 
 interface TransactionsViewProps {
   transactions: Transaction[];
@@ -47,6 +51,8 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedAccount, setSelectedAccount] = useState<string>('all');
   const [selectedStatus, setSelectedStatus] = useState<'all' | 'paid' | 'pending'>('all');
+  const [visibleCount, setVisibleCount] = useState<number>(PAGE_SIZE);
+  const isMobile = useMediaQuery('(max-width: 767px)');
 
   const categoriesMap = useMemo(() => {
     return categories.reduce<Record<string, Category>>((acc, cat) => {
@@ -97,7 +103,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
       if (selectedStatus === 'pending' && tx.isPaid) return false;
 
       return true;
-    }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    }).sort((a, b) => b.date.localeCompare(a.date));
   }, [transactions, searchQuery, selectedType, selectedCategory, selectedAccount, selectedStatus, categoriesMap, accountsMap]);
 
   // Totals for filtered subset
@@ -123,6 +129,19 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
     setSelectedAccount('all');
     setSelectedStatus('all');
   };
+
+  // Sempre que um filtro muda, volta para a primeira página.
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [searchQuery, selectedType, selectedCategory, selectedAccount, selectedStatus]);
+
+  // Só renderiza a fatia visível — evita montar centenas de linhas de uma vez.
+  const visibleTransactions = useMemo(
+    () => filteredTransactions.slice(0, visibleCount),
+    [filteredTransactions, visibleCount]
+  );
+
+  const remaining = filteredTransactions.length - visibleTransactions.length;
 
   const hasActiveFilters =
     searchQuery.trim() !== '' ||
@@ -305,18 +324,21 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
           </div>
         ) : (
           <>
-          <div className="md:hidden px-3 py-1">
-            <TransactionMobileList
-              transactions={filteredTransactions}
-              categoriesMap={categoriesMap}
-              accountsMap={accountsMap}
-              onTogglePaid={onTogglePaid}
-              onEdit={onEditTransaction}
-              onDelete={onDeleteTransaction}
-            />
-          </div>
+          {isMobile && (
+            <div className="px-3 py-1">
+              <TransactionMobileList
+                transactions={visibleTransactions}
+                categoriesMap={categoriesMap}
+                accountsMap={accountsMap}
+                onTogglePaid={onTogglePaid}
+                onEdit={onEditTransaction}
+                onDelete={onDeleteTransaction}
+              />
+            </div>
+          )}
 
-          <div className="hidden md:block overflow-x-auto">
+          {!isMobile && (
+          <div className="overflow-x-auto">
             <table className="ui-table">
               <thead>
                 <tr>
@@ -330,7 +352,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
                 </tr>
               </thead>
               <tbody>
-                {filteredTransactions.map((tx) => {
+                {visibleTransactions.map((tx) => {
                   const cat = categoriesMap[tx.category] || {
                     name: 'Outros',
                     icon: 'Tag',
@@ -437,6 +459,33 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
                 })}
               </tbody>
             </table>
+          </div>
+          )}
+
+          {/* Paginação: carrega sob demanda em vez de montar tudo de uma vez */}
+          <div className="flex flex-wrap items-center justify-center gap-2 border-t border-[var(--border-1)] px-4 py-3">
+            <span className="text-[11px] text-[var(--text-4)] tabular-nums">
+              Mostrando {visibleTransactions.length} de {filteredTransactions.length}
+            </span>
+
+            {remaining > 0 && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setVisibleCount((count) => count + PAGE_SIZE)}
+                  className="ui-btn ui-btn-secondary text-xs"
+                >
+                  Carregar mais {Math.min(PAGE_SIZE, remaining)}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setVisibleCount(filteredTransactions.length)}
+                  className="ui-btn ui-btn-ghost text-xs"
+                >
+                  Mostrar todas
+                </button>
+              </>
+            )}
           </div>
           </>
         )}
