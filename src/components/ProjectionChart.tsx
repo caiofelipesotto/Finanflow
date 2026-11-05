@@ -288,7 +288,7 @@ export const ProjectionChart: React.FC<ProjectionChartProps> = ({
                     {/* Month Label */}
                     <text
                       x={x + barWidth}
-                      y={chartHeight - 6}
+                      y={chartHeight - paddingBottom + 4}
                       textAnchor="middle"
                       fontSize="10"
                       fontWeight={isSelected ? 'bold' : 'normal'}
@@ -306,14 +306,14 @@ export const ProjectionChart: React.FC<ProjectionChartProps> = ({
       )}
 
       {/* Painel de guardado acumulado */}
-      <div className="mt-3 pt-3 border-t border-[var(--border-1)]">
+      <div className="mt-6 pt-4 border-t border-[var(--border-1)]">
         <div className="flex items-center justify-between mb-2">
           <span className="ui-stat-label">Guardado acumulado</span>
           <span className="text-xs font-bold text-[var(--accent-text)] tabular-nums">
             {formatCurrency(monthsData[monthsData.length - 1]?.cumulativeSaved ?? 0)}
           </span>
         </div>
-        <SavingsChart points={monthsData} compact />
+        <SavingsChart points={monthsData} compact height={100} />
       </div>
 
       {/* Legend */}

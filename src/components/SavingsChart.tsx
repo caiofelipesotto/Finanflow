@@ -18,9 +18,9 @@ export const SavingsChart: React.FC<SavingsChartProps> = ({ points, height = 140
   const maxVal = Math.max(0, ...values);
   const span = maxVal - minVal || 1;
 
-  const chartHeight = compact ? 90 : height;
-  const paddingTop = compact ? 8 : 16;
-  const paddingBottom = compact ? 8 : 16;
+  const chartHeight = compact ? 100 : height;
+  const paddingTop = compact ? 12 : 16;
+  const paddingBottom = compact ? 16 : 16;
   const availableHeight = chartHeight - paddingTop - paddingBottom;
   const colWidth = 48;
   const totalWidth = Math.max(points.length * colWidth, 320);
@@ -98,7 +98,7 @@ export const SavingsChart: React.FC<SavingsChartProps> = ({ points, height = 140
         {/* Month labels */}
         <text
           x={getX(0)}
-          y={chartHeight - 2}
+          y={chartHeight - paddingBottom + (compact ? 4 : 2)}
           textAnchor="middle"
           fontSize={compact ? 8 : 10}
           fontWeight="normal"
@@ -109,7 +109,7 @@ export const SavingsChart: React.FC<SavingsChartProps> = ({ points, height = 140
         </text>
         <text
           x={getX(points.length - 1)}
-          y={chartHeight - 2}
+          y={chartHeight - paddingBottom + (compact ? 4 : 2)}
           textAnchor="middle"
           fontSize={compact ? 8 : 10}
           fontWeight={!compact ? 'bold' : 'normal'}
