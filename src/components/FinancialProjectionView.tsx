@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Transaction, Category, Account } from '../types/finance';
 import { formatCurrency, getMonthName } from '../utils/formatters';
+import { isAporte } from '../utils/aportes';
 import { Calendar, ChevronLeft, ChevronRight, TrendingUp, TrendingDown, Minus, AlertCircle, CreditCard } from 'lucide-react';
 
 interface FinancialProjectionViewProps {
@@ -93,6 +94,7 @@ export const FinancialProjectionView: React.FC<FinancialProjectionViewProps> = (
         dayOfMonth: data.earliestDate.getDate(),
         isInstallment: firstTx.recurrence === 'installment' || firstTx.installment,
         installmentInfo: firstTx.installment,
+        isAporteRow: isAporte(firstTx),
       };
     });
   }, [transactions, categoriesMap, accountsMap]);
@@ -167,9 +169,22 @@ export const FinancialProjectionView: React.FC<FinancialProjectionViewProps> = (
     });
   }, [projectionRows, months]);
 
-  const grandTotal = columnTotals.reduce((s: number, v: number) => s + v, 0);
-  const totalIncome = columnTotals.reduce((s: number, v: number) => s + (v > 0 ? v : 0), 0);
-  const totalExpense = columnTotals.reduce((s: number, v: number) => s + (v < 0 ? Math.abs(v) : 0), 0);
+  const totalIncome = projectionRows.reduce((sum, row) => {
+    if (row.type !== 'income' || row.isAporteRow) return sum;
+    return sum + row.values.reduce((s: number, v: number | null) => s + (v && v > 0 ? v : 0), 0);
+  }, 0);
+
+  const totalExpense = projectionRows.reduce((sum, row) => {
+    if (row.type !== 'expense' || row.isAporteRow) return sum;
+    return sum + row.values.reduce((s: number, v: number | null) => s + (v && v < 0 ? Math.abs(v) : 0), 0);
+  }, 0);
+
+  const totalSaved = projectionRows.reduce((sum, row) => {
+    if (!row.isAporteRow) return sum;
+    return sum + row.values.reduce((s: number, v: number | null) => s + (v ? Math.abs(v) : 0), 0);
+  }, 0);
+
+  const grandTotal = totalIncome - totalExpense - totalSaved;
 
   // Navegação
   const goPrev = () => {
@@ -247,6 +262,8 @@ export const FinancialProjectionView: React.FC<FinancialProjectionViewProps> = (
             <option value={6}>6 meses</option>
             <option value={12}>12 meses</option>
             <option value={24}>24 meses</option>
+            <option value={36}>36 meses</option>
+            <option value={60}>60 meses</option>
           </select>
 
           <button onClick={goPrev} className="ui-btn ui-btn-ghost" aria-label="Mês anterior">
@@ -305,14 +322,25 @@ export const FinancialProjectionView: React.FC<FinancialProjectionViewProps> = (
                             {row.installmentInfo.current}/{row.installmentInfo.total}
                           </span>
                         )}
-                        <span className="ui-badge !text-[9px] !px-1.5 !py-0.5"
-                          style={{
-                            backgroundColor: row.type === 'income' ? 'var(--success-soft)' : 'var(--danger-soft)',
-                            color: row.type === 'income' ? 'var(--success-text)' : 'var(--danger-text)',
-                          }}
-                        >
-                          {row.type === 'income' ? 'Receita' : 'Despesa'}
-                        </span>
+                        {row.isAporteRow ? (
+                          <span className="ui-badge !text-[9px] !px-1.5 !py-0.5"
+                            style={{
+                              backgroundColor: 'var(--accent-soft)',
+                              color: 'var(--accent-text)',
+                            }}
+                          >
+                            Aporte
+                          </span>
+                        ) : (
+                          <span className="ui-badge !text-[9px] !px-1.5 !py-0.5"
+                            style={{
+                              backgroundColor: row.type === 'income' ? 'var(--success-soft)' : 'var(--danger-soft)',
+                              color: row.type === 'income' ? 'var(--success-text)' : 'var(--danger-text)',
+                            }}
+                          >
+                            {row.type === 'income' ? 'Receita' : 'Despesa'}
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -359,7 +387,7 @@ export const FinancialProjectionView: React.FC<FinancialProjectionViewProps> = (
       </div>
 
       {/* Resumo cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="ui-card p-4">
           <span className="ui-stat-label">Receitas projetadas</span>
           <div className="ui-stat-value !text-[var(--accent-text)]">{formatCurrency(totalIncome)}</div>
@@ -372,6 +400,11 @@ export const FinancialProjectionView: React.FC<FinancialProjectionViewProps> = (
         <div className="ui-card p-4">
           <span className="ui-stat-label">Despesas projetadas</span>
           <div className="ui-stat-value !text-[var(--danger-text)]">{formatCurrency(totalExpense)}</div>
+          <span className="ui-stat-note">{viewMonths} meses</span>
+        </div>
+        <div className="ui-card p-4">
+          <span className="ui-stat-label">Guardado no período</span>
+          <div className="ui-stat-value !text-[var(--accent-text)]">{formatCurrency(totalSaved)}</div>
           <span className="ui-stat-note">{viewMonths} meses</span>
         </div>
         <div className="ui-card p-4">
@@ -390,7 +423,7 @@ export const FinancialProjectionView: React.FC<FinancialProjectionViewProps> = (
       </div>
 
       {/* Insight rápido — só faz sentido comparar quando há receita recorrente */}
-      {grandTotal < 0 && totalIncome > 0 && (
+      {totalIncome > 0 && totalIncome - totalExpense < 0 && (
         <div className="ui-alert !border-[color-mix(in_srgb,var(--danger-text)_32%,transparent)] !bg-[var(--danger-soft)]">
           <div className="flex items-start gap-2">
             <AlertCircle className="w-4 h-4 text-[var(--danger-text)] shrink-0" />
@@ -398,7 +431,7 @@ export const FinancialProjectionView: React.FC<FinancialProjectionViewProps> = (
               <strong className="block font-semibold">Atenção: Déficit projetado</strong>
               <span className="text-[var(--text-2)] text-[11px] mt-1">
                 No período de {viewMonths} meses, as despesas recorrentes superam as receitas em
-                {formatCurrency(Math.abs(grandTotal))}. Revise fixos ou aumente receitas.
+                {formatCurrency(Math.abs(totalIncome - totalExpense))}. Revise fixos ou aumente receitas.
               </span>
             </div>
           </div>
