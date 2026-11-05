@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, FileSpreadsheet, Upload, Check, AlertCircle, ArrowRight, Table, Sparkles } from 'lucide-react';
 import { Transaction, Category, Account, TransactionType } from '../types/finance';
 import { formatCurrency, getTodayString } from '../utils/formatters';
+import { inferCategoryFromDescription } from '../utils/categoryInference';
 
 interface ImportSpreadsheetModalProps {
   isOpen: boolean;
@@ -110,25 +111,6 @@ export const ImportSpreadsheetModal: React.FC<ImportSpreadsheetModalProps> = ({
   // de colunas específicas de categoria/conta.
   // ============================================================
 
-  /** Palavras-chave para inferir categoria pela descrição */
-  const CATEGORY_KEYWORDS: Record<string, string[]> = {
-    cat_salario: ['salario', 'salário', 'vencimento', 'pagamento salario'],
-    cat_renda_extra: ['renda extra', 'freelance', 'free lance', 'bico', 'extra'],
-    cat_rendimentos: ['rendimento', 'juros', 'dividendo', 'dividendos', 'rentabilidade'],
-    cat_aluguel: ['aluguel'],
-    cat_veiculo: ['ipva', 'licenciamento', 'dpvat', 'financiamento', 'virtus', 'parcela carro', 'carro'],
-    cat_combustivel: ['gasolina', 'etanol', 'diesel', 'posto', 'combustivel', 'combustível', 'abastecimento'],
-    cat_alimentacao: ['supermercado', 'mercado', 'padaria', 'açougue', 'hortifruti', 'ifood', 'rappi', 'uber eats', 'zé delivery', 'japa', 'restaurante', 'lanche', 'almoço', 'jantar'],
-    cat_saude: ['farmacia', 'farmácia', 'drogaria', 'medico', 'médico', 'hospital', 'clinica', 'clínica', 'exame', 'plano de saude', 'plano de saúde', 'seguro saude', 'seguro saúde', 'unimed', 'amil', 'sulamerica'],
-    cat_assinaturas: ['netflix', 'spotify', 'prime', 'youtube', 'google one', 'amazonprime', 'amazon prime', 'apple', 'disney', 'hbo', 'paramount', 'globoplay', 'premiere', 'telecine', 'microsoft', 'office 365', 'adobe'],
-    cat_lazer: ['cinema', 'teatro', 'show', 'viagem', 'uber', '99', 'uber eats', 'airbnb', 'booking', 'hotel', 'pousada', 'passagem', 'ingresso'],
-    cat_educacao: ['escola', 'faculdade', 'universidade', 'curso', 'mensalidade', 'colegio', 'colégio', 'creche', 'material escolar'],
-    cat_investimentos_saida: ['investimento', 'aporte', 'cdb', 'tesouro', 'acoes', 'ações', 'fundo', 'btg', 'xp', 'rico', 'clear', 'modal', 'inter', 'nubank invest'],
-    cat_moradia: ['condominio', 'condomínio', 'iptu', 'agua', 'água', 'luz', 'energia', 'internet fixa', 'tv', 'telefone', 'celular', 'fixo', 'iptv', 'net', 'claro', 'oi', 'vivo', 'tim', 'fibra', 'banda larga'],
-    cat_compras_cartao: ['riachuelo', 'renner', 'ceara', 'ceará', 'marisa', 'loja', 'e-commerce', 'ecommerce', 'magazine', 'magalu', 'casas bahia', 'ponto frio', 'fast shop', 'americanas', 'submarino', 'shoptime'],
-    cat_outros: ['outros', 'diversos', 'variados'],
-  };
-
   /** Palavras-chave para inferir conta/cartão pela descrição */
   const ACCOUNT_KEYWORDS: Record<string, string[]> = {
     acc_picpay: ['picpay', 'pic pay', 'claro flex', 'amazonprime', 'amazon prime', 'google one', 'youtube', 'netflix', 'amazon br', 'netshoes', 'dermo ervas', 'paypal', 'lojafastop', 'shopee', 'mercado pago', 'mercadopago', 'internet pg', 'internet p g', 'fibra', 'banda larga'],
@@ -144,21 +126,6 @@ export const ImportSpreadsheetModal: React.FC<ImportSpreadsheetModalProps> = ({
     acc_caixa: ['caixa', 'caixa economica', 'caixa econômica'],
     acc_original: ['original', 'banco original'],
     acc_next: ['next', 'banco next'],
-  };
-
-  /**
-   * Tenta encontrar categoria pela descrição usando palavras-chave.
-   * Retorna o ID da categoria ou null se não encontrar.
-   */
-  const inferCategoryFromDescription = (description: string, type: TransactionType): string | null => {
-    const desc = description.toLowerCase();
-    for (const [catId, keywords] of Object.entries(CATEGORY_KEYWORDS)) {
-      if (keywords.some((k) => desc.includes(k))) {
-        const cat = categories.find((c) => c.id === catId);
-        if (cat && (cat.type === type || cat.type === 'both')) return catId;
-      }
-    }
-    return null;
   };
 
   /**
@@ -394,7 +361,7 @@ export const ImportSpreadsheetModal: React.FC<ImportSpreadsheetModalProps> = ({
       if (rawCat) {
         categoryId = matchCategory(rawCat, txType);
       } else {
-        const inferred = inferCategoryFromDescription(rawDesc, txType);
+        const inferred = inferCategoryFromDescription(rawDesc, txType, categories);
         categoryId = inferred || matchCategory('', txType);
       }
 
@@ -479,7 +446,7 @@ export const ImportSpreadsheetModal: React.FC<ImportSpreadsheetModalProps> = ({
 
         // --- Categoria: prioridade 1 = inferida pela descrição, 2 = grupo amplo ---
         let categoryId: string;
-        const inferredCat = inferCategoryFromDescription(rawDesc, txType);
+        const inferredCat = inferCategoryFromDescription(rawDesc, txType, categories);
         if (inferredCat) {
           categoryId = inferredCat;
         } else if (rawGroup) {
