@@ -17,6 +17,7 @@ import {
   exportTransactionsToCsv,
   getMonthName,
 } from '../utils/formatters';
+import { summarizeTransactions } from '../utils/aportes';
 import { CategoryIcon } from './CategoryIcon';
 import { TransactionMobileList } from './TransactionMobileList';
 import { useMediaQuery } from '../hooks/useMediaQuery';
@@ -145,20 +146,8 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
   }, [transactions, monthFilter, searchQuery, selectedType, selectedCategory, selectedAccount, selectedStatus, categoriesMap, accountsMap]);
 
   // Totals for filtered subset
-  const filteredStats = useMemo(() => {
-    let income = 0;
-    let expense = 0;
-    filteredTransactions.forEach((tx) => {
-      if (tx.type === 'income') income += tx.amount;
-      else expense += tx.amount;
-    });
-    return {
-      count: filteredTransactions.length,
-      income,
-      expense,
-      net: income - expense,
-    };
-  }, [filteredTransactions]);
+  const filteredStats = useMemo(() => summarizeTransactions(filteredTransactions), [filteredTransactions]);
+  const filteredCount = useMemo(() => filteredTransactions.length, [filteredTransactions]);
 
   const resetFilters = () => {
     setMonthFilter(defaultMonthKey);
@@ -336,7 +325,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
       {/* Resumo do filtro */}
       <div className="flex flex-wrap items-center justify-between gap-3 px-1 text-[11px] text-[var(--text-3)]">
         <div className="flex items-center gap-1.5">
-          <span className="font-bold text-[var(--text-1)] tabular-nums text-xs">{filteredStats.count}</span>
+          <span className="font-bold text-[var(--text-1)] tabular-nums text-xs">{filteredCount}</span>
           <span>transações encontradas</span>
         </div>
 
@@ -352,13 +341,18 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
           </div>
           <span aria-hidden="true" className="text-[var(--border-2)]">·</span>
           <div>
+            Guardado:{' '}
+            <strong className="text-[var(--accent-text)] font-semibold">{formatCurrency(filteredStats.saved)}</strong>
+          </div>
+          <span aria-hidden="true" className="text-[var(--border-2)]">·</span>
+          <div>
             Saldo:{' '}
             <strong
               className={`font-semibold ${
-                filteredStats.net >= 0 ? 'text-[var(--accent-text)]' : 'text-[var(--danger-text)]'
+                filteredStats.balance >= 0 ? 'text-[var(--accent-text)]' : 'text-[var(--danger-text)]'
               }`}
             >
-              {formatCurrency(filteredStats.net)}
+              {formatCurrency(filteredStats.balance)}
             </strong>
           </div>
         </div>
