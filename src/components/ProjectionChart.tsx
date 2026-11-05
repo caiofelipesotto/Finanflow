@@ -1,19 +1,9 @@
 import React, { useState, useMemo } from 'react';
 import { Transaction } from '../types/finance';
 import { formatCurrency, getShortMonthName, formatMonthShort } from '../utils/formatters';
-import { TrendingUp, BarChart3, CreditCard, Calendar } from 'lucide-react';
-
-interface MonthData {
-  year: number;
-  month: number; // 0-11
-  key: string; // e.g. "2026-10"
-  label: string; // e.g. "Out/26"
-  fullLabel: string; // e.g. "Outubro de 2026"
-  income: number;
-  expense: number;
-  balance: number;
-  cardTotal: number;
-}
+import { buildMonthSeries, MonthPoint } from '../utils/monthlySeries';
+import { TrendingUp, BarChart3, CreditCard, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
+import { SavingsChart } from './SavingsChart';
 
 interface ProjectionChartProps {
   transactions: Transaction[];
@@ -29,70 +19,43 @@ export const ProjectionChart: React.FC<ProjectionChartProps> = ({
   onSelectMonth,
 }) => {
   const [chartMode, setChartMode] = useState<'cashflow' | 'card'>('cashflow');
-  const [hoveredMonth, setHoveredMonth] = useState<MonthData | null>(null);
+  const [horizon, setHorizon] = useState<12 | 24 | 36 | 60>(12);
+  const [hoveredMonth, setHoveredMonth] = useState<MonthPoint | null>(null);
 
-  // Generate 12 months horizon starting at the selected month (dashboard month).
-  const monthsData = useMemo<MonthData[]>(() => {
-    const list: MonthData[] = [];
-    const startYear = selectedYear;
-    const startMonth = selectedMonth;
-
-    for (let i = 0; i < 12; i++) {
-      const d = new Date(startYear, startMonth + i, 1);
-      const y = d.getFullYear();
-      const m = d.getMonth();
-      const monthPrefix = `${y}-${String(m + 1).padStart(2, '0')}`;
-      const label = formatMonthShort(y, m);
-      const fullLabel = `${getShortMonthName(m)}/${y}`;
-
-      let income = 0;
-      let expense = 0;
-      let cardTotal = 0;
-
-      transactions.forEach((tx) => {
-        if (tx.date.startsWith(monthPrefix)) {
-          if (tx.type === 'income') {
-            income += tx.amount;
-          } else {
-            expense += tx.amount;
-            if (tx.paymentMethod === 'credit' || tx.recurrence === 'installment') {
-              cardTotal += tx.amount;
-            }
-          }
-        }
-      });
-
-      list.push({
-        year: y,
-        month: m,
-        key: monthPrefix,
-        label,
-        fullLabel,
-        income,
-        expense,
-        balance: income - expense,
-        cardTotal,
-      });
-    }
-
-    return list;
-  }, [transactions, selectedYear, selectedMonth]);
-
-  const hasAnyData = useMemo(
-    () => monthsData.some((d) => d.income > 0 || d.expense > 0 || d.cardTotal > 0),
-    [monthsData]
+  // Build month series with cumulative saved using the shared helper.
+  const monthsData = useMemo(
+    () => buildMonthSeries(transactions, selectedYear, selectedMonth, horizon),
+    [transactions, selectedYear, selectedMonth, horizon]
   );
 
-  // Max value for scaling
+  // Card totals by month for the "Faturas" mode.
+  const cardTotalsByMonth = useMemo(() => {
+    const totals: Record<string, number> = {};
+    for (const tx of transactions) {
+      if (tx.type !== 'expense') continue;
+      if (tx.paymentMethod !== 'credit' && tx.recurrence !== 'installment') continue;
+      const key = tx.date.slice(0, 7);
+      totals[key] = (totals[key] || 0) + tx.amount;
+    }
+    return totals;
+  }, [transactions]);
+
+  const hasAnyData = useMemo(
+    () => monthsData.some((d) => d.income > 0 || d.expense > 0 || (cardTotalsByMonth[d.key] || 0) > 0),
+    [monthsData, cardTotalsByMonth]
+  );
+
+  // Max value for scaling (bars)
   const maxVal = useMemo(() => {
     let max = 1000;
     monthsData.forEach((d) => {
       if (d.income > max) max = d.income;
       if (d.expense > max) max = d.expense;
-      if (d.cardTotal > max) max = d.cardTotal;
+      const cardTotal = cardTotalsByMonth[d.key] || 0;
+      if (cardTotal > max) max = cardTotal;
     });
     return max * 1.15;
-  }, [monthsData]);
+  }, [monthsData, cardTotalsByMonth]);
 
   const chartHeight = 160;
   const colWidth = 48;
@@ -106,7 +69,7 @@ export const ProjectionChart: React.FC<ProjectionChartProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="ui-section-title">Projeção dos próximos 12 meses</h3>
+            <h3 className="ui-section-title">Projeção dos próximos {horizon} meses</h3>
             <span className="ui-badge">Tempo real</span>
           </div>
           <p className="ui-sub">
@@ -114,8 +77,22 @@ export const ProjectionChart: React.FC<ProjectionChartProps> = ({
           </p>
         </div>
 
-        {/* Alternância de visão */}
-        <div className="ui-segmented w-full sm:w-auto shrink-0">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-2 w-full sm:w-auto shrink-0">
+          {/* Seletor de horizonte */}
+          <select
+            value={horizon}
+            onChange={(e) => setHorizon(Number(e.target.value) as 12 | 24 | 36 | 60)}
+            aria-label="Horizonte do gráfico"
+            className="ui-input w-full sm:w-auto px-2 py-1 text-xs"
+          >
+            <option value={12}>12 meses</option>
+            <option value={24}>24 meses</option>
+            <option value={36}>36 meses</option>
+            <option value={60}>60 meses</option>
+          </select>
+
+          {/* Alternância de visão */}
+          <div className="ui-segmented w-full sm:w-auto shrink-0">
           <button
             type="button"
             onClick={() => setChartMode('cashflow')}
@@ -134,6 +111,7 @@ export const ProjectionChart: React.FC<ProjectionChartProps> = ({
           </button>
         </div>
       </div>
+      </div>
 
       {/* Floating Hover Card */}
       {hoveredMonth && (
@@ -143,7 +121,7 @@ export const ProjectionChart: React.FC<ProjectionChartProps> = ({
               className="w-2 h-2 rounded-full"
               style={{ backgroundColor: 'var(--chart-income)' }}
             />
-            <span className="font-bold text-[var(--text-1)] text-xs">{hoveredMonth.fullLabel}</span>
+            <span className="font-bold text-[var(--text-1)] text-xs">{hoveredMonth.label}</span>
           </div>
 
           <div className="flex flex-wrap items-center gap-3 text-[11px] tabular-nums">
@@ -175,12 +153,24 @@ export const ProjectionChart: React.FC<ProjectionChartProps> = ({
                     {formatCurrency(hoveredMonth.balance)}
                   </strong>
                 </div>
+                <div className="border-l border-[var(--border-1)] pl-3">
+                  <span className="ui-stat-label">Guardado</span>
+                  <strong className="font-bold" style={{ color: 'var(--accent-text)' }}>
+                    {formatCurrency(hoveredMonth.saved)}
+                  </strong>
+                </div>
+                <div className="border-l border-[var(--border-1)] pl-3">
+                  <span className="ui-stat-label">Acumulado</span>
+                  <strong className="font-bold" style={{ color: 'var(--accent-text)' }}>
+                    {formatCurrency(hoveredMonth.cumulativeSaved)}
+                  </strong>
+                </div>
               </>
             ) : (
               <div>
                 <span className="ui-stat-label">Fatura e parcelas</span>
                 <strong className="font-bold" style={{ color: 'var(--chart-card)' }}>
-                  {formatCurrency(hoveredMonth.cardTotal)}
+                  {formatCurrency(cardTotalsByMonth[hoveredMonth.key] || 0)}
                 </strong>
               </div>
             )}
@@ -231,7 +221,8 @@ export const ProjectionChart: React.FC<ProjectionChartProps> = ({
                 // Cashflow mode heights
                 const incomeH = maxVal > 0 ? (m.income / maxVal) * availableHeight : 0;
                 const expenseH = maxVal > 0 ? (m.expense / maxVal) * availableHeight : 0;
-                const cardH = maxVal > 0 ? (m.cardTotal / maxVal) * availableHeight : 0;
+                const cardTotal = cardTotalsByMonth[m.key] || 0;
+                 const cardH = maxVal > 0 ? (cardTotal / maxVal) * availableHeight : 0;
 
                 const incomeY = paddingTop + availableHeight - incomeH;
                 const expenseY = paddingTop + availableHeight - expenseH;
@@ -313,6 +304,17 @@ export const ProjectionChart: React.FC<ProjectionChartProps> = ({
           </div>
         </div>
       )}
+
+      {/* Painel de guardado acumulado */}
+      <div className="mt-3 pt-3 border-t border-[var(--border-1)]">
+        <div className="flex items-center justify-between mb-2">
+          <span className="ui-stat-label">Guardado acumulado</span>
+          <span className="text-xs font-bold text-[var(--accent-text)] tabular-nums">
+            {formatCurrency(monthsData[monthsData.length - 1]?.cumulativeSaved ?? 0)}
+          </span>
+        </div>
+        <SavingsChart points={monthsData} compact />
+      </div>
 
       {/* Legend */}
       <div className="flex flex-wrap items-center justify-between gap-3 mt-2 pt-3 border-t border-[var(--border-1)] text-[11px] text-[var(--text-3)]">
