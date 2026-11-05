@@ -11,21 +11,18 @@ import { CreditCardsWidget } from './CreditCardsWidget';
 import { MonthBreakdownTable } from './MonthBreakdownTable';
 import { DonutCategoryChart } from './DonutCategoryChart';
 import { ProjectionChart } from './ProjectionChart';
+import { FinancialProjectionView } from './FinancialProjectionView';
 import { formatCurrency, getMonthName, formatMonthShort } from '../utils/formatters';
 import {
-  PlusCircle,
-  CreditCard,
-  Sparkles,
-  AlertCircle,
-  ArrowRight,
   ChevronDown,
   ChevronUp,
-  BarChart2,
   Target,
   PiggyBank,
-  Calendar,
   TrendingUp,
-  TrendingDown,
+  PlusCircle,
+  Sparkles,
+  Calendar,
+  BarChart2,
 } from 'lucide-react';
 
 interface DashboardViewProps {
@@ -70,7 +67,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const monthLabel = `${getMonthName(selectedMonth)} de ${selectedYear}`;
   const shortLabel = formatMonthShort(selectedYear, selectedMonth);
 
-  // Month transactions (recorrentes + normais)
+  // Lançamentos do mês (recorrentes + normais)
   const monthTransactions = useMemo(() => {
     const normal = transactions.filter((t) => t.date.startsWith(monthPrefix));
 
@@ -96,46 +93,44 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     return [...normal, ...recurringAsTx].sort((a, b) => a.date.localeCompare(b.date));
   }, [transactions, recurringTransactions, monthPrefix]);
 
-  // Aggregate sums
-  const totalIncome = useMemo(() => {
-    return monthTransactions
-      .filter((t) => t.type === 'income')
-      .reduce((sum, t) => sum + t.amount, 0);
-  }, [monthTransactions]);
+  const totalIncome = useMemo(
+    () => monthTransactions.filter((t) => t.type === 'income').reduce((sum, t) => sum + t.amount, 0),
+    [monthTransactions]
+  );
 
-  const totalExpense = useMemo(() => {
-    return monthTransactions
-      .filter((t) => t.type === 'expense')
-      .reduce((sum, t) => sum + t.amount, 0);
-  }, [monthTransactions]);
+  const totalExpense = useMemo(
+    () => monthTransactions.filter((t) => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0),
+    [monthTransactions]
+  );
 
   const balance = totalIncome - totalExpense;
 
-  const paidCount = useMemo(() => {
-    return monthTransactions.filter((t) => t.type === 'expense' && t.isPaid).length;
-  }, [monthTransactions]);
+  const paidCount = useMemo(
+    () => monthTransactions.filter((t) => t.type === 'expense' && t.isPaid).length,
+    [monthTransactions]
+  );
 
-  const totalCount = useMemo(() => {
-    return monthTransactions.filter((t) => t.type === 'expense').length;
-  }, [monthTransactions]);
+  const totalCount = useMemo(
+    () => monthTransactions.filter((t) => t.type === 'expense').length,
+    [monthTransactions]
+  );
 
-  const creditCardTotal = useMemo(() => {
-    return monthTransactions
-      .filter(
-        (t) =>
-          t.type === 'expense' &&
-          (t.paymentMethod === 'credit' || t.recurrence === 'installment')
-      )
-      .reduce((sum, t) => sum + t.amount, 0);
-  }, [monthTransactions]);
+  const creditCardTotal = useMemo(
+    () =>
+      monthTransactions
+        .filter((t) => t.type === 'expense' && (t.paymentMethod === 'credit' || t.recurrence === 'installment'))
+        .reduce((sum, t) => sum + t.amount, 0),
+    [monthTransactions]
+  );
 
-  // Donut category items
-  const categoriesMap = useMemo(() => {
-    return categories.reduce<Record<string, Category>>((acc, c) => {
-      acc[c.id] = c;
-      return acc;
-    }, {});
-  }, [categories]);
+  const categoriesMap = useMemo(
+    () =>
+      categories.reduce<Record<string, Category>>((acc, c) => {
+        acc[c.id] = c;
+        return acc;
+      }, {}),
+    [categories]
+  );
 
   const donutItems = useMemo(() => {
     const catAmounts: Record<string, number> = {};
@@ -162,7 +157,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       .sort((a, b) => b.amount - a.amount);
   }, [monthTransactions, categoriesMap]);
 
-  // Navigation handlers
+  // Navegação de mês
   const handlePrevMonth = () => {
     if (selectedMonth === 0) {
       onSelectYear(selectedYear - 1);
@@ -186,23 +181,21 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     onSelectMonth(now.getMonth());
   };
 
-  // UI state for collapsible sections
-  const [showCharts, setShowCharts] = useState(true);
-  const [showTable, setShowTable] = useState(true);
-  const [showGoals, setShowGoals] = useState(false);
-  const [showBudgets, setShowBudgets] = useState(false);
-  const [showSimulation, setShowSimulation] = useState(false);
-
   const handleSelectMonthFromChart = (year: number, month: number) => {
     onSelectYear(year);
     onSelectMonth(month);
   };
 
+  const [showCharts, setShowCharts] = useState(false);
+  const [showGoals, setShowGoals] = useState(false);
+  const [showBudgets, setShowBudgets] = useState(false);
+  const [showSimulation, setShowSimulation] = useState(false);
+
+  const budgetCategories = categories.filter((c) => c.type === 'expense' && (c.budget || 0) > 0);
+
   return (
-    <div className="space-y-5">
-      {/* ============================================================
-         1. HERO — Saldo do mês (sempre visível, centro de comando)
-         ============================================================ */}
+    <div className="space-y-4">
+      {/* 1. O essencial: entrou, saiu, sobrou */}
       <MonthBalanceHero
         monthLabel={monthLabel}
         shortLabel={shortLabel}
@@ -219,9 +212,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         onOpenNewTransaction={onOpenNewTransaction}
       />
 
-      {/* ============================================================
-         2. CARTÕES — módulos com transações do mês (sempre visível)
-         ============================================================ */}
+      {/* 2. Cartões: fatura e lançamentos do mês, cartão por cartão */}
       <CreditCardsWidget
         transactions={transactions}
         accounts={accounts}
@@ -231,85 +222,39 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         onOpenScanInvoice={onOpenScanInvoice}
       />
 
-      {/* ============================================================
-         3. GRÁFICOS — projeção + donut (colapsável)
-         ============================================================ */}
+      {/* 3. Lançamentos do mês — sempre visível */}
       <section className="ui-card p-4">
-        <button
-          type="button"
-          onClick={() => setShowCharts(!showCharts)}
-          className="flex items-center justify-between w-full pb-3 border-b border-[var(--border-1)] mb-3"
-          aria-expanded={showCharts}
-        >
-          <div className="flex items-center gap-2">
-            <BarChart2 className="w-4 h-4 text-[var(--text-3)]" aria-hidden="true" />
-            <h3 className="ui-section-title">Visão gráfica do mês</h3>
-          </div>
-          {showCharts ? (
-            <ChevronUp className="w-4 h-4 text-[var(--text-3)]" aria-hidden="true" />
-          ) : (
-            <ChevronDown className="w-4 h-4 text-[var(--text-3)]" aria-hidden="true" />
-          )}
-        </button>
-
-        {showCharts && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 animate-in fade-in-50 duration-200">
-            <div className="lg:col-span-2 min-w-0">
-              <ProjectionChart
-                transactions={transactions}
-                selectedYear={selectedYear}
-                selectedMonth={selectedMonth}
-                onSelectMonth={handleSelectMonthFromChart}
-              />
-            </div>
-
-            <div className="lg:col-span-1">
-              <DonutCategoryChart
-                items={donutItems}
-                totalExpense={totalExpense}
-                monthLabel={monthLabel}
-              />
-            </div>
-          </div>
-        )}
-      </section>
-
-      {/* ============================================================
-         4. LANÇAMENTOS DO MÊS — tabela (sempre visível, compacta)
-         ============================================================ */}
-      <section className="ui-card p-4">
-        <div className="flex items-center justify-between pb-3 border-b border-[var(--border-1)] mb-3">
-          <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-[var(--border-1)] mb-3">
+          <div className="flex items-center gap-2 min-w-0">
             <Calendar className="w-4 h-4 text-[var(--text-3)]" aria-hidden="true" />
-            <h3 className="ui-section-title">
+            <h3 className="ui-section-title truncate">
               Lançamentos de {monthLabel} ({monthTransactions.length})
             </h3>
           </div>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={onOpenNewTransaction}
-              className="ui-btn ui-btn-secondary text-xs"
-              aria-label="Novo lançamento"
-            >
-              <PlusCircle className="w-3 h-3" aria-hidden="true" />
-              <span>Novo</span>
-            </button>
+
+          <div className="flex items-center gap-2 shrink-0">
             <button
               type="button"
               onClick={onOpenImportSpreadsheet}
               className="ui-btn ui-btn-secondary text-xs"
-              aria-label="Importar planilha"
             >
               <Sparkles className="w-3 h-3" aria-hidden="true" />
               <span>Importar</span>
+            </button>
+            <button
+              type="button"
+              onClick={onOpenNewTransaction}
+              className="ui-btn ui-btn-primary text-xs"
+            >
+              <PlusCircle className="w-3 h-3" aria-hidden="true" />
+              <span>Novo</span>
             </button>
           </div>
         </div>
 
         {monthTransactions.length > 0 ? (
           <MonthBreakdownTable
-            transactions={monthTransactions.slice(0, 12)}
+            transactions={monthTransactions}
             categories={categories}
             accounts={accounts}
             monthLabel={monthLabel}
@@ -319,21 +264,64 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             onOpenNewTransaction={onOpenNewTransaction}
           />
         ) : (
-          <div className="ui-alert flex-col !border-[color-mix(in_srgb,var(--accent-text)_32%,transparent)] !bg-[var(--accent-soft)] text-center py-6">
-            <Sparkles className="w-6 h-6 text-[var(--accent-text)] mx-auto mb-2" aria-hidden="true" />
-            <strong className="block text-[var(--accent-text)] font-semibold mb-1">
-              Nenhum lançamento neste mês
-            </strong>
-            <span className="text-[var(--text-3)] text-[11px]">
-              Clique em <strong>Novo</strong> para criar seu primeiro lançamento.
-            </span>
+          <div className="text-center py-10">
+            <Sparkles className="w-7 h-7 text-[var(--accent-text)] mx-auto mb-2" aria-hidden="true" />
+            <p className="text-sm font-semibold text-[var(--text-2)] mb-1">
+              Nenhum lançamento em {monthLabel}
+            </p>
+            <p className="text-xs text-[var(--text-4)] mb-3">
+              Cadastre um lançamento ou importe sua planilha para começar.
+            </p>
+            <button onClick={onOpenNewTransaction} className="ui-btn ui-btn-primary text-xs">
+              <PlusCircle className="w-3.5 h-3.5" aria-hidden="true" />
+              <span>Criar primeiro lançamento</span>
+            </button>
           </div>
         )}
       </section>
 
-      {/* ============================================================
-         5. METAS — seção colapsável
-         ============================================================ */}
+      {/* 4. Para onde foi a grana */}
+      <section className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="lg:col-span-1 min-w-0">
+          <DonutCategoryChart items={donutItems} totalExpense={totalExpense} monthLabel={monthLabel} />
+        </div>
+
+        <div className="lg:col-span-2 min-w-0">
+          <section className="ui-card p-4 h-full">
+            <button
+              type="button"
+              onClick={() => setShowCharts(!showCharts)}
+              className="flex items-center justify-between w-full pb-3 border-b border-[var(--border-1)] mb-3"
+              aria-expanded={showCharts}
+            >
+              <div className="flex items-center gap-2">
+                <BarChart2 className="w-4 h-4 text-[var(--text-3)]" aria-hidden="true" />
+                <h3 className="ui-section-title">Evolução mês a mês</h3>
+              </div>
+              {showCharts ? (
+                <ChevronUp className="w-4 h-4 text-[var(--text-3)]" aria-hidden="true" />
+              ) : (
+                <ChevronDown className="w-4 h-4 text-[var(--text-3)]" aria-hidden="true" />
+              )}
+            </button>
+
+            {showCharts ? (
+              <ProjectionChart
+                transactions={transactions}
+                selectedYear={selectedYear}
+                selectedMonth={selectedMonth}
+                onSelectMonth={handleSelectMonthFromChart}
+              />
+            ) : (
+              <p className="text-center py-10 text-xs text-[var(--text-4)]">
+                Clique para ver entradas, saídas e saldo dos próximos meses.
+              </p>
+            )}
+          </section>
+        </div>
+      </section>
+
+      {/* 5. Metas */}
       {goals.length > 0 && (
         <section className="ui-card p-4">
           <button
@@ -354,29 +342,26 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </button>
 
           {showGoals && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 animate-in fade-in-50 duration-200">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
               {goals.map((goal) => {
                 const pct = Math.min(100, Math.round((goal.currentAmount / goal.targetAmount) * 100));
                 return (
-                  <div key={goal.id} className="ui-tile p-3 flex flex-col">
-                    <div className="flex items-center justify-between mb-2">
+                  <div key={goal.id} className="ui-tile p-3">
+                    <div className="flex items-center justify-between mb-2 gap-2">
                       <span className="text-xs font-medium text-[var(--text-1)] truncate">
                         {goal.title}
                       </span>
-                      <span className="text-[10px] font-bold text-[var(--accent-text)] tabular-nums">
+                      <span className="text-[10px] font-bold text-[var(--accent-text)] tabular-nums shrink-0">
                         {pct}%
                       </span>
                     </div>
                     <div className="ui-progress mb-2">
                       <div
                         className="ui-progress-bar"
-                        style={{
-                          width: `${pct}%`,
-                          backgroundColor: 'var(--accent-text)',
-                        }}
+                        style={{ width: `${pct}%`, backgroundColor: goal.color || 'var(--accent-text)' }}
                       />
                     </div>
-                    <div className="flex justify-between text-[10px] text-[var(--text-4)]">
+                    <div className="flex justify-between text-[10px] text-[var(--text-4)] tabular-nums">
                       <span>{formatCurrency(goal.currentAmount)}</span>
                       <span>/ {formatCurrency(goal.targetAmount)}</span>
                     </div>
@@ -388,32 +373,29 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </section>
       )}
 
-      {/* ============================================================
-         6. ORÇAMENTOS — seção colapsável
-         ============================================================ */}
-      <section className="ui-card p-4">
-        <button
-          type="button"
-          onClick={() => setShowBudgets(!showBudgets)}
-          className="flex items-center justify-between w-full pb-3 border-b border-[var(--border-1)] mb-3"
-          aria-expanded={showBudgets}
-        >
-          <div className="flex items-center gap-2">
-            <PiggyBank className="w-4 h-4 text-[var(--text-3)]" aria-hidden="true" />
-            <h3 className="ui-section-title">Limites por categoria</h3>
-          </div>
-          {showBudgets ? (
-            <ChevronUp className="w-4 h-4 text-[var(--text-3)]" aria-hidden="true" />
-          ) : (
-            <ChevronDown className="w-4 h-4 text-[var(--text-3)]" aria-hidden="true" />
-          )}
-        </button>
+      {/* 6. Limites por categoria */}
+      {budgetCategories.length > 0 && (
+        <section className="ui-card p-4">
+          <button
+            type="button"
+            onClick={() => setShowBudgets(!showBudgets)}
+            className="flex items-center justify-between w-full pb-3 border-b border-[var(--border-1)] mb-3"
+            aria-expanded={showBudgets}
+          >
+            <div className="flex items-center gap-2">
+              <PiggyBank className="w-4 h-4 text-[var(--text-3)]" aria-hidden="true" />
+              <h3 className="ui-section-title">Limites por categoria ({budgetCategories.length})</h3>
+            </div>
+            {showBudgets ? (
+              <ChevronUp className="w-4 h-4 text-[var(--text-3)]" aria-hidden="true" />
+            ) : (
+              <ChevronDown className="w-4 h-4 text-[var(--text-3)]" aria-hidden="true" />
+            )}
+          </button>
 
-        {showBudgets && (
-          <div className="space-y-2 animate-in fade-in-50 duration-200">
-            {categories
-              .filter((c) => c.type === 'expense' && (c.budget || 0) > 0)
-              .map((cat) => {
+          {showBudgets && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {budgetCategories.map((cat) => {
                 const spent = monthTransactions
                   .filter((t) => t.type === 'expense' && t.category === cat.id)
                   .reduce((s, t) => s + t.amount, 0);
@@ -421,128 +403,66 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 const over = spent > (cat.budget || 0);
 
                 return (
-                  <div key={cat.id} className="ui-tile p-2.5 flex items-center justify-between">
-                    <div className="min-w-0 flex-1">
-                      <span className="text-xs font-medium text-[var(--text-1)] truncate block">
+                  <div key={cat.id} className="ui-tile p-3">
+                    <div className="flex items-center justify-between gap-2 mb-1.5">
+                      <span className="text-xs font-medium text-[var(--text-1)] truncate">
                         {cat.name}
                       </span>
-                      <div className="flex items-center gap-1 mt-0.5">
-                        <div className="ui-progress h-[6px]">
-                          <div
-                            className="ui-progress-bar"
-                            style={{
-                              width: `${pct}%`,
-                              backgroundColor: over ? 'var(--danger-text)' : 'var(--accent-text)',
-                            }}
-                          />
-                        </div>
-                        <span className="text-[10px] tabular-nums">
-                          {over ? 'Excedido' : `${pct}%`}
-                        </span>
-                      </div>
+                      <span className="text-[11px] font-bold tabular-nums shrink-0">
+                        {formatCurrency(spent)} / {formatCurrency(cat.budget || 0)}
+                      </span>
                     </div>
-                    <span className="text-sm font-bold tabular-nums shrink-0">
-                      {formatCurrency(spent)} / {formatCurrency(cat.budget || 0)}
+                    <div className="ui-progress">
+                      <div
+                        className="ui-progress-bar"
+                        style={{
+                          width: `${pct}%`,
+                          backgroundColor: over ? 'var(--danger-text)' : 'var(--accent-text)',
+                        }}
+                      />
+                    </div>
+                    <span className="ui-stat-note">
+                      {over ? 'Limite excedido' : `${pct}% do limite usado`}
                     </span>
                   </div>
                 );
               })}
-            {categories.filter((c) => c.type === 'expense' && (c.budget || 0) > 0).length === 0 && (
-              <p className="text-center py-3 text-[var(--text-4)] text-[11px]">
-                Nenhum limite definido. Vá em <strong>Limites</strong> para definir.
-              </p>
-            )}
-          </div>
-        )}
-      </section>
-
-      {/* ============================================================
-         7. SIMULAÇÃO RÁPIDA — seção colapsável
-         ============================================================ */}
-      {recurringTransactions && recurringTransactions.length > 0 && (
-        <section className="ui-card p-4">
-          <button
-            type="button"
-            onClick={() => setShowSimulation(!showSimulation)}
-            className="flex items-center justify-between w-full pb-3 border-b border-[var(--border-1)] mb-3"
-            aria-expanded={showSimulation}
-          >
-            <div className="flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-[var(--text-3)]" aria-hidden="true" />
-              <h3 className="ui-section-title">Simulação de longo prazo</h3>
-            </div>
-            {showSimulation ? (
-              <ChevronUp className="w-4 h-4 text-[var(--text-3)]" aria-hidden="true" />
-            ) : (
-              <ChevronDown className="w-4 h-4 text-[var(--text-3)]" aria-hidden="true" />
-            )}
-          </button>
-
-          {showSimulation && (
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 animate-in fade-in-50 duration-200">
-              <div className="ui-card p-4">
-                <span className="ui-stat-label">Lançamentos recorrentes</span>
-                <div className="ui-stat-value text-[var(--text-1)]">
-                  {recurringTransactions.length}
-                </div>
-              </div>
-              <div className="ui-card p-4">
-                <span className="ui-stat-label">Próximo mês projetado</span>
-                <div className="ui-stat-value text-[var(--danger-text)]">
-                  {formatCurrency(
-                    recurringTransactions
-                      .filter((r) => r.type === 'expense')
-                      .reduce((s, r) => s + r.amount, 0)
-                  )}
-                </div>
-              </div>
-              <div className="ui-card p-4">
-                <span className="ui-stat-label">Ver detalhes</span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    // Navega para a seção de gráficos se colapsada
-                    if (!showCharts) setShowCharts(true);
-                  }}
-                  className="ui-btn ui-btn-secondary text-xs w-full"
-                >
-                  <ArrowRight className="w-3 h-3" aria-hidden="true" />
-                  <span>Abrir simulação completa</span>
-                </button>
-              </div>
             </div>
           )}
         </section>
       )}
 
-      {/* ============================================================
-         8. TABELA COMPLETA — colapsável (detalhe total)
-         ============================================================ */}
-      {showTable && monthTransactions.length > 12 && (
-        <section className="ui-card p-4 mt-4">
-          <button
-            type="button"
-            onClick={() => setShowTable(false)}
-            className="flex items-center justify-between w-full pb-3 border-b border-[var(--border-1)] mb-3"
-          >
-            <div className="flex items-center gap-2">
-              <h3 className="ui-section-title">Todos os lançamentos do mês</h3>
-            </div>
+      {/* 7. Simulação de longo prazo */}
+      <section className="ui-card p-4">
+        <button
+          type="button"
+          onClick={() => setShowSimulation(!showSimulation)}
+          className="flex items-center justify-between w-full pb-3 border-b border-[var(--border-1)] mb-3"
+          aria-expanded={showSimulation}
+        >
+          <div className="flex items-center gap-2">
+            <TrendingUp className="w-4 h-4 text-[var(--text-3)]" aria-hidden="true" />
+            <h3 className="ui-section-title">Simulação de longo prazo</h3>
+          </div>
+          {showSimulation ? (
             <ChevronUp className="w-4 h-4 text-[var(--text-3)]" aria-hidden="true" />
-          </button>
+          ) : (
+            <ChevronDown className="w-4 h-4 text-[var(--text-3)]" aria-hidden="true" />
+          )}
+        </button>
 
-          <MonthBreakdownTable
-            transactions={monthTransactions}
+        {showSimulation ? (
+          <FinancialProjectionView
+            transactions={transactions}
             categories={categories}
             accounts={accounts}
-            monthLabel={monthLabel}
-            onTogglePaid={onTogglePaid}
-            onEditTransaction={onEditTransaction}
-            onDeleteTransaction={onDeleteTransaction}
-            onOpenNewTransaction={onOpenNewTransaction}
           />
-        </section>
-      )}
+        ) : (
+          <p className="text-center py-4 text-xs text-[var(--text-4)]">
+            Clique para projetar recorrências e parcelas dos próximos meses.
+          </p>
+        )}
+      </section>
     </div>
   );
 };

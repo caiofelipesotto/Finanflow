@@ -1,5 +1,14 @@
 import React from 'react';
-import { ArrowUpRight, ArrowDownRight, Wallet, CreditCard, ChevronLeft, ChevronRight, PlusCircle, CheckCircle2, TriangleAlert } from 'lucide-react';
+import {
+  ArrowUpRight,
+  ArrowDownRight,
+  Wallet,
+  ChevronLeft,
+  ChevronRight,
+  PlusCircle,
+  CheckCircle2,
+  TriangleAlert,
+} from 'lucide-react';
 import { formatCurrency } from '../utils/formatters';
 
 interface MonthBalanceHeroProps {
@@ -39,12 +48,10 @@ export const MonthBalanceHero: React.FC<MonthBalanceHeroProps> = ({
   return (
     <section className="ui-card p-4 sm:p-5">
       {/* Cabeçalho: contexto, mês e ações */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-[var(--border-1)]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[var(--border-1)]">
         <div className="min-w-0">
-          <span className="ui-label mb-0">Visão geral do mês</span>
-
-          <div className="flex flex-wrap items-center gap-2 mt-1">
-            <h2 className="ui-h1 text-2xl sm:text-3xl">{monthLabel}</h2>
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 className="ui-h1 text-xl sm:text-2xl">{monthLabel}</h2>
             {isCurrentMonth ? (
               <span className="ui-badge ui-badge-accent">Mês atual</span>
             ) : (
@@ -53,6 +60,9 @@ export const MonthBalanceHero: React.FC<MonthBalanceHeroProps> = ({
               </button>
             )}
           </div>
+          <p className="text-xs text-[var(--text-4)] mt-1">
+            O que entrou, o que saiu e o que sobrou neste mês.
+          </p>
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
@@ -88,61 +98,68 @@ export const MonthBalanceHero: React.FC<MonthBalanceHeroProps> = ({
         </div>
       </div>
 
-      {/* Quatro métricas do mês */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mt-4">
-        <div className="ui-tile ui-tile-hover p-3.5">
-          <div className="flex items-start justify-between gap-2 mb-2">
-            <span className="ui-stat-label">Receitas do mês</span>
+      {/* Os três números que importam */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4">
+        {/* Entrou */}
+        <div className="ui-tile p-4 sm:p-5">
+          <div className="flex items-center justify-between gap-2">
+            <span className="ui-stat-label">Dinheiro que entrou</span>
             <span className="ui-icon ui-icon-success">
-              <ArrowUpRight className="w-3.5 h-3.5" aria-hidden="true" />
+              <ArrowUpRight className="w-4 h-4" aria-hidden="true" />
             </span>
           </div>
-          <div className="ui-stat-value">{formatCurrency(totalIncome)}</div>
+          <div className="text-2xl sm:text-3xl font-black tracking-tight text-[var(--success-text)] tabular-nums mt-2 break-words">
+            {formatCurrency(totalIncome)}
+          </div>
           <span className="ui-stat-note">
-            {totalIncome > 0 ? 'Receitas cadastradas no mês' : 'Nenhuma receita cadastrada'}
+            {totalIncome > 0 ? 'Receitas do mês' : 'Nenhuma receita cadastrada'}
           </span>
         </div>
 
-        <div className="ui-tile ui-tile-hover p-3.5">
-          <div className="flex items-start justify-between gap-2 mb-2">
-            <span className="ui-stat-label">Despesas e contas</span>
+        {/* Saiu */}
+        <div className="ui-tile p-4 sm:p-5">
+          <div className="flex items-center justify-between gap-2">
+            <span className="ui-stat-label">Despesas</span>
             <span className="ui-icon ui-icon-danger">
-              <ArrowDownRight className="w-3.5 h-3.5" aria-hidden="true" />
+              <ArrowDownRight className="w-4 h-4" aria-hidden="true" />
             </span>
           </div>
-          <div className="ui-stat-value">{formatCurrency(totalExpense)}</div>
+          <div className="text-2xl sm:text-3xl font-black tracking-tight text-[var(--danger-text)] tabular-nums mt-2 break-words">
+            {formatCurrency(totalExpense)}
+          </div>
           <span className="ui-stat-note">
             {totalCount > 0 ? `${paidCount} de ${totalCount} contas já pagas` : 'Nenhuma despesa cadastrada'}
           </span>
         </div>
 
+        {/* Sobrou */}
         <div
-          className={`ui-tile p-3.5 ${
+          className={`ui-tile p-4 sm:p-5 ${
             hasData
               ? isPositive
-                ? '!border-[color-mix(in_srgb,var(--accent-text)_32%,transparent)]'
-                : '!border-[color-mix(in_srgb,var(--danger-text)_32%,transparent)]'
+                ? '!border-[color-mix(in_srgb,var(--accent-text)_38%,transparent)]'
+                : '!border-[color-mix(in_srgb,var(--danger-text)_38%,transparent)]'
               : ''
           }`}
         >
-          <div className="flex items-start justify-between gap-2 mb-2">
-            <span className={`ui-stat-label ${hasData && isPositive ? '!text-[var(--accent-text)]' : hasData ? '!text-[var(--danger-text)]' : ''}`}>
-              Disponível para poupar
+          <div className="flex items-center justify-between gap-2">
+            <span className={`ui-stat-label ${hasData ? (isPositive ? '!text-[var(--accent-text)]' : '!text-[var(--danger-text)]') : ''}`}>
+              {isPositive ? 'Sobrou' : 'Faltou'}
             </span>
-            <span className="ui-icon ui-icon-accent">
-              <Wallet className="w-3.5 h-3.5" aria-hidden="true" />
+            <span className={`ui-icon ${hasData && isPositive ? 'ui-icon-accent' : hasData ? 'ui-icon-danger' : ''}`}>
+              <Wallet className="w-4 h-4" aria-hidden="true" />
             </span>
           </div>
           <div
-            className={`ui-stat-value ${
-              hasData ? (isPositive ? '!text-[var(--accent-text)]' : '!text-[var(--danger-text)]') : ''
+            className={`text-2xl sm:text-3xl font-black tracking-tight tabular-nums mt-2 break-words ${
+              hasData ? (isPositive ? 'text-[var(--accent-text)]' : 'text-[var(--danger-text)]') : 'text-[var(--text-1)]'
             }`}
           >
             {formatCurrency(balance)}
           </div>
           <span className="ui-stat-note flex items-center gap-1">
             {!hasData ? (
-              'Valores calculados em tempo real'
+              'Calculado em tempo real'
             ) : isPositive ? (
               <>
                 <CheckCircle2 className="w-3 h-3 text-[var(--accent-text)] shrink-0" aria-hidden="true" />
@@ -151,22 +168,9 @@ export const MonthBalanceHero: React.FC<MonthBalanceHeroProps> = ({
             ) : (
               <>
                 <TriangleAlert className="w-3 h-3 text-[var(--danger-text)] shrink-0" aria-hidden="true" />
-                Saídas superam as entradas
+                As saídas superam as entradas
               </>
             )}
-          </span>
-        </div>
-
-        <div className="ui-tile ui-tile-hover p-3.5">
-          <div className="flex items-start justify-between gap-2 mb-2">
-            <span className="ui-stat-label">Fatura e parcelas</span>
-            <span className="ui-icon">
-              <CreditCard className="w-3.5 h-3.5" aria-hidden="true" />
-            </span>
-          </div>
-          <div className="ui-stat-value">{formatCurrency(creditCardTotal)}</div>
-          <span className="ui-stat-note">
-            {creditCardTotal > 0 ? 'Compras à vista + parcelas do mês' : 'Sem faturas para este mês'}
           </span>
         </div>
       </div>
@@ -175,16 +179,21 @@ export const MonthBalanceHero: React.FC<MonthBalanceHeroProps> = ({
       <div className="mt-4 pt-3 border-t border-[var(--border-1)] text-xs text-[var(--text-3)]">
         {hasData ? (
           <p className="leading-relaxed">
-            Em <strong className="text-[var(--text-2)] font-semibold">{monthLabel}</strong> você tem{' '}
-            <strong className="text-[var(--accent-text)] font-semibold tabular-nums">{formatCurrency(totalIncome)}</strong> de entradas,{' '}
-            <strong className="text-[var(--danger-text)] font-semibold tabular-nums">{formatCurrency(totalExpense)}</strong> em despesas e{' '}
+            Em <strong className="text-[var(--text-2)] font-semibold">{monthLabel}</strong> entraram{' '}
+            <strong className="text-[var(--success-text)] font-semibold tabular-nums">{formatCurrency(totalIncome)}</strong>, saíram{' '}
+            <strong className="text-[var(--danger-text)] font-semibold tabular-nums">{formatCurrency(totalExpense)}</strong> e{' '}
             <strong className={isPositive ? 'text-[var(--accent-text)] font-semibold tabular-nums' : 'text-[var(--danger-text)] font-semibold tabular-nums'}>
-              {isPositive ? 'sobram' : 'faltam'} {formatCurrency(Math.abs(balance))}
-            </strong>.
+              {isPositive ? 'sobraram' : 'faltaram'} {formatCurrency(Math.abs(balance))}
+            </strong>
+            {creditCardTotal > 0 ? (
+              <> — sendo <strong className="text-[var(--text-2)] font-semibold tabular-nums">{formatCurrency(creditCardTotal)}</strong> em cartão.</>
+            ) : (
+              '.'
+            )}
           </p>
         ) : (
           <p className="leading-relaxed">
-            Comece cadastrando sua renda mensal, contas fixas ou compras parceladas no cartão para ver os cálculos automáticos.
+            Cadastre sua renda e suas contas do mês para ver automaticamente quanto entrou, quanto saiu e quanto sobrou.
           </p>
         )}
       </div>
