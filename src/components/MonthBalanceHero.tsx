@@ -8,6 +8,7 @@ import {
   PlusCircle,
   CheckCircle2,
   TriangleAlert,
+  PiggyBank,
 } from 'lucide-react';
 import { formatCurrency } from '../utils/formatters';
 
@@ -17,6 +18,8 @@ interface MonthBalanceHeroProps {
   totalIncome: number;
   totalExpense: number;
   balance: number;
+  saved: number;
+  totalSaved: number;
   paidCount: number;
   totalCount: number;
   creditCardTotal: number;
@@ -33,6 +36,8 @@ export const MonthBalanceHero: React.FC<MonthBalanceHeroProps> = ({
   totalIncome,
   totalExpense,
   balance,
+  saved,
+  totalSaved,
   paidCount,
   totalCount,
   creditCardTotal,
@@ -43,6 +48,7 @@ export const MonthBalanceHero: React.FC<MonthBalanceHeroProps> = ({
   onOpenNewTransaction,
 }) => {
   const isPositive = balance >= 0;
+  const isSaving = saved >= 0;
   const hasData = totalIncome > 0 || totalExpense > 0;
 
   return (
@@ -98,8 +104,8 @@ export const MonthBalanceHero: React.FC<MonthBalanceHeroProps> = ({
         </div>
       </div>
 
-      {/* Os três números que importam */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4">
+      {/* Os quatro números que importam */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 mt-4">
         {/* Entrou */}
         <div className="ui-tile p-4 sm:p-5">
           <div className="flex items-center justify-between gap-2">
@@ -129,6 +135,32 @@ export const MonthBalanceHero: React.FC<MonthBalanceHeroProps> = ({
           </div>
           <span className="ui-stat-note">
             {totalCount > 0 ? `${paidCount} de ${totalCount} contas já pagas` : 'Nenhuma despesa cadastrada'}
+          </span>
+        </div>
+
+        {/* Guardado / Resgatado */}
+        <div
+          className={`ui-tile p-4 sm:p-5 ${
+            hasData
+              ? isSaving
+                ? '!border-[color-mix(in_srgb,var(--accent-text)_38%,transparent)]'
+                : '!border-[color-mix(in_srgb,var(--danger-text)_38%,transparent)]'
+              : ''
+          }`}
+        >
+          <div className="flex items-center justify-between gap-2">
+            <span className={`ui-stat-label ${saved !== 0 ? '!text-[var(--accent-text)]' : ''}`}>
+              {isSaving ? 'Guardado' : 'Resgatado'}
+            </span>
+            <span className="ui-icon ui-icon-accent">
+              <PiggyBank className="w-4 h-4" aria-hidden="true" />
+            </span>
+          </div>
+          <div className="text-2xl sm:text-3xl font-black tracking-tight text-[var(--accent-text)] tabular-nums mt-2 break-words">
+            {formatCurrency(Math.abs(saved))}
+          </div>
+          <span className="ui-stat-note">
+            {totalSaved > 0 ? `${formatCurrency(totalSaved)} acumulado` : 'Comece a guardar este mês'}
           </span>
         </div>
 
@@ -185,6 +217,15 @@ export const MonthBalanceHero: React.FC<MonthBalanceHeroProps> = ({
             <strong className={isPositive ? 'text-[var(--accent-text)] font-semibold tabular-nums' : 'text-[var(--danger-text)] font-semibold tabular-nums'}>
               {isPositive ? 'sobraram' : 'faltaram'} {formatCurrency(Math.abs(balance))}
             </strong>
+            {saved > 0 ? (
+              <span> e foram guardados{' '}
+                <strong className="text-[var(--accent-text)] font-semibold tabular-nums">{formatCurrency(saved)}</strong>
+              </span>
+            ) : saved < 0 ? (
+              <span> e foram resgatados{' '}
+                <strong className="text-[var(--danger-text)] font-semibold tabular-nums">{formatCurrency(Math.abs(saved))}</strong>
+              </span>
+            ) : null}
             {creditCardTotal > 0 ? (
               <> — sendo <strong className="text-[var(--text-2)] font-semibold tabular-nums">{formatCurrency(creditCardTotal)}</strong> em cartão.</>
             ) : (

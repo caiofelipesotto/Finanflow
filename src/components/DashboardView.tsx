@@ -12,6 +12,8 @@ import { DonutCategoryChart } from './DonutCategoryChart';
 import { ProjectionChart } from './ProjectionChart';
 import { FinancialProjectionView } from './FinancialProjectionView';
 import { formatCurrency, getMonthName, formatMonthShort } from '../utils/formatters';
+import { summarizeTransactions, isAporte } from '../utils/aportes';
+import { cumulativeSavedThrough } from '../utils/monthlySeries';
 import {
   ChevronDown,
   ChevronUp,
@@ -93,32 +95,30 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     return [...normal, ...recurringAsTx].sort((a, b) => a.date.localeCompare(b.date));
   }, [transactions, recurringTransactions, monthPrefix]);
 
-  const totalIncome = useMemo(
-    () => monthTransactions.filter((t) => t.type === 'income').reduce((sum, t) => sum + t.amount, 0),
-    [monthTransactions]
+  const monthTotals = useMemo(() => summarizeTransactions(monthTransactions), [monthTransactions]);
+  const initialSaved = useMemo(
+    () => accounts.filter((a) => a.type === 'investment').reduce((sum, a) => sum + a.initialBalance, 0),
+    [accounts]
   );
-
-  const totalExpense = useMemo(
-    () => monthTransactions.filter((t) => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0),
-    [monthTransactions]
+  const totalSaved = useMemo(
+    () => initialSaved + cumulativeSavedThrough(transactions, selectedYear, selectedMonth),
+    [initialSaved, transactions, selectedYear, selectedMonth]
   );
-
-  const balance = totalIncome - totalExpense;
 
   const paidCount = useMemo(
-    () => monthTransactions.filter((t) => t.type === 'expense' && t.isPaid).length,
+    () => monthTransactions.filter((t) => t.type === 'expense' && !isAporte(t) && t.isPaid).length,
     [monthTransactions]
   );
 
   const totalCount = useMemo(
-    () => monthTransactions.filter((t) => t.type === 'expense').length,
+    () => monthTransactions.filter((t) => t.type === 'expense' && !isAporte(t)).length,
     [monthTransactions]
   );
 
   const creditCardTotal = useMemo(
     () =>
       monthTransactions
-        .filter((t) => t.type === 'expense' && (t.paymentMethod === 'credit' || t.recurrence === 'installment'))
+        .filter((t) => t.type === 'expense' && !isAporte(t) && (t.paymentMethod === 'credit' || t.recurrence === 'installment'))
         .reduce((sum, t) => sum + t.amount, 0),
     [monthTransactions]
   );
@@ -136,7 +136,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     const catAmounts: Record<string, number> = {};
 
     monthTransactions
-      .filter((t) => t.type === 'expense')
+      .filter((t) => t.type === 'expense' && !isAporte(t))
       .forEach((t) => {
         catAmounts[t.category] = (catAmounts[t.category] || 0) + t.amount;
       });
@@ -200,9 +200,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       <MonthBalanceHero
         monthLabel={monthLabel}
         shortLabel={shortLabel}
-        totalIncome={totalIncome}
-        totalExpense={totalExpense}
-        balance={balance}
+        totalIncome={monthTotals.income}
+        totalExpense={monthTotals.expense}
+        balance={monthTotals.balance}
+        saved={monthTotals.saved}
+        totalSaved={totalSaved}
         paidCount={paidCount}
         totalCount={totalCount}
         creditCardTotal={creditCardTotal}
@@ -254,7 +256,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       {/* 4. Para onde foi a grana */}
       <section className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="lg:col-span-1 min-w-0">
-          <DonutCategoryChart items={donutItems} totalExpense={totalExpense} monthLabel={monthLabel} />
+          <DonutCategoryChart items={donutItems} totalExpense={monthTotals.expense} monthLabel={monthLabel} />
         </div>
 
         <div className="lg:col-span-2 min-w-0">
