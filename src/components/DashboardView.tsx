@@ -5,6 +5,7 @@ import {
   Account,
   Goal,
   RecurringTransactionDraft,
+  RecurrenceRule,
 } from '../types/finance';
 import { MonthBalanceHero } from './MonthBalanceHero';
 import { CreditCardsWidget } from './CreditCardsWidget';
@@ -42,6 +43,7 @@ interface DashboardViewProps {
   onDeleteTransaction: (id: string) => void;
   onOpenTransactions: () => void;
   recurringTransactions?: RecurringTransactionDraft[];
+  recurrenceRules?: RecurrenceRule[];
 }
 
 export const DashboardView: React.FC<DashboardViewProps> = ({

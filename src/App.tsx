@@ -1065,6 +1065,7 @@ export default function App() {
             onDeleteTransaction={handleDeleteTransaction}
             onOpenTransactions={() => setCurrentTab('transactions')}
             recurringTransactions={recurringTransactions}
+            recurrenceRules={recurrenceRules}
           />
         )}
 
