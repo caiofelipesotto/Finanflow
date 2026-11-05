@@ -11,15 +11,13 @@ import { CreditCardsWidget } from './CreditCardsWidget';
 import { DonutCategoryChart } from './DonutCategoryChart';
 import { ProjectionChart } from './ProjectionChart';
 import { FinancialProjectionView } from './FinancialProjectionView';
-import { formatCurrency, formatDateShort, getMonthName, formatMonthShort } from '../utils/formatters';
+import { formatCurrency, getMonthName, formatMonthShort } from '../utils/formatters';
 import {
   ChevronDown,
   ChevronUp,
   Target,
   PiggyBank,
   TrendingUp,
-  PlusCircle,
-  Sparkles,
   Calendar,
   BarChart2,
   ArrowRight,
@@ -134,15 +132,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     [categories]
   );
 
-  const accountsMap = useMemo(
-    () =>
-      accounts.reduce<Record<string, Account>>((acc, a) => {
-        acc[a.id] = a;
-        return acc;
-      }, {}),
-    [accounts]
-  );
-
   const donutItems = useMemo(() => {
     const catAmounts: Record<string, number> = {};
 
@@ -233,117 +222,33 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         onOpenScanInvoice={onOpenScanInvoice}
       />
 
-      {/* 3. Últimos lançamentos — prévia com atalho para a aba Transações */}
-      <section className="ui-card p-4">
-        <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-[var(--border-1)] mb-3">
-          <div className="flex items-center gap-2 min-w-0">
-            <Calendar className="w-4 h-4 text-[var(--text-3)]" aria-hidden="true" />
-            <h3 className="ui-section-title truncate">
+      {/* 3. Atalho para a aba Transações (a lista completa vive lá) */}
+      <button
+        type="button"
+        onClick={onOpenTransactions}
+        className="ui-card ui-tile-hover p-4 w-full flex items-center justify-between gap-3 text-left group"
+      >
+        <div className="flex items-center gap-3 min-w-0">
+          <span className="ui-icon ui-icon-accent">
+            <Calendar className="w-4 h-4" aria-hidden="true" />
+          </span>
+          <div className="min-w-0">
+            <span className="block text-sm font-semibold text-[var(--text-1)] truncate">
               Lançamentos de {monthLabel}
-            </h3>
-            <span className="ui-badge tabular-nums">{monthTransactions.length}</span>
-          </div>
-
-          <div className="flex items-center gap-2 shrink-0">
-            <button
-              type="button"
-              onClick={onOpenImportSpreadsheet}
-              className="ui-btn ui-btn-secondary text-xs"
-            >
-              <Sparkles className="w-3 h-3" aria-hidden="true" />
-              <span>Importar</span>
-            </button>
-            <button
-              type="button"
-              onClick={onOpenNewTransaction}
-              className="ui-btn ui-btn-primary text-xs"
-            >
-              <PlusCircle className="w-3 h-3" aria-hidden="true" />
-              <span>Novo</span>
-            </button>
+            </span>
+            <span className="ui-stat-note">
+              {monthTransactions.length > 0
+                ? `${monthTransactions.length} transaç${monthTransactions.length === 1 ? 'ão' : 'ões'} neste mês — ver na aba Transações`
+                : 'Nenhum lançamento neste mês — abrir aba Transações'}
+            </span>
           </div>
         </div>
 
-        {monthTransactions.length > 0 ? (
-          <>
-            <div className="divide-y divide-[var(--border-1)]">
-              {[...monthTransactions]
-                .sort((a, b) => b.date.localeCompare(a.date))
-                .slice(0, 6)
-                .map((tx) => {
-                  const cat = categoriesMap[tx.category];
-                  const acc = accountsMap[tx.account];
-                  const isIncome = tx.type === 'income';
-
-                  return (
-                    <div key={tx.id} className="flex items-center justify-between gap-3 py-2.5">
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <span
-                          className="w-2 h-2 rounded-full shrink-0"
-                          style={{ backgroundColor: cat?.color || 'var(--text-4)' }}
-                        />
-                        <div className="min-w-0">
-                          <span className="text-xs font-medium text-[var(--text-1)] truncate block">
-                            {tx.description}
-                          </span>
-                          <span className="text-[10px] text-[var(--text-4)] truncate block">
-                            {formatDateShort(tx.date)}
-                            {cat ? ` · ${cat.name}` : ''}
-                            {acc ? ` · ${acc.name}` : ''}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="text-right shrink-0">
-                        <span
-                          className={`text-sm font-bold tabular-nums ${
-                            isIncome ? 'text-[var(--success-text)]' : 'text-[var(--danger-text)]'
-                          }`}
-                        >
-                          {isIncome ? '+' : '−'} {formatCurrency(tx.amount)}
-                        </span>
-                        {tx.type === 'expense' && (
-                          <span
-                            className={`ui-badge !text-[9px] !px-1.5 !py-0.5 ml-2 ${
-                              tx.isPaid ? 'ui-badge-success' : 'ui-badge-danger'
-                            }`}
-                          >
-                            {tx.isPaid ? 'Pago' : 'Aberto'}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-            </div>
-
-            <button
-              type="button"
-              onClick={onOpenTransactions}
-              className="mt-3 pt-3 border-t border-[var(--border-1)] w-full flex items-center justify-center gap-1.5 text-xs font-semibold text-[var(--accent-text)] hover:underline min-h-[44px]"
-            >
-              <span>
-                Ver todas as {monthTransactions.length} transações de {monthLabel}
-              </span>
-              <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
-            </button>
-          </>
-        ) : (
-          <div className="text-center py-10">
-            <Sparkles className="w-7 h-7 text-[var(--accent-text)] mx-auto mb-2" aria-hidden="true" />
-            <p className="text-sm font-semibold text-[var(--text-2)] mb-1">
-              Nenhum lançamento em {monthLabel}
-            </p>
-            <p className="text-xs text-[var(--text-4)] mb-3">
-              Cadastre um lançamento ou importe sua planilha para começar.
-            </p>
-            <button onClick={onOpenNewTransaction} className="ui-btn ui-btn-primary text-xs">
-              <PlusCircle className="w-3.5 h-3.5" aria-hidden="true" />
-              <span>Criar primeiro lançamento</span>
-            </button>
-          </div>
-        )}
-      </section>
+        <span className="flex items-center gap-1.5 shrink-0 text-xs font-semibold text-[var(--accent-text)] group-hover:underline">
+          <span className="hidden sm:inline">Ver transações</span>
+          <ArrowRight className="w-4 h-4" aria-hidden="true" />
+        </span>
+      </button>
 
       {/* 4. Para onde foi a grana */}
       <section className="grid grid-cols-1 lg:grid-cols-3 gap-4">
