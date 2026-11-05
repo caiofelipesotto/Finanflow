@@ -2,8 +2,7 @@ import { Transaction } from '../types/finance';
 
 export const APORTE_CATEGORY_ID = 'cat_investimentos_saida';
 
-type AporteShape = Pick<Transaction, 'type' | 'category' | 'paymentMethod'>;
-type AporteAmount = AporteShape & Pick<Transaction, 'amount'>;
+type AporteShape = Pick<Transaction, 'type' | 'category' | 'paymentMethod' | 'amount'>;
 
 const matchesAporteRule = (tx: AporteShape): boolean =>
   tx.category === APORTE_CATEGORY_ID || tx.paymentMethod === 'investment';
@@ -12,7 +11,7 @@ export const isAporte = (tx: AporteShape): boolean => tx.type === 'expense' && m
 
 export const isResgate = (tx: AporteShape): boolean => tx.type === 'income' && matchesAporteRule(tx);
 
-export const aporteNet = (tx: AporteAmount): number => {
+export const aporteNet = (tx: AporteShape): number => {
   if (isAporte(tx)) return tx.amount;
   if (isResgate(tx)) return -tx.amount;
   return 0;
