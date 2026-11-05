@@ -26,6 +26,7 @@ interface TransactionModalProps {
     existingId?: string
   ) => void;
   initialData?: Transaction | null;
+  preset?: Partial<Pick<Transaction, 'type' | 'category' | 'account' | 'paymentMethod' | 'description' | 'isPaid'>> | null;
   categories: Category[];
   accounts: Account[];
 }
@@ -35,6 +36,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
   onClose,
   onSave,
   initialData,
+  preset = null,
   categories,
   accounts,
 }) => {
@@ -91,30 +93,28 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
         setEntryMode('single');
       }
     } else {
-      setType('expense');
+      // Defaults (can be overridden by preset for "Novo aporte/resgate")
+      const firstExp = categories.find((c) => c.type === 'expense' || c.type === 'both');
+      const firstCredit = accounts.find((a) => a.type === 'credit');
+
+      setType(preset?.type ?? 'expense');
       setEntryMode('single');
-      setDescription('');
+      setDescription(preset?.description ?? '');
       setAmountInput('');
       setInstallmentMode('total');
       setTotalInstallments(3);
       setRecurrentMonths(12);
       setRecurrentInterval(1);
-
-      // Default category
-      const firstExp = categories.find((c) => c.type === 'expense' || c.type === 'both');
-      setCategory(firstExp ? firstExp.id : categories[0]?.id || '');
-      
-      // Default account: prefer a credit card if in expense, else first account
-      const firstCredit = accounts.find((a) => a.type === 'credit');
-      setAccount(firstCredit ? firstCredit.id : accounts[0]?.id || '');
-      setPaymentMethod('credit');
+      setCategory(preset?.category ?? (firstExp ? firstExp.id : categories[0]?.id || ''));
+      setAccount(preset?.account ?? (firstCredit ? firstCredit.id : accounts[0]?.id || ''));
+      setPaymentMethod(preset?.paymentMethod ?? 'credit');
       setDate(getTodayString());
-      setIsPaid(false);
+      setIsPaid(preset?.isPaid ?? false);
       setNotes('');
     }
     setErrors({});
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, initialData]);
+  }, [isOpen, initialData, preset]);
 
   // If user switches entry mode to 'installment', auto switch account to credit card if possible
   const handleEntryModeChange = (mode: EntryMode) => {

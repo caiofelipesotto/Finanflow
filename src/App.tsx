@@ -13,6 +13,7 @@ import {
   RecurrenceRule,
   RecurringTransactionDraft,
 } from './types/finance';
+import { APORTE_CATEGORY_ID } from './utils/aportes';
 import {
   DEFAULT_CATEGORIES,
   DEFAULT_ACCOUNTS,
@@ -22,6 +23,7 @@ import {
 import { Navbar } from './components/Navbar';
 import { DashboardView } from './components/DashboardView';
 import { TransactionsView } from './components/TransactionsView';
+import { InvestmentsView } from './components/InvestmentsView';
 import { TransactionModal } from './components/TransactionModal';
 import { BackupModal } from './components/BackupModal';
 import { ImportSpreadsheetModal } from './components/ImportSpreadsheetModal';
@@ -214,6 +216,7 @@ export default function App() {
   // Modal states
   const [isTxModalOpen, setIsTxModalOpen] = useState(false);
   const [editingTx, setEditingTx] = useState<Transaction | null>(null);
+  const [txPreset, setTxPreset] = useState<Partial<Transaction> | null>(null);
   const [isBackupModalOpen, setIsBackupModalOpen] = useState(false);
   const [isImportSpreadsheetOpen, setIsImportSpreadsheetOpen] = useState(false);
   const [isScanInvoiceOpen, setIsScanInvoiceOpen] = useState(false);
@@ -646,6 +649,17 @@ export default function App() {
     }
   };
 
+  const openAporteModal = (kind: 'aporte' | 'resgate') => {
+  setEditingTx(null);
+  setTxPreset({
+    type: kind === 'aporte' ? 'expense' : 'income',
+    category: APORTE_CATEGORY_ID,
+    paymentMethod: 'investment',
+    description: kind === 'aporte' ? 'Aporte' : 'Resgate',
+  });
+  setIsTxModalOpen(true);
+};
+
   const handleTogglePaid = (id: string) => {
     const target = transactions.find((t) => t.id === id);
     if (!target) return;
@@ -1072,6 +1086,21 @@ export default function App() {
             onTogglePaid={handleTogglePaid}
           />
         )}
+
+        {currentTab === 'investments' && (
+          <InvestmentsView
+            transactions={transactions}
+            categories={categories}
+            accounts={accounts}
+            selectedYear={selectedYear}
+            selectedMonth={selectedMonth}
+            onSelectMonth={(year, month) => { setSelectedYear(year); setSelectedMonth(month); }}
+            onOpenNewAporte={() => openAporteModal('aporte')}
+            onOpenNewResgate={() => openAporteModal('resgate')}
+            onEditTransaction={handleEditTransaction}
+            onDeleteTransaction={handleDeleteTransaction}
+          />
+        )}
       </main>
 
       {/* Rodapé */}
@@ -1137,9 +1166,11 @@ export default function App() {
         onClose={() => {
           setIsTxModalOpen(false);
           setEditingTx(null);
+          setTxPreset(null);
         }}
         onSave={handleSaveTransaction}
         initialData={editingTx}
+        preset={txPreset}
         categories={categories}
         accounts={accounts}
       />

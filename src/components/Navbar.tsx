@@ -41,6 +41,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   const navItems: { id: ViewTab; label: string; short: string }[] = [
     { id: 'dashboard', label: 'Visão geral', short: 'Geral' },
     { id: 'transactions', label: 'Transações', short: 'Lançamentos' },
+    { id: 'investments', label: 'Investimentos', short: 'Investir' },
   ];
 
   return (
@@ -171,7 +172,7 @@ export const Navbar: React.FC<NavbarProps> = ({
       </div>
 
       {/* Navegação mobile */}
-      <nav className="md:hidden grid grid-cols-2 gap-1 border-t border-[var(--border-1)] bg-[var(--surface-2)] px-1.5 py-1.5">
+      <nav className="md:hidden grid grid-cols-3 gap-1 border-t border-[var(--border-1)] bg-[var(--surface-2)] px-1.5 py-1.5">
         {navItems.map((item) => {
           const isActive = currentTab === item.id;
           return (
