@@ -55,14 +55,10 @@ import { recurrenceService } from './services/recurrenceService';
 
 const PENDING_TX_KEY = 'finanflow_pending_txs';
 const GUEST_TXS_KEY = 'finanflow_guest_txs';
+const GUEST_RECURRENCE_RULES_KEY = 'finanflow_guest_recurrence_rules';
 
 /**
  * Lançamentos criados no modo "Continuar sem conta".
- *
- * Antes eles eram marcados como pendentes e subiam sozinhos para o espaço
- * compartilhado no próximo login (o total aparecia somado sem o usuário ter
- * pedido). Agora ficam guardados à parte, só neste aparelho, e o app pergunta
- * antes de enviá-los.
  */
 function loadGuestTxs(): Transaction[] {
   try {
@@ -79,6 +75,75 @@ function saveGuestTxs(list: Transaction[]): void {
   try {
     if (list.length === 0) localStorage.removeItem(GUEST_TXS_KEY);
     else localStorage.setItem(GUEST_TXS_KEY, JSON.stringify(list));
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+/**
+ * Regras de recorrência no modo visitante (localStorage).
+ */
+function loadGuestRecurrenceRules(): RecurrenceRule[] {
+  try {
+    const raw = localStorage.getItem(GUEST_RECURRENCE_RULES_KEY);
+    const parsed = raw ? (JSON.parse(raw) as RecurrenceRule[]) : [];
+    const rules = Array.isArray(parsed) ? parsed : [];
+
+    // Se não há regras, cria exemplos padrão (Financiamento Virtus)
+    if (rules.length === 0) {
+      const defaults: RecurrenceRule[] = [
+        {
+          id: 'guest_rec_virtus',
+          user_id: 'guest',
+          household_id: 'guest',
+          description: 'Financiamento Virtus',
+          amount: 931.00,
+          day_of_month: 3,
+          interval_months: 1,
+          category_id: 'cat_veiculo',
+          account_id: 'acc_santander',
+          payment_method: 'credit',
+          type: 'expense',
+          start_date: '2026-11-03',
+          end_date: '2028-10-03',
+          is_active: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        },
+        {
+          id: 'guest_rec_salary',
+          user_id: 'guest',
+          household_id: 'guest',
+          description: 'Salário',
+          amount: 5000.00,
+          day_of_month: 5,
+          interval_months: 1,
+          category_id: 'cat_salario',
+          account_id: 'acc_corrente',
+          payment_method: 'pix',
+          type: 'income',
+          start_date: '2026-01-05',
+          end_date: undefined,
+          is_active: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        },
+      ];
+      saveGuestRecurrenceRules(defaults);
+      return defaults;
+    }
+
+    return rules;
+  } catch (e) {
+    console.error(e);
+    return [];
+  }
+}
+
+function saveGuestRecurrenceRules(list: RecurrenceRule[]): void {
+  try {
+    if (list.length === 0) localStorage.removeItem(GUEST_RECURRENCE_RULES_KEY);
+    else localStorage.setItem(GUEST_RECURRENCE_RULES_KEY, JSON.stringify(list));
   } catch (e) {
     console.error(e);
   }
@@ -248,6 +313,7 @@ export default function App() {
 
   // Lançamentos do modo sem conta (ver loadGuestTxs)
   const guestTxsRef = useRef<Transaction[]>(loadGuestTxs());
+  const guestRecurrenceRulesRef = useRef<RecurrenceRule[]>(loadGuestRecurrenceRules());
   const [guestTxCount, setGuestTxCount] = useState(() => guestTxsRef.current.length);
   const persistGuestTxs = (list: Transaction[]) => {
     guestTxsRef.current = list;
@@ -338,22 +404,31 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser, isGuestMode]);
 
-  // Carregar regras de recorrência quando o household muda
+  // Carregar regras de recorrência (cloud ou guest)
   useEffect(() => {
-    if (!currentUser || !currentHousehold?.id) return;
-
     let stopped = false;
+
     const load = async () => {
       try {
-        const rules = await recurrenceService.listRules(currentHousehold.id);
+        let rules: RecurrenceRule[] = [];
+
+        if (currentUser && currentHousehold?.id) {
+          // Modo cloud: busca do Supabase
+          rules = await recurrenceService.listRules(currentHousehold.id);
+        } else {
+          // Modo guest: carrega do localStorage
+          rules = guestRecurrenceRulesRef.current;
+        }
+
         if (!stopped) setRecurrenceRules(rules);
       } catch (err) {
         console.error('Erro ao carregar regras de recorrência:', err);
       }
     };
+
     load();
     return () => { stopped = true; };
-  }, [currentUser, currentHousehold?.id]);
+  }, [currentUser, currentHousehold?.id, isGuestMode]);
 
   // Gerar lançamentos recorrentes para o mês selecionado
   useEffect(() => {
