@@ -1,5 +1,6 @@
 import React from 'react';
 import { Plus, Download, FileSpreadsheet, Camera, ArrowLeft, LogOut } from 'lucide-react';
+import { ViewTab } from '../types/finance';
 import { User, HouseholdDoc } from '../services/cloudSyncService';
 import { GoogleIcon } from './GoogleIcon';
 import { LogoMark } from './Logo';
@@ -7,6 +8,8 @@ import { ThemeToggle } from './ThemeToggle';
 import type { Theme } from '../utils/theme';
 
 interface NavbarProps {
+  currentTab: ViewTab;
+  onSelectTab: (tab: ViewTab) => void;
   onOpenNewTransaction: () => void;
   onOpenScanInvoice: () => void;
   onOpenImportSpreadsheet: () => void;
@@ -21,6 +24,8 @@ interface NavbarProps {
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
+  currentTab,
+  onSelectTab,
   onOpenNewTransaction,
   onOpenScanInvoice,
   onOpenImportSpreadsheet,
@@ -33,22 +38,53 @@ export const Navbar: React.FC<NavbarProps> = ({
   theme,
   onToggleTheme,
 }) => {
+  const navItems: { id: ViewTab; label: string; short: string }[] = [
+    { id: 'dashboard', label: 'Visão geral', short: 'Geral' },
+    { id: 'transactions', label: 'Transações', short: 'Lançamentos' },
+  ];
+
   return (
     <header className="sticky top-0 z-30 bg-[var(--app-bg)]/95 backdrop-blur-md border-b border-[var(--border-1)]">
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between gap-2 sm:gap-4 min-w-0">
-        {/* Marca — única tela do app */}
-        <div
+        {/* Marca */}
+        <a
+          href="#"
+          onClick={(e) => { e.preventDefault(); onSelectTab('dashboard'); }}
+          aria-current={currentTab === 'dashboard' ? 'page' : undefined}
           aria-label="FinanFlow · Visão geral"
-          className="flex items-center gap-2.5 text-left shrink-0"
+          className="flex items-center gap-2.5 text-left group cursor-pointer shrink-0"
+          title="Voltar para a visão geral"
         >
-          <LogoMark className="w-8 h-8" aria-hidden="true" />
+          <LogoMark className="w-8 h-8 group-hover:opacity-90 transition-opacity" aria-hidden="true" />
           <div className="flex items-center gap-2 min-w-0">
             <span className="text-base sm:text-lg font-black tracking-tight text-[var(--text-1)] truncate">
               FinanFlow
             </span>
-            <span className="hidden sm:inline ui-badge">Visão geral</span>
+            <span className="hidden sm:inline ui-badge">Pro</span>
           </div>
-        </div>
+        </a>
+
+        {/* Navegação desktop */}
+        <nav className="hidden md:flex items-center gap-1 text-xs font-semibold min-w-0">
+          {navItems.map((item) => {
+            const isActive = currentTab === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => onSelectTab(item.id)}
+                aria-current={isActive ? 'page' : undefined}
+                aria-label={item.label}
+                className={`px-3 py-1.5 rounded-[var(--r-control)] whitespace-nowrap transition-colors cursor-pointer ${
+                  isActive
+                    ? 'bg-[var(--surface-3)] text-[var(--text-1)]'
+                    : 'text-[var(--text-3)] hover:text-[var(--text-1)] hover:bg-[var(--surface-2)]'
+                }`}
+              >
+                {item.label}
+              </button>
+            );
+          })}
+        </nav>
 
         {/* Ações */}
         <div className="flex items-center gap-1.5 shrink-0">
@@ -133,6 +169,28 @@ export const Navbar: React.FC<NavbarProps> = ({
           </button>
         </div>
       </div>
+
+      {/* Navegação mobile */}
+      <nav className="md:hidden grid grid-cols-2 gap-1 border-t border-[var(--border-1)] bg-[var(--surface-2)] px-1.5 py-1.5">
+        {navItems.map((item) => {
+          const isActive = currentTab === item.id;
+          return (
+            <button
+              key={item.id}
+              onClick={() => onSelectTab(item.id)}
+              aria-current={isActive ? 'page' : undefined}
+              aria-label={item.label}
+              className={`min-w-0 px-1 py-2 text-xs text-center rounded-[var(--r-control)] truncate transition-colors cursor-pointer ${
+                isActive
+                  ? 'bg-[var(--accent-soft)] text-[var(--accent-text)] font-bold'
+                  : 'text-[var(--text-3)] hover:text-[var(--text-1)]'
+              }`}
+            >
+              {item.label}
+            </button>
+          );
+        })}
+      </nav>
     </header>
   );
 };

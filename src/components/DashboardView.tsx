@@ -8,11 +8,10 @@ import {
 } from '../types/finance';
 import { MonthBalanceHero } from './MonthBalanceHero';
 import { CreditCardsWidget } from './CreditCardsWidget';
-import { MonthBreakdownTable } from './MonthBreakdownTable';
 import { DonutCategoryChart } from './DonutCategoryChart';
 import { ProjectionChart } from './ProjectionChart';
 import { FinancialProjectionView } from './FinancialProjectionView';
-import { formatCurrency, getMonthName, formatMonthShort } from '../utils/formatters';
+import { formatCurrency, formatDateShort, getMonthName, formatMonthShort } from '../utils/formatters';
 import {
   ChevronDown,
   ChevronUp,
@@ -23,6 +22,7 @@ import {
   Sparkles,
   Calendar,
   BarChart2,
+  ArrowRight,
 } from 'lucide-react';
 
 interface DashboardViewProps {
@@ -40,6 +40,7 @@ interface DashboardViewProps {
   onTogglePaid: (id: string) => void;
   onEditTransaction: (tx: Transaction) => void;
   onDeleteTransaction: (id: string) => void;
+  onOpenTransactions: () => void;
   recurringTransactions?: RecurringTransactionDraft[];
 }
 
@@ -58,6 +59,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   onTogglePaid,
   onEditTransaction,
   onDeleteTransaction,
+  onOpenTransactions,
   recurringTransactions,
 }) => {
   const now = new Date();
@@ -130,6 +132,15 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         return acc;
       }, {}),
     [categories]
+  );
+
+  const accountsMap = useMemo(
+    () =>
+      accounts.reduce<Record<string, Account>>((acc, a) => {
+        acc[a.id] = a;
+        return acc;
+      }, {}),
+    [accounts]
   );
 
   const donutItems = useMemo(() => {
@@ -222,14 +233,15 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         onOpenScanInvoice={onOpenScanInvoice}
       />
 
-      {/* 3. Lançamentos do mês — sempre visível */}
+      {/* 3. Últimos lançamentos — prévia com atalho para a aba Transações */}
       <section className="ui-card p-4">
         <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-[var(--border-1)] mb-3">
           <div className="flex items-center gap-2 min-w-0">
             <Calendar className="w-4 h-4 text-[var(--text-3)]" aria-hidden="true" />
             <h3 className="ui-section-title truncate">
-              Lançamentos de {monthLabel} ({monthTransactions.length})
+              Lançamentos de {monthLabel}
             </h3>
+            <span className="ui-badge tabular-nums">{monthTransactions.length}</span>
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
@@ -253,16 +265,69 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
 
         {monthTransactions.length > 0 ? (
-          <MonthBreakdownTable
-            transactions={monthTransactions}
-            categories={categories}
-            accounts={accounts}
-            monthLabel={monthLabel}
-            onTogglePaid={onTogglePaid}
-            onEditTransaction={onEditTransaction}
-            onDeleteTransaction={onDeleteTransaction}
-            onOpenNewTransaction={onOpenNewTransaction}
-          />
+          <>
+            <div className="divide-y divide-[var(--border-1)]">
+              {[...monthTransactions]
+                .sort((a, b) => b.date.localeCompare(a.date))
+                .slice(0, 6)
+                .map((tx) => {
+                  const cat = categoriesMap[tx.category];
+                  const acc = accountsMap[tx.account];
+                  const isIncome = tx.type === 'income';
+
+                  return (
+                    <div key={tx.id} className="flex items-center justify-between gap-3 py-2.5">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <span
+                          className="w-2 h-2 rounded-full shrink-0"
+                          style={{ backgroundColor: cat?.color || 'var(--text-4)' }}
+                        />
+                        <div className="min-w-0">
+                          <span className="text-xs font-medium text-[var(--text-1)] truncate block">
+                            {tx.description}
+                          </span>
+                          <span className="text-[10px] text-[var(--text-4)] truncate block">
+                            {formatDateShort(tx.date)}
+                            {cat ? ` · ${cat.name}` : ''}
+                            {acc ? ` · ${acc.name}` : ''}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="text-right shrink-0">
+                        <span
+                          className={`text-sm font-bold tabular-nums ${
+                            isIncome ? 'text-[var(--success-text)]' : 'text-[var(--danger-text)]'
+                          }`}
+                        >
+                          {isIncome ? '+' : '−'} {formatCurrency(tx.amount)}
+                        </span>
+                        {tx.type === 'expense' && (
+                          <span
+                            className={`ui-badge !text-[9px] !px-1.5 !py-0.5 ml-2 ${
+                              tx.isPaid ? 'ui-badge-success' : 'ui-badge-danger'
+                            }`}
+                          >
+                            {tx.isPaid ? 'Pago' : 'Aberto'}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+            </div>
+
+            <button
+              type="button"
+              onClick={onOpenTransactions}
+              className="mt-3 pt-3 border-t border-[var(--border-1)] w-full flex items-center justify-center gap-1.5 text-xs font-semibold text-[var(--accent-text)] hover:underline min-h-[44px]"
+            >
+              <span>
+                Ver todas as {monthTransactions.length} transações de {monthLabel}
+              </span>
+              <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
+            </button>
+          </>
         ) : (
           <div className="text-center py-10">
             <Sparkles className="w-7 h-7 text-[var(--accent-text)] mx-auto mb-2" aria-hidden="true" />

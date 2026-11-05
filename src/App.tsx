@@ -5,6 +5,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import {
+  ViewTab,
   Transaction,
   Category,
   Account,
@@ -20,6 +21,7 @@ import {
 } from './data/initialData';
 import { Navbar } from './components/Navbar';
 import { DashboardView } from './components/DashboardView';
+import { TransactionsView } from './components/TransactionsView';
 import { TransactionModal } from './components/TransactionModal';
 import { BackupModal } from './components/BackupModal';
 import { ImportSpreadsheetModal } from './components/ImportSpreadsheetModal';
@@ -122,8 +124,8 @@ export default function App() {
   const now = new Date();
   const [selectedYear, setSelectedYear] = useState<number>(now.getFullYear());
   const [selectedMonth, setSelectedMonth] = useState<number>(now.getMonth());
-  // Tela única: visão geral. Transações, metas, limites e simulação vivem
-  // como seções dentro desta tela; criar/editar acontece em modais.
+  // Tela principal: visão geral (resumo) + transações (lista completa).
+  const [currentTab, setCurrentTab] = useState<ViewTab>('dashboard');
   const [theme, setTheme] = useState<Theme>(() => readTheme());
   const toggleTheme = () => setTheme((t) => (t === 'dark' ? 'light' : 'dark'));
 
@@ -937,6 +939,8 @@ export default function App() {
     <div className="min-h-screen bg-[var(--app-bg)] text-[var(--text-1)] flex flex-col font-sans selection:bg-[var(--accent-soft)]">
       {/* 3-Zone Top Bar Navigation */}
       <Navbar
+        currentTab={currentTab}
+        onSelectTab={setCurrentTab}
         onOpenNewTransaction={() => {
           setEditingTx(null);
           setIsTxModalOpen(true);
@@ -1026,26 +1030,46 @@ export default function App() {
           </div>
         )}
 
-        <DashboardView
-          transactions={transactions}
-          categories={categories}
-          accounts={accounts}
-          goals={goals}
-          selectedYear={selectedYear}
-          selectedMonth={selectedMonth}
-          onSelectYear={setSelectedYear}
-          onSelectMonth={setSelectedMonth}
-          onOpenNewTransaction={() => {
-            setEditingTx(null);
-            setIsTxModalOpen(true);
-          }}
-          onOpenScanInvoice={() => setIsScanInvoiceOpen(true)}
-          onOpenImportSpreadsheet={() => setIsImportSpreadsheetOpen(true)}
-          onTogglePaid={handleTogglePaid}
-          onEditTransaction={handleEditTransaction}
-          onDeleteTransaction={handleDeleteTransaction}
-          recurringTransactions={recurringTransactions}
-        />
+        {currentTab === 'dashboard' && (
+          <DashboardView
+            transactions={transactions}
+            categories={categories}
+            accounts={accounts}
+            goals={goals}
+            selectedYear={selectedYear}
+            selectedMonth={selectedMonth}
+            onSelectYear={setSelectedYear}
+            onSelectMonth={setSelectedMonth}
+            onOpenNewTransaction={() => {
+              setEditingTx(null);
+              setIsTxModalOpen(true);
+            }}
+            onOpenScanInvoice={() => setIsScanInvoiceOpen(true)}
+            onOpenImportSpreadsheet={() => setIsImportSpreadsheetOpen(true)}
+            onTogglePaid={handleTogglePaid}
+            onEditTransaction={handleEditTransaction}
+            onDeleteTransaction={handleDeleteTransaction}
+            onOpenTransactions={() => setCurrentTab('transactions')}
+            recurringTransactions={recurringTransactions}
+          />
+        )}
+
+        {currentTab === 'transactions' && (
+          <TransactionsView
+            transactions={transactions}
+            categories={categories}
+            accounts={accounts}
+            onOpenNewTransaction={() => {
+              setEditingTx(null);
+              setIsTxModalOpen(true);
+            }}
+            onOpenScanInvoice={() => setIsScanInvoiceOpen(true)}
+            onOpenImportSpreadsheet={() => setIsImportSpreadsheetOpen(true)}
+            onEditTransaction={handleEditTransaction}
+            onDeleteTransaction={handleDeleteTransaction}
+            onTogglePaid={handleTogglePaid}
+          />
+        )}
       </main>
 
       {/* Rodapé */}
