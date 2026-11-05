@@ -63,6 +63,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   onDeleteTransaction,
   onOpenTransactions,
   recurringTransactions,
+  recurrenceRules,
 }) => {
   const now = new Date();
   const isCurrentMonth = selectedYear === now.getFullYear() && selectedMonth === now.getMonth();
@@ -432,6 +433,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             categories={categories}
             accounts={accounts}
             recurringTransactions={recurringTransactions}
+            recurrenceRules={recurrenceRules}
           />
         ) : (
           <p className="text-center py-4 text-xs text-[var(--text-4)]">
