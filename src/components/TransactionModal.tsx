@@ -172,8 +172,14 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
   const lastInstallmentDate = date ? addMonthsToDate(date, totalInstallments - 1) : '';
   const lastInstallmentLabel = lastInstallmentDate ? formatMonthShort(parseInt(lastInstallmentDate.split('-')[0]), parseInt(lastInstallmentDate.split('-')[1]) - 1) : '';
 
-  const lastRecurrentDate = date ? addMonthsToDate(date, recurrentMonths - 1) : '';
+  const lastRecurrentDate = date
+    ? addMonthsToDate(date, (recurrentMonths - 1) * recurrentInterval)
+    : '';
   const lastRecurrentLabel = lastRecurrentDate ? formatMonthShort(parseInt(lastRecurrentDate.split('-')[0]), parseInt(lastRecurrentDate.split('-')[1]) - 1) : '';
+
+  // Horizonte total da recorrência (em meses) — usado para alertar projeções longas.
+  const recurrentSpanMonths = (recurrentMonths - 1) * recurrentInterval;
+  const recurrentSpanYears = recurrentSpanMonths / 12;
 
   const applyPreset = (presetDesc: string, presetCatId: string, presetType: TransactionType, defaultMode: EntryMode = 'single') => {
     setDescription(presetDesc);
@@ -646,6 +652,15 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                     De <strong className="text-[var(--text-2)]">{firstMonthLabel}</strong> até{' '}
                     <strong className="text-[var(--text-2)]">{lastRecurrentLabel}</strong>.
                   </div>
+                  {recurrentSpanMonths > 60 && (
+                    <div className="flex items-start gap-1.5 pt-1 text-[11px] text-[var(--warning-text)]">
+                      <span aria-hidden="true">⚠</span>
+                      <span>
+                        Atenção: com {recurrentInterval} {recurrentInterval === 1 ? 'mês' : 'meses'} de intervalo,
+                        isso se estende por {Math.round(recurrentSpanYears)} anos. Confira a data final antes de salvar.
+                      </span>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

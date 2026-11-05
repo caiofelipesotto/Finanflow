@@ -15,6 +15,7 @@ import {
   formatCurrency,
   formatDate,
   exportTransactionsToCsv,
+  getMonthName,
 } from '../utils/formatters';
 import { CategoryIcon } from './CategoryIcon';
 import { TransactionMobileList } from './TransactionMobileList';
@@ -27,6 +28,9 @@ interface TransactionsViewProps {
   transactions: Transaction[];
   categories: Category[];
   accounts: Account[];
+  /** Mês que a aba deve abrir por padrão (vindo da Visão geral). */
+  initialYear?: number;
+  initialMonth?: number; // 0-11
   onOpenNewTransaction: () => void;
   onOpenScanInvoice?: () => void;
   onOpenImportSpreadsheet: () => void;
@@ -39,6 +43,8 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
   transactions,
   categories,
   accounts,
+  initialYear,
+  initialMonth,
   onOpenNewTransaction,
   onOpenScanInvoice,
   onOpenImportSpreadsheet,
@@ -53,6 +59,33 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
   const [selectedStatus, setSelectedStatus] = useState<'all' | 'paid' | 'pending'>('all');
   const [visibleCount, setVisibleCount] = useState<number>(PAGE_SIZE);
   const isMobile = useMediaQuery('(max-width: 767px)');
+
+  // Abre já no mês selecionado na Visão geral (ou no mês atual).
+  const defaultMonthKey = useMemo(() => {
+    if (initialYear !== undefined && initialMonth !== undefined) {
+      return `${initialYear}-${String(initialMonth + 1).padStart(2, '0')}`;
+    }
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  }, [initialYear, initialMonth]);
+
+  const [monthFilter, setMonthFilter] = useState<string>(defaultMonthKey);
+
+  // Meses que realmente têm lançamentos, do mais recente para o mais antigo.
+  const monthOptions = useMemo(() => {
+    const keys = new Set<string>();
+    transactions.forEach((t) => {
+      if (t.date && t.date.length >= 7) keys.add(t.date.slice(0, 7));
+    });
+    if (!keys.has(defaultMonthKey)) keys.add(defaultMonthKey);
+    return Array.from(keys).sort((a, b) => b.localeCompare(a));
+  }, [transactions, defaultMonthKey]);
+
+  const monthLabel = (key: string): string => {
+    const [y, m] = key.split('-').map(Number);
+    if (!y || !m) return key;
+    return `${getMonthName(m - 1)} de ${y}`;
+  };
 
   const categoriesMap = useMemo(() => {
     return categories.reduce<Record<string, Category>>((acc, cat) => {
@@ -71,6 +104,11 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
   // Filter transactions
   const filteredTransactions = useMemo(() => {
     return transactions.filter((tx) => {
+      // Mês selecionado (padrão: mês atual)
+      if (monthFilter !== 'all' && !tx.date.startsWith(monthFilter)) {
+        return false;
+      }
+
       // Search text
       if (searchQuery.trim()) {
         const query = searchQuery.toLowerCase();
@@ -104,7 +142,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
 
       return true;
     }).sort((a, b) => b.date.localeCompare(a.date));
-  }, [transactions, searchQuery, selectedType, selectedCategory, selectedAccount, selectedStatus, categoriesMap, accountsMap]);
+  }, [transactions, monthFilter, searchQuery, selectedType, selectedCategory, selectedAccount, selectedStatus, categoriesMap, accountsMap]);
 
   // Totals for filtered subset
   const filteredStats = useMemo(() => {
@@ -123,6 +161,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
   }, [filteredTransactions]);
 
   const resetFilters = () => {
+    setMonthFilter(defaultMonthKey);
     setSearchQuery('');
     setSelectedType('all');
     setSelectedCategory('all');
@@ -133,7 +172,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
   // Sempre que um filtro muda, volta para a primeira página.
   useEffect(() => {
     setVisibleCount(PAGE_SIZE);
-  }, [searchQuery, selectedType, selectedCategory, selectedAccount, selectedStatus]);
+  }, [monthFilter, searchQuery, selectedType, selectedCategory, selectedAccount, selectedStatus]);
 
   // Só renderiza a fatia visível — evita montar centenas de linhas de uma vez.
   const visibleTransactions = useMemo(
@@ -144,6 +183,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
   const remaining = filteredTransactions.length - visibleTransactions.length;
 
   const hasActiveFilters =
+    monthFilter !== defaultMonthKey ||
     searchQuery.trim() !== '' ||
     selectedType !== 'all' ||
     selectedCategory !== 'all' ||
@@ -220,6 +260,22 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
         </div>
 
         <div className="flex flex-wrap items-end gap-3 pt-3 border-t border-[var(--border-1)]">
+          <div className="min-w-0 flex-1 sm:flex-none sm:w-52">
+            <label className="ui-label">Mês</label>
+            <select
+              value={monthFilter}
+              onChange={(e) => setMonthFilter(e.target.value)}
+              className="ui-input !py-1.5"
+            >
+              <option value="all">Todos os meses</option>
+              {monthOptions.map((key) => (
+                <option key={key} value={key}>
+                  {monthLabel(key)}
+                </option>
+              ))}
+            </select>
+          </div>
+
           <div className="min-w-0 flex-1 sm:flex-none sm:w-48">
             <label className="ui-label">Categoria</label>
             <select

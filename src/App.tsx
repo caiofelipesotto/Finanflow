@@ -1059,6 +1059,8 @@ export default function App() {
             transactions={transactions}
             categories={categories}
             accounts={accounts}
+            initialYear={selectedYear}
+            initialMonth={selectedMonth}
             onOpenNewTransaction={() => {
               setEditingTx(null);
               setIsTxModalOpen(true);
