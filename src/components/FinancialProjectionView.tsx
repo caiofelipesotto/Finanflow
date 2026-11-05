@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Transaction, Category, Account } from '../types/finance';
+import { Transaction, Category, Account, RecurringTransactionDraft } from '../types/finance';
 import { formatCurrency, getMonthName } from '../utils/formatters';
 import { isAporte } from '../utils/aportes';
 import { Calendar, ChevronLeft, ChevronRight, TrendingUp, TrendingDown, Minus, AlertCircle, CreditCard } from 'lucide-react';
@@ -8,16 +8,40 @@ interface FinancialProjectionViewProps {
   transactions: Transaction[];
   categories: Category[];
   accounts: Account[];
+  recurringTransactions?: RecurringTransactionDraft[];
 }
 
 export const FinancialProjectionView: React.FC<FinancialProjectionViewProps> = ({
   transactions,
   categories,
   accounts,
+  recurringTransactions = [],
 }) => {
   const [centerYear, setCenterYear] = useState(() => new Date().getFullYear());
   const [centerMonth, setCenterMonth] = useState(() => new Date().getMonth());
-  const [viewMonths, setViewMonths] = useState(12); // 6, 12, 24 meses
+  const [viewMonths, setViewMonths] = useState(12); // 6, 12, 24, 36, 60 meses
+
+  // Mescla transações reais + transações geradas por regras de recorrência
+  const allTransactions = useMemo(() => {
+    const recurringAsTx: Transaction[] = recurringTransactions.map((r) => ({
+      id: r.id,
+      amount: r.amount,
+      type: r.type,
+      category: r.categoryId || '',
+      date: r.date,
+      account: r.accountId || '',
+      paymentMethod: r.paymentMethod || 'credit',
+      isPaid: false,
+      description: r.description,
+      notes: r.isException
+        ? `Recorrência (exceção): ${r.description}`
+        : `Recorrência: ${r.description}`,
+      recurrence: 'monthly',
+      installment: undefined,
+      recurrenceGroupId: r.id,
+    }));
+    return [...transactions, ...recurringAsTx];
+  }, [transactions, recurringTransactions]);
 
   const categoriesMap = useMemo(() => {
     return categories.reduce<Record<string, Category>>((acc, c) => {
@@ -42,7 +66,7 @@ export const FinancialProjectionView: React.FC<FinancialProjectionViewProps> = (
 
   // Agrupar lançamentos recorrentes por descrição + categoria
   const recurringGroups = useMemo(() => {
-    const recurring = transactions.filter(
+    const recurring = allTransactions.filter(
       (t) =>
         t.recurrence === 'monthly' ||
         t.recurrence === 'installment' ||

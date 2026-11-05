@@ -429,6 +429,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             transactions={transactions}
             categories={categories}
             accounts={accounts}
+            recurringTransactions={recurringTransactions}
           />
         ) : (
           <p className="text-center py-4 text-xs text-[var(--text-4)]">
