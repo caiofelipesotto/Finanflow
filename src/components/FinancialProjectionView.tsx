@@ -32,6 +32,13 @@ export const FinancialProjectionView: React.FC<FinancialProjectionViewProps> = (
     }, {});
   }, [accounts]);
 
+  // Converte "YYYY-MM-DD" em data local (new Date("YYYY-MM-DD") usa UTC e
+  // desloca o dia/mês em fusos negativos, como o do Brasil).
+  const parseLocalDate = (value: string): Date => {
+    const [y, m, d] = value.split('-').map(Number);
+    return new Date(y, (m || 1) - 1, d || 1);
+  };
+
   // Agrupar lançamentos recorrentes por descrição + categoria
   const recurringGroups = useMemo(() => {
     const recurring = transactions.filter(
@@ -41,18 +48,28 @@ export const FinancialProjectionView: React.FC<FinancialProjectionViewProps> = (
         Boolean(t.recurrenceGroupId)
     );
 
-    const grouped = new Map<string, { txs: Transaction[]; earliestDate: Date; categoryId: string; accountId: string }>();
+    const grouped = new Map<
+      string,
+      { txs: Transaction[]; earliestDate: Date; latestDate: Date; categoryId: string; accountId: string }
+    >();
 
     for (const tx of recurring) {
       const key = `${tx.category || 'sem-cat'}|${tx.description || 'Lançamento'}|${tx.account || 'sem-conta'}`;
-      const txDate = new Date(tx.date);
+      const txDate = parseLocalDate(tx.date);
       if (!isNaN(txDate.getTime())) {
         if (grouped.has(key)) {
           const existing = grouped.get(key)!;
           existing.txs.push(tx);
           if (txDate < existing.earliestDate) existing.earliestDate = txDate;
+          if (txDate > existing.latestDate) existing.latestDate = txDate;
         } else {
-          grouped.set(key, { txs: [tx], earliestDate: txDate, categoryId: tx.category || '', accountId: tx.account || '' });
+          grouped.set(key, {
+            txs: [tx],
+            earliestDate: txDate,
+            latestDate: txDate,
+            categoryId: tx.category || '',
+            accountId: tx.account || '',
+          });
         }
       }
     }
@@ -72,6 +89,7 @@ export const FinancialProjectionView: React.FC<FinancialProjectionViewProps> = (
         category,
         account,
         startDate: data.earliestDate,
+        endDate: data.latestDate,
         dayOfMonth: data.earliestDate.getDate(),
         isInstallment: firstTx.recurrence === 'installment' || firstTx.installment,
         installmentInfo: firstTx.installment,
@@ -79,15 +97,11 @@ export const FinancialProjectionView: React.FC<FinancialProjectionViewProps> = (
     });
   }, [transactions, categoriesMap, accountsMap]);
 
-  // Gerar meses para exibição (centro ± viewMonths/2)
+  // Gerar meses para exibição: começa no mês central e vai para frente.
   const months = useMemo(() => {
-    const startMonth = centerMonth - Math.floor(viewMonths / 2);
-    const startYear = centerYear + Math.floor(startMonth / 12);
-    const normalizedStartMonth = ((startMonth % 12) + 12) % 12;
-
     const result: Array<{ year: number; month: number; label: string; key: string }> = [];
-    let year = startYear;
-    let month = normalizedStartMonth;
+    let year = centerYear;
+    let month = centerMonth; // 0-11
 
     for (let i = 0; i < viewMonths; i++) {
       const monthNum = month + 1;
@@ -111,11 +125,14 @@ export const FinancialProjectionView: React.FC<FinancialProjectionViewProps> = (
     return recurringGroups.map((item) => {
       const startY = item.startDate.getFullYear();
       const startM = item.startDate.getMonth() + 1;
+      const endY = item.endDate.getFullYear();
+      const endM = item.endDate.getMonth() + 1;
       const day = item.dayOfMonth;
 
       const values = months.map((m) => {
-        // Só aparece a partir do mês de início
+        // Só aparece entre o mês de início e o mês da última ocorrência real.
         if (m.year < startY || (m.year === startY && m.month < startM)) return null;
+        if (m.year > endY || (m.year === endY && m.month > endM)) return null;
 
         const daysInMonth = new Date(m.year, m.month, 0).getDate();
         const projectedDay = Math.min(day, daysInMonth);
@@ -346,7 +363,11 @@ export const FinancialProjectionView: React.FC<FinancialProjectionViewProps> = (
         <div className="ui-card p-4">
           <span className="ui-stat-label">Receitas projetadas</span>
           <div className="ui-stat-value !text-[var(--accent-text)]">{formatCurrency(totalIncome)}</div>
-          <span className="ui-stat-note">{viewMonths} meses</span>
+          <span className="ui-stat-note">
+            {totalIncome > 0
+              ? `${viewMonths} meses`
+              : 'Nenhuma receita recorrente cadastrada'}
+          </span>
         </div>
         <div className="ui-card p-4">
           <span className="ui-stat-label">Despesas projetadas</span>
@@ -359,13 +380,17 @@ export const FinancialProjectionView: React.FC<FinancialProjectionViewProps> = (
             {grandTotal >= 0 ? '+' : ''}{formatCurrency(Math.abs(grandTotal))}
           </div>
           <span className="ui-stat-note">
-            {grandTotal >= 0 ? 'Superávit' : 'Déficit'} no período
+            {totalIncome === 0
+              ? 'Só despesas recorrentes'
+              : grandTotal >= 0
+              ? 'Superávit no período'
+              : 'Déficit no período'}
           </span>
         </div>
       </div>
 
-      {/* Insight rápido */}
-      {grandTotal < 0 && (
+      {/* Insight rápido — só faz sentido comparar quando há receita recorrente */}
+      {grandTotal < 0 && totalIncome > 0 && (
         <div className="ui-alert !border-[color-mix(in_srgb,var(--danger-text)_32%,transparent)] !bg-[var(--danger-soft)]">
           <div className="flex items-start gap-2">
             <AlertCircle className="w-4 h-4 text-[var(--danger-text)] shrink-0" />

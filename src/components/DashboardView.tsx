@@ -186,10 +186,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     onSelectMonth(month);
   };
 
-  const [showCharts, setShowCharts] = useState(false);
+  // Evolução e simulação abertas por padrão: são o conteúdo principal desses blocos.
+  const [showCharts, setShowCharts] = useState(true);
   const [showGoals, setShowGoals] = useState(false);
   const [showBudgets, setShowBudgets] = useState(false);
-  const [showSimulation, setShowSimulation] = useState(false);
+  const [showSimulation, setShowSimulation] = useState(true);
 
   const budgetCategories = categories.filter((c) => c.type === 'expense' && (c.budget || 0) > 0);
 

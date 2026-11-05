@@ -31,12 +31,11 @@ export const ProjectionChart: React.FC<ProjectionChartProps> = ({
   const [chartMode, setChartMode] = useState<'cashflow' | 'card'>('cashflow');
   const [hoveredMonth, setHoveredMonth] = useState<MonthData | null>(null);
 
-  // Generate 12 months horizon (from current date or selected view)
+  // Generate 12 months horizon starting at the selected month (dashboard month).
   const monthsData = useMemo<MonthData[]>(() => {
     const list: MonthData[] = [];
-    const baseDate = new Date();
-    const startYear = baseDate.getFullYear();
-    const startMonth = baseDate.getMonth();
+    const startYear = selectedYear;
+    const startMonth = selectedMonth;
 
     for (let i = 0; i < 12; i++) {
       const d = new Date(startYear, startMonth + i, 1);
@@ -77,9 +76,12 @@ export const ProjectionChart: React.FC<ProjectionChartProps> = ({
     }
 
     return list;
-  }, [transactions]);
+  }, [transactions, selectedYear, selectedMonth]);
 
-  const hasAnyData = transactions.length > 0;
+  const hasAnyData = useMemo(
+    () => monthsData.some((d) => d.income > 0 || d.expense > 0 || d.cardTotal > 0),
+    [monthsData]
+  );
 
   // Max value for scaling
   const maxVal = useMemo(() => {
